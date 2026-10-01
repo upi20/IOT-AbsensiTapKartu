@@ -151,7 +151,9 @@ Lengkapnya di [`doc/spesifikasi-api.md`](../doc/spesifikasi-api.md). Ringkasnya:
 - Semua hasil bisnis → **HTTP 200**.
 - `config` berisi `title` (judul layar), `pin` (PIN menu Pengaturan alat, hanya dikirim kalau diisi
   di panel), `dim_after` & `dim_level` (layar redup setelah diam sekian detik ke sekian persen, bawaan
-  60 detik & 20 %), dan `announcements_rev` (penanda versi pengumuman).
+  60 detik & 20 %), `announcements_rev` (penanda versi pengumuman), dan `restart_at` (jam restart harian
+  alat ini, `"HH:MM"` menurut jam di layar alat; selalu dikirim, `""` = alat tidak restart otomatis; bawaan
+  `"03:00"`, diatur per alat di halaman **Alat**).
 - `GET /announcements`: hanya pengumuman aktif, urut nomor urutan, maks. 10; `id` berupa teks,
   `description` tidak dikirim kalau kosong. `interval`/`idle` dari menu **Pengumuman** (bawaan 3 dan 30 detik).
 - `config.announcements_rev` = `"<jumlah pengumuman>-<unix perubahan terakhir>-<interval>-<idle>"`,
@@ -225,7 +227,7 @@ dikunci 60 detik; selain itu maksimal 10 percobaan login per menit per IP.
 | **Kehadiran** | Semua tap kartu pada tanggal yang dipilih (bisa dicari); hapus satu tap atau semua tap tanggal itu (mis. untuk mengulang tes) |
 | **Kartu belum terdaftar** | Nomor kartu yang pernah ditempel tapi belum punya pemilik → tombol "Daftarkan" (nomor kartu terisi otomatis) |
 | **Rekap** | Rentang tanggal, per anggota per hari: jam masuk pertama & jam pulang terakhir; ekspor CSV |
-| **Alat** | ID alat, nama & **PIN menu Pengaturan per alat** (opsional, 4–8 digit; bisa diubah), aktif/tidak, terakhir terlihat, firmware, IP, RSSI, WiFi, tap hari ini. Galat isian tampil di baris alat yang bersangkutan |
+| **Alat** | ID alat, nama & **PIN menu Pengaturan per alat** (opsional, 4–8 digit; bisa diubah), **jam restart harian per alat** (bawaan 03:00, sebaiknya jam sepi; kosongkan = tidak restart otomatis; alat restart sendiri sekali sehari saat tidak dipakai), aktif/tidak, terakhir terlihat, firmware, IP, RSSI, WiFi, tap hari ini. Galat isian tampil di baris alat yang bersangkutan |
 | **Pengumuman** | Pengumuman untuk screensaver alat: judul (maks. 40), deskripsi (maks. 160), ikon, aktif, urutan; **aksi massal** (tampilkan / sembunyikan / hapus yang dicentang); plus pengaturan screensaver (lama tiap pengumuman 2–60 detik, muncul setelah diam 5–600 detik). Sampai ke alat dalam ±1 menit |
 | **Pengaturan** | Base URL & API key (bisa dibuat ulang), judul layar alat dan **layar redup** (redup setelah 0 atau 10–3600 detik, kecerahan 0–100 %; untuk semua alat), ganti password |
 

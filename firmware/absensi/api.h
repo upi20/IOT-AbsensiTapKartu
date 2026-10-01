@@ -10,7 +10,7 @@ String revPengumuman = "";            // config.announcements_rev terakhir yang 
 
 // ---------- Bagian yang sama untuk /ping dan /heartbeat ----------
 
-// Pakai server_time (jam) dan config (pin, title, dim_after, dim_level, announcements_rev). Nilai yang tidak sesuai aturan diabaikan.
+// Pakai server_time (jam) dan config (pin, title, dim_after, dim_level, restart_at, announcements_rev). Nilai yang tidak sesuai aturan diabaikan.
 void terapkanBalasanUmum(JsonDocument& doc) {
   const char* jam = doc["server_time"];
   if (jam) jamDariTeksServer(jam);
@@ -43,6 +43,13 @@ void terapkanBalasanUmum(JsonDocument& doc) {
   if (redupDetik != atur.redupDetik || redupPersen != atur.redupPersen) {
     aturSimpanRedup(redupDetik, redupPersen);
     lampuTerapkan();
+  }
+  // Jam restart harian per alat: "HH:MM" atau "" (mati)
+  if (cfg["restart_at"].is<const char*>()) {
+    String r = cfg["restart_at"].as<const char*>();
+    r.trim();
+    if (!restartValid(r)) Serial.println("config.restart_at diabaikan (harus \"HH:MM\" atau kosong)");
+    else if (r != atur.restartAt) aturSimpanRestart(r);
   }
   // Penanda versi pengumuman (teks bebas). Kalau berubah, daftar pengumuman diambil ulang.
   if (!cfg["announcements_rev"].isNull()) {
@@ -117,6 +124,7 @@ bool apiHeartbeat() {
   JsonObject raw = isi["raw"].to<JsonObject>();
   isiRawJaringan(raw);
   raw["free_heap"] = ESP.getFreeHeap();
+  raw["reset_reason"] = alasanResetKode();
   raw["rfid_ok"] = rfidAda;
   raw["queue"] = jumlahAntrean;
   String teks;

@@ -1,4 +1,4 @@
-// Absensi Tap: alat absensi kartu RFID dengan layar sentuh 3.5".
+// Absensi RFID Terintegrasi: alat absensi kartu RFID dengan layar sentuh 3.5" yang terhubung ke website.
 // Alat umum: bisa dihubungkan ke aplikasi apa saja yang mengikuti doc/spesifikasi-api.md.
 // Kartu ditempel -> POST {Base URL}/tap -> layar menampilkan MASUK / PULANG / dst.
 // Semua pengaturan (WiFi, Base URL, API key, PIN) diisi lewat layar sentuh.
@@ -9,6 +9,7 @@
 //   pengaturan.h  pengaturan tersimpan di memori (NVS), ID alat, hitungan tekan EN
 //   feedback.h    buzzer dan LED RGB
 //   lampu.h       lampu latar layar (D2): meredup saat alat diam
+//   perawatan.h   watchdog, restart harian terjadwal, alasan restart terakhir
 //   rfid.h        pembaca kartu RC522 (dan cek kabel MOSI/MISO)
 //   waktu.h       jam (server_time / NTP) dan zona waktu
 //   antrean.h     antrean tap saat server tidak bisa dihubungi (LittleFS)
@@ -50,6 +51,7 @@ TFT_eSPI tft = TFT_eSPI();   // layar, dipakai oleh file-file di bawah
 #include "lampu.h"
 #include "rfid.h"
 #include "waktu.h"
+#include "perawatan.h"
 #include "antrean.h"
 #include "jaringan.h"
 #include "api.h"
@@ -249,7 +251,9 @@ void urusBoot() {
 void setup() {
   Serial.begin(115200);
   delay(300);
-  Serial.printf("\n##### ABSENSI TAP v%s #####\n", VERSI_FIRMWARE);
+  Serial.printf("\n##### ABSENSI RFID TERINTEGRASI v%s #####\n", VERSI_FIRMWARE);
+  Serial.printf("Restart terakhir: %s\n", alasanResetTeks());
+  watchdogMulai();
   aturMulai();                                            // pengaturan tersimpan + ID alat
   bool tanyaReset = bootHitungNaik();                     // EN ditekan 3 kali?
   pinMode(PIN_TOMBOL_BOOT, INPUT_PULLUP);
@@ -325,6 +329,7 @@ void loop() {
       bukaScreensaver();
       return;
     }
+    urusRestartHarian(millis() - aktifTerakhir >= RESTART_DIAM_MS);
     urusServer();
   } else if (layar == LAYAR_SCREENSAVER) {
     // Sentuhan apa pun hanya menutup screensaver (tidak menekan tombol di layar utama)
@@ -333,6 +338,7 @@ void loop() {
       bukaUtama();
       return;
     }
+    urusRestartHarian(millis() - aktifTerakhir >= RESTART_DIAM_MS);
     urusServer();
   } else {                                                // LAYAR_HASIL
     uint32_t lewat = millis() - waktuLayar;

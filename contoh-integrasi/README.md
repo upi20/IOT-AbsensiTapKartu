@@ -58,7 +58,7 @@ Hal penting lainnya:
 - Kalau server tidak bisa dihubungi, alat menyimpan tap lalu mengirimnya belakangan dengan `"queued": true`. Untuk tap seperti ini, pakai **`tapped_at`** sebagai waktu absen. Kalau `tapped_at` bernilai `null`, pakai waktu diterima.
 - **`tap_id` unik per tap** dan tetap sama kalau tap itu dikirim ulang (misalnya balasan server lewat 8 detik padahal tap sudah tersimpan). Simpan `tap_id`. Kalau `tap_id` sudah ada, jangan catat lagi, cukup balas hasil yang sama (atau `duplicate`).
 - `raw` bisa berupa objek atau `null` dan boleh diabaikan.
-- Opsional: `photo_url` (JPEG baseline, maks. 160×160 px, maks. 30 KB), `info` (maks. 2 baris), dan `config` (`title` maks. 30 karakter, `pin` per alat, `dim_after` & `dim_level` untuk layar redup, `announcements_rev`) di balasan `/ping` dan `/heartbeat`.
+- Opsional: `photo_url` (JPEG baseline, maks. 160×160 px, maks. 30 KB), `info` (maks. 2 baris), dan `config` (`title` maks. 30 karakter, `pin` per alat, `dim_after` & `dim_level` untuk layar redup, `announcements_rev`, `restart_at` jam restart harian `"HH:MM"` atau `""` = tidak restart otomatis) di balasan `/ping` dan `/heartbeat`.
 - Opsional: **pengumuman screensaver** lewat `GET /announcements`. Saat alat tidak dipakai, layar menampilkan pengumuman bergantian (maks. 10; judul maks. 40 karakter, deskripsi maks. 160; ikon salah satu dari `info`, `pengumuman`, `kalender`, `jam`, `peringatan`, `rapat`, `libur`, `selamat`, `kesehatan`, `buku`). Alat mengambil ulang daftar setiap `config.announcements_rev` berubah (atau paling lambat tiap 10 menit). Kalau endpoint ini tidak ada (404), screensaver tidak tampil.
 
 ## 2. Menjalankan contoh
@@ -108,6 +108,10 @@ Daftar pengumuman screensaver ditulis langsung di konstanta `PENGUMUMAN` (2 cont
 ### PIN per alat di contoh
 
 `config.pin` dikirim per alat lewat konstanta `PIN_ALAT` (kunci = `X-Device-ID` yang tampil di layar alat, nilai = PIN 4–8 digit). Bawaannya kosong, jadi PIN alat tidak diubah (tetap `2026` atau yang diganti di alat). Contoh: `'ABS-79438C' => '4321'` (PHP) atau `'ABS-79438C': '4321'` (Node).
+
+### Jam restart harian di contoh
+
+`config.restart_at` = jam (menurut jam di layar alat, format 24 jam `"HH:MM"`) saat alat me-restart dirinya sekali sehari ketika sedang tidak dipakai. Contoh mengirim `'03:00'` untuk semua alat; isi `''` (teks kosong) supaya alat tidak restart otomatis. Di aplikasi sungguhan, nilai ini sebaiknya diatur per alat dan dipilih jam sepi.
 
 Semua tap dicatat di `absensi`, termasuk yang `unknown`, jadi nomor kartu baru mudah dicari. Respons tiap tap juga disimpan, sehingga kalau `tap_id` yang sama datang lagi, server cukup mengirim respons lama tanpa menambah baris.
 
@@ -173,7 +177,7 @@ Skrip ini berperan seperti alat. Ia memanggil `/ping`, `/heartbeat`, `/tap`, dan
 - tap antrean `queued: true` dengan `tapped_at: null` dan `raw: null` (jam alat belum tersinkron);
 - kartu tak terdaftar (harus `unknown`).
 
-Skrip juga memeriksa bahwa `ok` sesuai `status`, `config.title` (kalau ada) maks. 30 karakter, `config.dim_after` (kalau ada) 0 atau 10–3600, `config.dim_level` (kalau ada) 0–100, API key yang salah dibalas **401**, dan request yang formatnya salah dibalas **400**.
+Skrip juga memeriksa bahwa `ok` sesuai `status`, `config.title` (kalau ada) maks. 30 karakter, `config.dim_after` (kalau ada) 0 atau 10–3600, `config.dim_level` (kalau ada) 0–100, `config.restart_at` (kalau ada) teks `""` atau `"HH:MM"` 00:00–23:59, API key yang salah dibalas **401**, dan request yang formatnya salah dibalas **400**.
 
 `GET /announcements` bersifat opsional: kalau server membalas **404**, skrip hanya menampilkan ⚠️ "tidak disediakan (opsional)". Kalau dibalas **200**, formatnya diperiksa (`items` berupa daftar, `title` wajib, `id` berupa teks, `interval` 2–60, `idle` 5–600).
 
@@ -217,7 +221,7 @@ Kebutuhannya hanya `bash`, `curl`, dan `python3` (tidak perlu `jq`). Setiap peme
 - [ ] Ambil ID alat dari header `X-Device-ID`. Request yang formatnya salah dibalas **HTTP 400** dengan `message`.
 - [ ] Kirim `server_time` (ISO 8601 dengan zona waktu) di `/ping` dan `/heartbeat` supaya jam alat tepat.
 - [ ] Pastikan balasan selalu **di bawah 8 detik**.
-- [ ] (Opsional) `photo_url`, `info`, `config.title`, `config.pin` per alat (sesuai `X-Device-ID`), `config.dim_after` / `config.dim_level` (layar redup), dan status "alat aktif" (heartbeat terakhir kurang dari ±3 menit).
+- [ ] (Opsional) `photo_url`, `info`, `config.title`, `config.pin` per alat (sesuai `X-Device-ID`), `config.dim_after` / `config.dim_level` (layar redup), `config.restart_at` (jam restart harian per alat, `""` = tidak restart otomatis), dan status "alat aktif" (heartbeat terakhir kurang dari ±3 menit).
 - [ ] (Opsional) `GET /announcements` untuk screensaver pengumuman, plus `config.announcements_rev` yang berubah setiap daftarnya berubah.
 - [ ] Jalankan `tes/cek-server.sh` terhadap server Anda sampai semua ✅.
 
@@ -267,6 +271,7 @@ Content-Type: application/json
     "dim_after": 60,
     "dim_level": 20,
     "announcements_rev": "1",
+    "restart_at": "03:00",
     "pin": "4321"
   }
 }
@@ -887,6 +892,7 @@ Content-Type: application/json
     "dim_after": 60,
     "dim_level": 20,
     "announcements_rev": "1",
+    "restart_at": "03:00",
     "pin": "4321"
   }
 }
@@ -941,6 +947,7 @@ Content-Type: application/json
     "dim_after": 60,
     "dim_level": 20,
     "announcements_rev": "1",
+    "restart_at": "03:00",
     "pin": "4321"
   }
 }

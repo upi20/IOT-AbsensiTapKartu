@@ -346,6 +346,47 @@ class AdminPanelTest extends TestCase
         $this->put(route('admin.devices.update', $door), ['name' => 'Pintu Utama', 'pin' => '12ab'])->assertSessionHasErrorsIn('device-'.$door->id, ['pin']);
     }
 
+    public function test_restart_time_is_set_per_device_and_sent_in_config(): void
+    {
+        $door = $this->device('ABS-0001');
+        $other = $this->device('ABS-0002');
+        $headers = fn (string $code) => ['X-API-Key' => Setting::apiKey(), 'X-Device-ID' => $code];
+        $errorBag = 'device-'.$door->id;
+
+        // Bawaan 03:00, termasuk alat yang dibuat otomatis saat pertama kali menghubungi server.
+        $this->assertSame('03:00', $door->fresh()->restart_at);
+        $this->postJson('/api/absensi/heartbeat', ['device_id' => 'ABS-0001'], $headers('ABS-0001'))->assertJsonPath('config.restart_at', '03:00');
+        $this->getJson('/api/absensi/ping', $headers('ABS-NEW'))->assertJsonPath('config.restart_at', '03:00');
+        $this->assertSame('03:00', Device::where('code', 'ABS-NEW')->sole()->restart_at);
+
+        $this->actingAs($this->admin)->get(route('admin.devices.index'))
+            ->assertOk()
+            ->assertSee('value="03:00"', false)
+            ->assertSee('Restart harian pukul');
+
+        $this->put(route('admin.devices.update', $door), ['name' => 'Pintu Utama', 'pin' => '', 'restart_at' => '22:15'])
+            ->assertRedirect(route('admin.devices.index'))
+            ->assertSessionHasNoErrors();
+        $this->assertSame('22:15', $door->fresh()->restart_at);
+        $this->getJson('/api/absensi/ping', $headers('ABS-0001'))->assertJsonPath('config.restart_at', '22:15');
+        $this->getJson('/api/absensi/ping', $headers('ABS-0002'))->assertJsonPath('config.restart_at', '03:00');
+
+        // Dikosongkan = tidak restart otomatis: disimpan null, dikirim "".
+        $this->put(route('admin.devices.update', $door), ['name' => 'Pintu Utama', 'pin' => '', 'restart_at' => ''])->assertSessionHasNoErrors();
+        $this->assertNull($door->fresh()->restart_at);
+        $this->postJson('/api/absensi/heartbeat', ['device_id' => 'ABS-0001'], $headers('ABS-0001'))
+            ->assertJsonPath('config.restart_at', '');
+        $this->get(route('admin.devices.index'))->assertSee('Tidak restart otomatis');
+        $this->assertSame('03:00', $other->fresh()->restart_at);
+
+        foreach (['25:00', '3pm', '03:7', '3:00', '03:00:00', '12:60'] as $invalid) {
+            $this->put(route('admin.devices.update', $door), ['name' => 'Pintu Utama', 'restart_at' => $invalid])
+                ->assertSessionHasErrorsIn($errorBag, ['restart_at']);
+        }
+        $this->assertNull($door->fresh()->restart_at);
+        $this->assertSame('03:00', $other->fresh()->restart_at);
+    }
+
     public function test_devices_page_shows_status_and_name_is_editable(): void
     {
         $device = $this->device('ABS-1A2B3C');

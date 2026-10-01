@@ -32,6 +32,7 @@
                   "  if ('announcements_rev' in d.config) pm.expect(d.config.announcements_rev).to.be.a('string');",
                   "  if ('dim_after' in d.config) { pm.expect(Number.isInteger(d.config.dim_after)).to.be.true; pm.expect(d.config.dim_after === 0 || (d.config.dim_after >= 10 && d.config.dim_after <= 3600)).to.be.true; }",
                   "  if ('dim_level' in d.config) { pm.expect(Number.isInteger(d.config.dim_level)).to.be.true; pm.expect(d.config.dim_level).to.be.within(0, 100); }",
+                  "  if ('restart_at' in d.config) { pm.expect(d.config.restart_at).to.be.a('string'); if (d.config.restart_at !== '') pm.expect(d.config.restart_at).to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); }",
                   "});"
                 ]
               }
@@ -111,7 +112,7 @@
                 }
               ],
               "cookie": [],
-              "body": "{\n  \"ok\": true,\n  \"message\": \"Terhubung ke Aplikasi Contoh\",\n  \"server_time\": \"2026-10-01T07:45:12+07:00\",\n  \"config\": {\n    \"title\": \"Aplikasi Contoh\",\n    \"dim_after\": 60,\n    \"dim_level\": 20,\n    \"announcements_rev\": \"1\",\n    \"pin\": \"4321\"\n  }\n}"
+              "body": "{\n  \"ok\": true,\n  \"message\": \"Terhubung ke Aplikasi Contoh\",\n  \"server_time\": \"2026-10-01T07:45:12+07:00\",\n  \"config\": {\n    \"title\": \"Aplikasi Contoh\",\n    \"dim_after\": 60,\n    \"dim_level\": 20,\n    \"announcements_rev\": \"1\",\n    \"restart_at\": \"03:00\",\n    \"pin\": \"4321\"\n  }\n}"
             },
             {
               "name": "Terlalu banyak request (429)",
@@ -1821,6 +1822,7 @@
                   "  if ('announcements_rev' in d.config) pm.expect(d.config.announcements_rev).to.be.a('string');",
                   "  if ('dim_after' in d.config) { pm.expect(Number.isInteger(d.config.dim_after)).to.be.true; pm.expect(d.config.dim_after === 0 || (d.config.dim_after >= 10 && d.config.dim_after <= 3600)).to.be.true; }",
                   "  if ('dim_level' in d.config) { pm.expect(Number.isInteger(d.config.dim_level)).to.be.true; pm.expect(d.config.dim_level).to.be.within(0, 100); }",
+                  "  if ('restart_at' in d.config) { pm.expect(d.config.restart_at).to.be.a('string'); if (d.config.restart_at !== '') pm.expect(d.config.restart_at).to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); }",
                   "});"
                 ]
               }
@@ -1926,7 +1928,7 @@
                 }
               ],
               "cookie": [],
-              "body": "{\n  \"ok\": true,\n  \"server_time\": \"2026-10-01T07:46:01+07:00\",\n  \"config\": {\n    \"title\": \"Aplikasi Contoh\",\n    \"dim_after\": 60,\n    \"dim_level\": 20,\n    \"announcements_rev\": \"1\",\n    \"pin\": \"4321\"\n  }\n}"
+              "body": "{\n  \"ok\": true,\n  \"server_time\": \"2026-10-01T07:46:01+07:00\",\n  \"config\": {\n    \"title\": \"Aplikasi Contoh\",\n    \"dim_after\": 60,\n    \"dim_level\": 20,\n    \"announcements_rev\": \"1\",\n    \"restart_at\": \"03:00\",\n    \"pin\": \"4321\"\n  }\n}"
             },
             {
               "name": "Terlalu banyak request (429)",
@@ -2010,6 +2012,7 @@
                   "  if ('announcements_rev' in d.config) pm.expect(d.config.announcements_rev).to.be.a('string');",
                   "  if ('dim_after' in d.config) { pm.expect(Number.isInteger(d.config.dim_after)).to.be.true; pm.expect(d.config.dim_after === 0 || (d.config.dim_after >= 10 && d.config.dim_after <= 3600)).to.be.true; }",
                   "  if ('dim_level' in d.config) { pm.expect(Number.isInteger(d.config.dim_level)).to.be.true; pm.expect(d.config.dim_level).to.be.within(0, 100); }",
+                  "  if ('restart_at' in d.config) { pm.expect(d.config.restart_at).to.be.a('string'); if (d.config.restart_at !== '') pm.expect(d.config.restart_at).to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); }",
                   "});"
                 ]
               }
@@ -2115,7 +2118,7 @@
                 }
               ],
               "cookie": [],
-              "body": "{\n  \"ok\": true,\n  \"server_time\": \"2026-10-01T07:47:01+07:00\",\n  \"config\": {\n    \"title\": \"Aplikasi Contoh\",\n    \"dim_after\": 60,\n    \"dim_level\": 20,\n    \"announcements_rev\": \"1\",\n    \"pin\": \"4321\"\n  }\n}"
+              "body": "{\n  \"ok\": true,\n  \"server_time\": \"2026-10-01T07:47:01+07:00\",\n  \"config\": {\n    \"title\": \"Aplikasi Contoh\",\n    \"dim_after\": 60,\n    \"dim_level\": 20,\n    \"announcements_rev\": \"1\",\n    \"restart_at\": \"03:00\",\n    \"pin\": \"4321\"\n  }\n}"
             }
           ]
         }

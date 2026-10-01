@@ -140,21 +140,24 @@ class AbsensiController extends Controller
     }
 
     /**
-     * Pengaturan jarak jauh (bagian 6). Hanya kunci yang diisi di panel yang dikirim.
-     * PIN diatur per alat (halaman Alat), judul berlaku untuk semua alat. announcements_rev berubah
+     * Pengaturan jarak jauh (bagian 6). Hanya kunci yang diisi di panel yang dikirim, kecuali restart_at.
+     * PIN dan jam restart diatur per alat (halaman Alat), judul berlaku untuk semua alat. announcements_rev berubah
      * setiap pengumuman / pengaturan screensaver berubah, sehingga alat mengambil ulang GET /announcements.
      *
-     * @return object{pin?: string, title?: string, announcements_rev: string}
+     * @return object{pin?: string, title?: string, dim_after?: int, dim_level?: int, announcements_rev: string, restart_at: string}
      */
     private function deviceConfig(Device $device): object
     {
-        return (object) array_filter([
+        // restart_at selalu dikirim: "" berarti alat tidak restart otomatis, jadi tidak ikut disaring.
+        return (object) (array_filter([
             'pin' => $device->pin,
             'title' => Setting::getValue(Setting::TITLE),
             'dim_after' => Setting::dimAfter(),
             'dim_level' => Setting::dimLevel(),
             'announcements_rev' => Announcement::revision(),
-        ], fn ($value) => $value !== null && $value !== '');
+        ], fn ($value) => $value !== null && $value !== '') + [
+            'restart_at' => $device->restart_at ?? '',
+        ]);
     }
 
     /**

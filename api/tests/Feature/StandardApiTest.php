@@ -161,7 +161,7 @@ class StandardApiTest extends TestCase
                 'ok' => true,
                 'message' => 'Terhubung ke PT Contoh Sejahtera',
                 'server_time' => '2026-09-30T07:45:12+07:00',
-                'config' => ['pin' => '4321', 'title' => 'PT Contoh Sejahtera', 'dim_after' => 60, 'dim_level' => 20, 'announcements_rev' => '0-0-3-30'],
+                'config' => ['pin' => '4321', 'title' => 'PT Contoh Sejahtera', 'dim_after' => 60, 'dim_level' => 20, 'announcements_rev' => '0-0-3-30', 'restart_at' => '03:00'],
             ]);
 
         $device = Device::where('code', self::DEVICE)->sole();
@@ -173,8 +173,18 @@ class StandardApiTest extends TestCase
     {
         $this->getJson('/api/absensi/ping', $this->headers())
             ->assertOk()
-            ->assertJsonPath('config', ['title' => 'PT Contoh Sejahtera', 'dim_after' => 60, 'dim_level' => 20, 'announcements_rev' => '0-0-3-30'])
+            ->assertJsonPath('config', ['title' => 'PT Contoh Sejahtera', 'dim_after' => 60, 'dim_level' => 20, 'announcements_rev' => '0-0-3-30', 'restart_at' => '03:00'])
             ->assertJsonMissingPath('config.pin');
+    }
+
+    public function test_config_always_sends_restart_at_and_empty_string_when_disabled(): void
+    {
+        Device::create(['code' => self::DEVICE, 'name' => self::DEVICE, 'restart_at' => '22:30']);
+        $this->getJson('/api/absensi/ping', $this->headers())->assertOk()->assertJsonPath('config.restart_at', '22:30');
+
+        Device::where('code', self::DEVICE)->update(['restart_at' => null]);
+        $this->getJson('/api/absensi/ping', $this->headers())->assertOk()->assertJsonPath('config.restart_at', '');
+        $this->postJson('/api/absensi/heartbeat', ['device_id' => self::DEVICE], $this->headers())->assertOk()->assertJsonPath('config.restart_at', '');
     }
 
     public function test_heartbeat_creates_then_updates_device(): void
@@ -191,7 +201,7 @@ class StandardApiTest extends TestCase
             ->assertExactJson([
                 'ok' => true,
                 'server_time' => '2026-09-30T07:45:12+07:00',
-                'config' => ['title' => 'PT Contoh Sejahtera', 'dim_after' => 60, 'dim_level' => 20, 'announcements_rev' => '0-0-3-30'],
+                'config' => ['title' => 'PT Contoh Sejahtera', 'dim_after' => 60, 'dim_level' => 20, 'announcements_rev' => '0-0-3-30', 'restart_at' => '03:00'],
             ]);
 
         $device = Device::where('code', self::DEVICE)->sole();

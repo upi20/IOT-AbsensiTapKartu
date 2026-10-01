@@ -110,6 +110,10 @@ if jenis in ("ping", "heartbeat"):
         if isinstance(c, dict) and "dim_level" in c:
             v = c["dim_level"]
             cek(type(v) is int and 0 <= v <= 100, '"config.dim_level" angka 0–100 (%s)' % v)
+        if isinstance(c, dict) and "restart_at" in c:
+            v = c["restart_at"]
+            cek(isinstance(v, str) and (v == "" or re.fullmatch(r"([01]\d|2[0-3]):[0-5]\d", v)),
+                '"config.restart_at" teks "" atau "HH:MM" 00:00–23:59 (%r)' % (v,))
 
 if jenis == "pengumuman":
     IKON = ["info", "pengumuman", "kalender", "jam", "peringatan", "rapat", "libur", "selamat", "kesehatan", "buku"]

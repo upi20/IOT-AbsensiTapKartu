@@ -84,7 +84,7 @@ void wifiMulai() {
   WiFi.setAutoReconnect(true);
   for (Sambungan* s : {&sambunganApi, &sambunganFoto}) {
     s->aman.setInsecure();              // HTTPS tanpa cek sertifikat
-    s->http.setUserAgent(String("AbsensiTap/") + VERSI_FIRMWARE);
+    s->http.setUserAgent(String("AbsensiRFID/") + VERSI_FIRMWARE);
   }
   sambunganApi.http.setReuse(true);     // sambungan dipakai ulang supaya tap lebih cepat
   // Foto memakai HTTP/1.0 (tanpa "chunked", jadi isi bisa dibaca langsung), tapi tetap minta keep-alive.

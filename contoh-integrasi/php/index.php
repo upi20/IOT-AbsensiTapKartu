@@ -92,6 +92,7 @@ function config($deviceId): array
         'dim_after' => REDUP_SETELAH,
         'dim_level' => REDUP_TERANG,
         'announcements_rev' => PENGUMUMAN_REV, // berubah → alat memanggil ulang GET /announcements
+        'restart_at' => '03:00',               // jam restart harian alat ("HH:MM", jam di layar alat); "" = tidak restart otomatis
     ];
     if (is_string($deviceId) && isset(PIN_ALAT[$deviceId])) {
         $c['pin'] = PIN_ALAT[$deviceId];       // PIN khusus alat ini

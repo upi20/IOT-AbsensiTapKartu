@@ -77,10 +77,10 @@ void gantiPin() {
 // ---------- Info alat ----------
 
 const char* const LABEL_INFO[] = {"ID alat", "Firmware", "WiFi", "IP", "Sinyal", "Base URL", "Antrean",
-                                  "Heartbeat", "Pengumuman", "RFID", "Jam", "RAM bebas", "Layar"};
-const int JUMLAH_INFO = 13;
+                                  "Heartbeat", "Pengumuman", "RFID", "Jam", "RAM bebas", "Layar", "Restart"};
+const int JUMLAH_INFO = 14;
 
-int yInfo(int i) { return 58 + i * 21; }
+int yInfo(int i) { return 56 + i * 19; }
 
 void infoNilai() {
   String nilai[JUMLAH_INFO];
@@ -101,6 +101,8 @@ void infoNilai() {
   nilai[11] = String(ESP.getFreeHeap() / 1024) + " KB";
   nilai[12] = atur.redupDetik == 0 ? String("Tidak pernah redup")
             : "Redup " + String(atur.redupPersen) + "% setelah " + String(atur.redupDetik) + " detik";
+  nilai[13] = (atur.restartAt.length() ? "Tiap hari " + atur.restartAt : String("Tidak otomatis")) +
+              " (terakhir: " + alasanResetTeks() + ")";
 
   tft.setTextFont(2);
   for (int i = 0; i < JUMLAH_INFO; i++) {

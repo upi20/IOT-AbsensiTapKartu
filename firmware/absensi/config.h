@@ -9,10 +9,10 @@
 const char ID_ALAT[] = "ABS-001";
 
 // ---------- Versi & nilai bawaan pabrik ----------
-const char VERSI_FIRMWARE[] = "1.3.0";
+const char VERSI_FIRMWARE[] = "1.4.0";
 const char VERSI_SPEK[]     = "1";              // versi spesifikasi API (header X-Spec-Version)
 const char PIN_BAWAAN[]     = "2026";           // PIN menu Pengaturan sebelum diganti
-const char JUDUL_BAWAAN[]   = "Absensi Tap";    // judul layar utama sebelum diganti
+const char JUDUL_BAWAAN[]   = "Absensi RFID";   // judul layar utama sebelum diganti
 const int  OFFSET_BAWAAN    = 7 * 60;           // zona waktu bawaan dalam menit (+07:00 = WIB)
 const char NTP_SERVER[]     = "pool.ntp.org";   // cadangan jam kalau server tidak mengirim server_time
 
@@ -60,6 +60,14 @@ const int DIAM_BAWAAN       = 30;               // screensaver muncul setelah di
 // ---------- Lampu layar (doc/spesifikasi-api.md bagian 6, config.dim_after / dim_level) ----------
 const int REDUP_DETIK_BAWAAN  = 60;             // layar meredup setelah diam sekian detik (0 = tidak pernah, boleh 10-3600)
 const int REDUP_PERSEN_BAWAAN = 20;             // kecerahan saat redup dalam persen (0 = mati, boleh 0-100)
+
+// ---------- Perawatan (perawatan.h) ----------
+const uint32_t WATCHDOG_MS          = 60000;    // program macet selama ini -> restart otomatis
+const char     RESTART_BAWAAN[]     = "03:00";  // restart harian (jam alat); "" = tidak restart otomatis.
+                                                // Diganti per alat lewat config.restart_at dari server
+const int      RESTART_JENDELA_MENIT = 30;      // restart boleh terjadi dalam 30 menit sejak jadwal (menunggu alat diam)
+const uint32_t RESTART_DIAM_MS      = 120000;   // restart hanya kalau tidak ada kartu / sentuhan selama 2 menit
+const uint32_t RESTART_MIN_NYALA_S  = 3600;     // dan alat sudah menyala minimal 1 jam
 
 // ---------- Lain-lain ----------
 const bool BUZZER_AKTIF = true;                 // false = alat tidak berbunyi

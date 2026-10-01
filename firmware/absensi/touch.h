@@ -126,6 +126,7 @@ bool tungguSentuh(Mentah& hasil, uint32_t batasMs) {
   while (true) {
     while (!ditekan()) {
       if (batasMs > 0 && millis() - mulai > batasMs) return false;
+      watchdogPakan();                                    // menunggu sentuhan boleh lama
       delay(5);
     }
     delay(30);                                            // lewati awal sentuhan
@@ -223,7 +224,7 @@ void touchSiapkan() {
   if (!ada || !kalValid() || tombolBoot) {
     if (tombolBoot) {                                     // tunggu BOOT dilepas dulu
       uiKalibrasiLepasBoot();
-      while (digitalRead(PIN_TOMBOL_BOOT) == LOW) delay(10);
+      while (digitalRead(PIN_TOMBOL_BOOT) == LOW) { watchdogPakan(); delay(10); }
     }
     touchKalibrasi(false);
   } else {

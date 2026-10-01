@@ -14,7 +14,7 @@
         <div class="table-wrap">
             <table class="table table-stack">
                 <thead>
-                <tr><th>ID alat</th><th>Nama &amp; PIN</th><th>Status</th><th>Terakhir terlihat</th><th>Firmware</th><th>IP</th><th class="num">RSSI</th><th>WiFi</th><th class="num">Tap hari ini</th></tr>
+                <tr><th>ID alat</th><th>Nama, PIN &amp; restart</th><th>Status</th><th>Terakhir terlihat</th><th>Firmware</th><th>IP</th><th class="num">RSSI</th><th>WiFi</th><th class="num">Tap hari ini</th></tr>
                 </thead>
                 <tbody>
                 @forelse ($devices as $device)
@@ -31,10 +31,21 @@
                                 <label for="pin-{{ $device->id }}" class="sr-only">PIN alat</label>
                                 <input id="pin-{{ $device->id }}" name="pin" type="text" class="input input-sm mono @error('pin', $bag) is-invalid @enderror" value="{{ $failed ? old('pin') : $device->pin }}"
                                        inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="PIN" autocomplete="off" style="max-width:7rem">
+                                <label for="restart-{{ $device->id }}" class="sr-only">Jam restart harian</label>
+                                <input id="restart-{{ $device->id }}" name="restart_at" type="time" class="input input-sm mono @error('restart_at', $bag) is-invalid @enderror"
+                                       value="{{ $failed ? old('restart_at') : $device->restart_at }}" title="Jam restart harian (kosong = tidak restart otomatis)" style="max-width:8rem">
                                 <button type="submit" class="btn btn-sm">Simpan</button>
                             </form>
                             @error('name', $bag)<div class="error">{{ $message }}</div>@enderror
                             @error('pin', $bag)<div class="error">{{ $message }}</div>@enderror
+                            @error('restart_at', $bag)<div class="error">{{ $message }}</div>@enderror
+                            <div class="small muted">
+                                @if ($device->restart_at)
+                                    Restart harian pukul <span class="mono">{{ $device->restart_at }}</span>
+                                @else
+                                    Tidak restart otomatis
+                                @endif
+                            </div>
                         </td>
                         <td data-label="Status">
                             <span class="live"><span @class(['dot', 'on' => $device->isOnline()])></span> {{ $device->isOnline() ? 'Aktif' : 'Tidak aktif' }}</span>
@@ -58,6 +69,8 @@
                 </tbody>
             </table>
         </div>
-        <div class="card-foot small muted">PIN menu Pengaturan per alat (4–8 digit). Kosongkan agar alat tetap memakai PIN-nya sendiri (bawaan pabrik <span class="mono">2026</span>).</div>
+        <div class="card-foot small muted">PIN menu Pengaturan per alat (4–8 digit). Kosongkan agar alat tetap memakai PIN-nya sendiri (bawaan pabrik <span class="mono">2026</span>).
+            Jam restart harian: alat restart sendiri sekali sehari pada jam itu (jam di layar alat) saat sedang tidak dipakai.
+            Kosongkan = alat tidak restart otomatis. Bawaan <span class="mono">03:00</span>, sebaiknya jam sepi.</div>
     </section>
 @endsection

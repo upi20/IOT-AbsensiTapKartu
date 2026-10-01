@@ -18,8 +18,10 @@ use Illuminate\Support\Str;
  * dari `api_key` (hash SHA-256 dari X-Device-Key).
  *
  * `pin` = PIN menu Pengaturan alat ini (4–8 digit), dikirim lewat config.pin. Kosong = alat memakai PIN-nya sendiri.
+ * `restart_at` = jam restart harian alat ini ("HH:MM", jam lokal alat), dikirim lewat config.restart_at.
+ * Null = alat tidak restart otomatis (dikirim sebagai ""). Bawaan 03:00.
  */
-#[Fillable(['code', 'name', 'location', 'pin'])]
+#[Fillable(['code', 'name', 'location', 'pin', 'restart_at'])]
 #[Hidden(['api_key'])]
 class Device extends Model
 {
@@ -28,6 +30,14 @@ class Device extends Model
 
     /** Alat dianggap aktif kalau terakhir menghubungi server kurang dari 3 menit lalu. */
     public const ONLINE_SECONDS = 180;
+
+    /** Jam restart harian bawaan, sama dengan default kolom devices.restart_at. */
+    public const DEFAULT_RESTART_AT = '03:00';
+
+    /** Nilai awal model baru (mis. alat yang dibuat otomatis oleh middleware), sama dengan default kolom. */
+    protected $attributes = [
+        'restart_at' => self::DEFAULT_RESTART_AT,
+    ];
 
     protected function casts(): array
     {

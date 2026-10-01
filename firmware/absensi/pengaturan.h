@@ -17,6 +17,7 @@ struct Pengaturan {
   int offsetMenit;     // zona waktu tampilan, contoh +07:00 = 420
   int redupDetik;      // layar meredup setelah diam sekian detik (0 = tidak pernah)
   int redupPersen;     // kecerahan layar saat redup (0-100 %)
+  String restartAt;    // jam restart harian "HH:MM" (jam alat), "" = tidak restart otomatis
 };
 Pengaturan atur;
 
@@ -43,6 +44,14 @@ int jumlahHuruf(const String& s) {
 bool judulValid(const String& j) { return j.length() > 0 && jumlahHuruf(j) <= JUDUL_UTAMA_MAKS; }
 
 bool redupDetikValid(long d) { return d == 0 || (d >= 10 && d <= 3600); }
+
+// "" (mati) atau "HH:MM" 24 jam.
+bool restartValid(const String& r) {
+  if (r.length() == 0) return true;
+  if (r.length() != 5 || r[2] != ':') return false;
+  for (int i : {0, 1, 3, 4}) if (r[i] < '0' || r[i] > '9') return false;
+  return r.substring(0, 2).toInt() <= 23 && r.substring(3, 5).toInt() <= 59;
+}
 bool redupPersenValid(long p) { return p >= 0 && p <= 100; }
 
 // Rapikan Base URL: buang spasi dan "/" di akhir.
@@ -66,10 +75,12 @@ void aturMuat() {
   atur.offsetMenit = prefs.getInt("offset", OFFSET_BAWAAN);
   atur.redupDetik  = prefs.getInt("redup", REDUP_DETIK_BAWAAN);
   atur.redupPersen = prefs.getInt("redupP", REDUP_PERSEN_BAWAAN);
+  atur.restartAt   = prefs.getString("restartAt", RESTART_BAWAAN);
   if (!pinValid(atur.pin)) atur.pin = PIN_BAWAAN;
   if (!judulValid(atur.judul)) atur.judul = JUDUL_BAWAAN;
   if (!redupDetikValid(atur.redupDetik)) atur.redupDetik = REDUP_DETIK_BAWAAN;
   if (!redupPersenValid(atur.redupPersen)) atur.redupPersen = REDUP_PERSEN_BAWAAN;
+  if (!restartValid(atur.restartAt)) atur.restartAt = RESTART_BAWAAN;
 }
 
 // Simpan WiFi dan server (dipanggil setelah penyetelan).
@@ -105,6 +116,12 @@ void aturSimpanRedup(int detik, int persen) {
   prefs.putInt("redup", detik);
   prefs.putInt("redupP", persen);
   Serial.printf("Lampu layar: redup setelah %d detik ke %d%%\n", detik, persen);
+}
+
+void aturSimpanRestart(const String& r) {
+  atur.restartAt = r;
+  prefs.putString("restartAt", r);
+  Serial.printf("Restart harian: %s\n", r.length() ? r.c_str() : "mati");
 }
 
 // ID alat: diambil dari ID_ALAT di config.h (diatur manual sebelum upload).

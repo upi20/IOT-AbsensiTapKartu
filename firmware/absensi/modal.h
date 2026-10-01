@@ -10,6 +10,7 @@ bool heartbeatDiMenu = false;   // true di menu Pengaturan: heartbeat tetap diki
 
 // Pekerjaan latar yang harus tetap jalan di semua layar.
 void urusLatar() {
+  watchdogPakan();                                        // layar menu & panduan juga memanggil ini
   feedbackUrus();
   wifiUrus();
   rfidUrus();

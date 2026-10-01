@@ -198,7 +198,7 @@ void uiKalibrasiUlang() {
 
 void uiKalibrasiTawaran() {
   tft.fillScreen(W_LATAR);
-  tulis("Absensi Tap", 240, 120, F_JUDUL, W_TEKS, TC_DATUM);
+  tulis("Absensi RFID", 240, 120, F_JUDUL, W_TEKS, TC_DATUM);
   tulis("Tekan BOOT sekarang untuk kalibrasi layar sentuh", 240, 190, F_KECIL, W_REDUP, TC_DATUM);
 }
 
@@ -241,8 +241,8 @@ void uiLangkah(int i, StatusLangkah s, const String& ket) {
 void uiBoot() {
   tft.fillScreen(W_LATAR);
   gambarKartu(118, 22, W_LATAR);
-  tulis("Absensi Tap", 212, 24, F_JUDUL, W_TEKS);
-  tulis("ID " + idAlat + "  -  versi " + VERSI_FIRMWARE, 214, 62, F_KECIL, W_REDUP);
+  tulis("Absensi RFID", 212, 18, F_JUDUL, W_TEKS);
+  tulis("Terintegrasi  -  ID " + idAlat + "  -  v" + VERSI_FIRMWARE, 214, 58, F_KECIL, W_REDUP);
   tft.drawFastHLine(40, 84, 400, W_GARIS);
   for (int i = 0; i < JUMLAH_LANGKAH; i++) {
     tulis(NAMA_LANGKAH[i], 94, yLangkah(i), F_BIASA, W_TEKS, ML_DATUM);

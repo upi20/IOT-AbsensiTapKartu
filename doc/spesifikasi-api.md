@@ -68,7 +68,7 @@ Dipakai untuk tombol **"Tes koneksi"** di alat dan untuk menyamakan jam.
   "ok": true,
   "message": "Terhubung ke Aplikasi Contoh",
   "server_time": "2026-09-30T07:45:12+07:00",
-  "config": { "pin": "4321", "title": "PT Contoh Sejahtera", "dim_after": 60, "dim_level": 20 }
+  "config": { "pin": "4321", "title": "PT Contoh Sejahtera", "dim_after": 60, "dim_level": 20, "restart_at": "03:00" }
 }
 ```
 
@@ -197,10 +197,12 @@ Objek `config` boleh disertakan di respons `/ping` dan `/heartbeat`. Semua isiny
 | `title` | `"PT Contoh Sejahtera"` | Judul di layar utama (maks. ±30 karakter) |
 | `dim_after` | `60` | Lampu layar **meredup** setelah alat tidak disentuh dan tidak ada kartu selama sekian detik. `0` = tidak pernah meredup. Nilai sah: `0` atau `10`–`3600`. **Bawaan 60** |
 | `dim_level` | `20` | Kecerahan lampu layar saat redup, dalam persen (`0`–`100`, `0` = mati). **Bawaan 20** |
+| `restart_at` | `"03:00"` | **Restart harian** alat ini pada jam tersebut (format `HH:MM` 24 jam, jam yang tampil di alat). Alat hanya restart kalau sedang diam (2 menit tanpa kartu/sentuhan), dalam 30 menit sejak jam itu, dan sudah menyala minimal 1 jam. `""` = tidak restart otomatis. Per alat, seperti `pin`. **Bawaan `"03:00"`** |
 | `announcements_rev` | `"7-1759212345"` | Penanda versi daftar pengumuman (teks bebas). Kalau berubah, alat segera mengambil ulang `GET /announcements` (lihat bagian 8) |
 
-- Nilai di luar aturan (PIN bukan 4–8 digit, judul lebih dari 30 karakter, `dim_after` 1–9 atau lebih dari 3600, `dim_level` di luar 0–100, atau bukan angka bulat) **diabaikan** oleh alat.
+- Nilai di luar aturan (PIN bukan 4–8 digit, judul lebih dari 30 karakter, `dim_after` 1–9 atau lebih dari 3600, `dim_level` di luar 0–100, atau bukan angka bulat, `restart_at` bukan `HH:MM` dan bukan `""`) **diabaikan** oleh alat.
 - `dim_after` dan `dim_level` tersimpan di alat. Kalau server tidak mengirimnya, alat memakai nilai terakhir yang diterima (atau bawaan 60 detik / 20 %). Butuh firmware **1.3.0** ke atas; firmware lama mengabaikannya.
+- `restart_at` juga tersimpan di alat (bawaan `"03:00"`), butuh firmware **1.4.0** ke atas. Restart harian membersihkan memori; antrean tap tetap tersimpan. Alat juga punya **watchdog**: kalau program macet lebih dari 60 detik, alat restart sendiri. Alasan restart terakhir dikirim di heartbeat sebagai `raw.reset_reason` (`poweron`, `software`, `watchdog`, `panic`, `brownout`, ...).
 - Saat layar redup, **kartu tetap diproses** dan lampu langsung terang lagi. Sentuhan pertama hanya menyalakan lampu dan tidak menekan tombol apa pun.
 - `server_time` yang berakhiran `Z` (UTC) tetap dipakai untuk mengatur jam, tetapi zona tampilan alat tidak berubah.
 - **PIN bawaan pabrik: `2026`.** Nilai ini tertanam di firmware dan dipakai sampai diganti dari menu alat atau lewat `config.pin`.
@@ -284,7 +286,7 @@ Isi pengumuman diambil otomatis dari aplikasi, jadi tidak ada yang perlu diisi d
 - [ ] Simpan nomor kartu 10 digit di data karyawan atau siswa Anda.
 - [ ] Pakai `tapped_at` untuk tap `queued: true`.
 - [ ] Simpan `tap_id` dan abaikan tap dengan `tap_id` yang sudah pernah dicatat.
-- [ ] (Opsional) Kirim `photo_url` JPEG kecil, `config.pin` (per alat), `config.title`, dan `config.dim_after` / `config.dim_level` (layar redup).
+- [ ] (Opsional) Kirim `photo_url` JPEG kecil, `config.pin` (per alat), `config.title`, `config.dim_after` / `config.dim_level` (layar redup), dan `config.restart_at` (per alat).
 - [ ] (Opsional) Tampilkan status alat aktif dari heartbeat.
 - [ ] (Opsional) Sediakan `GET /announcements` untuk screensaver pengumuman, plus `config.announcements_rev`.
 

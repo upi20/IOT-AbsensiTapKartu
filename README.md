@@ -38,6 +38,7 @@ Repositori ini berisi **semua yang dibutuhkan dari nol sampai alat jadi**: dafta
 - **Layar meredup** saat alat diam; kartu tetap terbaca.
 - Menu Pengaturan ber-PIN, kalibrasi layar, tes buzzer & LED, cek kabel RFID, reset pabrik (tekan EN 3 kali).
 - Heartbeat tiap menit, sehingga website tahu alat mana yang aktif.
+- Tahan menyala lama: **watchdog** (restart sendiri kalau program macet) dan **restart harian terjadwal** saat sepi (jamnya diatur per alat dari website, bawaan 03:00).
 
 **Website**
 - **API sederhana** (`/ping`, `/tap`, `/heartbeat`, opsional `/announcements`) yang bisa diterapkan di aplikasi apa saja: lihat [doc/spesifikasi-api.md](doc/spesifikasi-api.md).
@@ -54,6 +55,7 @@ Supaya tidak ada yang tersesat: bagian di bawah ini dibedakan antara yang **suda
 |---|---|
 | Prototipe kabel jumper di expansion board | ✅ Dirakit dan berjalan |
 | Firmware v1.3.0 | ✅ Berjalan di alat prototipe (tap, antrean, pengumuman, layar redup) |
+| Firmware v1.4.0 (watchdog, restart harian, identitas baru) | ✅ Berjalan di alat (boot, tap, heartbeat, watchdog aktif); ⚠️ restart harian **belum diuji** |
 | Server Laravel + panel admin | ✅ Dipakai di server percobaan; 127 tes otomatis lulus |
 | Contoh integrasi PHP/Node + Postman | ✅ Lolos skrip pemeriksa dan 114 pemeriksaan Postman |
 | PCB dot matrix (papan bolong) | ⚠️ Tata letak dan panduan selesai, **belum dirakit fisik** |
@@ -268,7 +270,9 @@ Monitor serial (115200 baud) menampilkan catatan seperti `RFID: RC522 terdeteksi
 | Reset pabrik | Tekan **EN 3 kali berturut-turut** (masing-masing sebelum alat menyala 5 detik), lalu pilih "Ya, reset"; atau lewat menu. Menghapus WiFi, URL, API key, PIN, judul, kalibrasi, antrean, pengumuman. **ID alat tidak terhapus** |
 | Layar redup | Setelah diam 60 detik, layar meredup ke 20 %. Kartu tetap diproses. Sentuhan pertama hanya menyalakan layar. Angka bisa diubah dari website (`dim_after`, `dim_level`) |
 | Antrean offline | Server tidak terjangkau → tap disimpan (maks. 200) dan dikirim ulang saat alat diam |
-| Pengaturan dari website | PIN menu (per alat), judul layar, layar redup, pengumuman |
+| Restart harian | Sekali sehari pada jam yang diatur per alat di website (bawaan **03:00**, jam alat), hanya saat alat diam. Antrean tap tetap tersimpan. Kosongkan jamnya di website untuk mematikan |
+| Watchdog | Kalau program macet lebih dari 60 detik, alat restart sendiri. Alasan restart terakhir terlihat di **Info alat → Restart** dan dikirim ke website |
+| Pengaturan dari website | PIN menu (per alat), jam restart (per alat), judul layar, layar redup, pengumuman |
 
 ---
 
