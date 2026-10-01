@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DeviceController;
+use App\Http\Controllers\Admin\FirmwareController;
 use App\Http\Controllers\Admin\MemberController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SettingsController;
@@ -46,6 +47,11 @@ Route::prefix('admin')->group(function () {
 
         Route::get('alat', [DeviceController::class, 'index'])->name('devices.index');
         Route::put('alat/{device}', [DeviceController::class, 'update'])->name('devices.update');
+
+        Route::get('firmware', [FirmwareController::class, 'index'])->name('firmware.index');
+        Route::post('firmware', [FirmwareController::class, 'store'])->name('firmware.store');
+        Route::post('firmware/{release}/terapkan', [FirmwareController::class, 'applyAll'])->name('firmware.apply-all');
+        Route::delete('firmware/{release}', [FirmwareController::class, 'destroy'])->name('firmware.destroy');
 
         Route::get('pengumuman', [AnnouncementController::class, 'index'])->name('announcements.index');
         Route::get('pengumuman/tambah', [AnnouncementController::class, 'create'])->name('announcements.create');

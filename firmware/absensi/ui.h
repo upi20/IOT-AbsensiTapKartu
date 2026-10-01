@@ -240,9 +240,17 @@ void uiLangkah(int i, StatusLangkah s, const String& ket) {
 
 void uiBoot() {
   tft.fillScreen(W_LATAR);
-  gambarKartu(118, 22, W_LATAR);
-  tulis("Absensi RFID", 212, 18, F_JUDUL, W_TEKS);
-  tulis("Terintegrasi  -  ID " + idAlat + "  -  v" + VERSI_FIRMWARE, 214, 58, F_KECIL, W_REDUP);
+  // Ikon kartu (lebar 96 px dengan gelombangnya) + teks, dipusatkan sesuai teks terlebar.
+  String judul = "Absensi RFID";
+  String sub = "Terintegrasi  -  ID " + idAlat + "  -  v" + VERSI_FIRMWARE;
+  tft.setFreeFont(F_JUDUL);
+  int lebar = tft.textWidth(judul);
+  tft.setFreeFont(F_KECIL);
+  lebar = max(lebar, (int)tft.textWidth(sub));
+  int x = max(8, (480 - (96 + lebar)) / 2);
+  gambarKartu(x, 22, W_LATAR);
+  tulis(judul, x + 96, 18, F_JUDUL, W_TEKS);
+  tulis(sub, x + 98, 58, F_KECIL, W_REDUP);
   tft.drawFastHLine(40, 84, 400, W_GARIS);
   for (int i = 0; i < JUMLAH_LANGKAH; i++) {
     tulis(NAMA_LANGKAH[i], 94, yLangkah(i), F_BIASA, W_TEKS, ML_DATUM);
@@ -349,14 +357,15 @@ void uiInfo(bool paksa) {
   String teks;
   uint16_t latar = W_PANEL, warna = W_REDUP;
 
-  if (!rfidAda)                          { teks = "RFID tidak terdeteksi, cek kabel";        latar = W_MERAH;  warna = W_TEKS; }
-  else if (!wifiTerhubung())             { teks = "WiFi terputus - tap tetap disimpan";      latar = W_ORANYE; warna = W_TEKS; }
-  else if (statusServer == SERVER_GAGAL && kodeServerTerakhir == 401)
-                                         { teks = "API key ditolak server (401)";            latar = W_MERAH;  warna = W_TEKS; }
-  else if (statusServer == SERVER_GAGAL && kodeServerTerakhir == 429)
-                                         { teks = "Server sibuk, dicoba lagi";               latar = W_MERAH;  warna = W_TEKS; }
-  else if (statusServer == SERVER_GAGAL) { teks = "Server tidak menjawab, dicoba lagi";      latar = W_MERAH;  warna = W_TEKS; }
+  // Masalah ditampilkan dengan kode error (galat.h), supaya pengguna cukup menyebut kodenya.
+  String kode = galatSekarang();
+  if (!rfidAda)                          { teks = "E30 RFID tidak terdeteksi, cek kabel";    latar = W_MERAH;  warna = W_TEKS; }
+  else if (!wifiTerhubung())             { teks = (kode.length() > 0 ? galatTeks(kode) : String("WiFi terputus")) +
+                                                  " - tap tetap disimpan";                   latar = W_ORANYE; warna = W_TEKS; }
+  else if (statusServer == SERVER_GAGAL) { teks = kode.length() > 0 ? galatTeks(kode) : String("Server tidak menjawab");
+                                                                                             latar = W_MERAH;  warna = W_TEKS; }
   else if (jumlahAntrean > 0)            { teks = String(jumlahAntrean) + " tap menunggu dikirim"; latar = W_AMBER; warna = W_TEKS; }
+  else if (kode.length() > 0)            { teks = galatTeks(kode);                           latar = W_AMBER;  warna = W_TEKS; }
   else if (!jamValid())                  { teks = "Menunggu jam dari server"; }
   else                                   { teks = "Siap"; }
   if (!paksa && teks == teksTadi && latar == latarTadi) return;
@@ -390,6 +399,27 @@ void uiUtamaUrus() {
   uiBilahStatus(false);
   uiJudulUtama(false);
   uiInfo(false);
+}
+
+// ---------- Layar update firmware (ota.h) ----------
+
+void uiOta(const String& judul, const String& ket, JenisOta jenis) {
+  uint16_t warna = jenis == OTA_SELESAI ? W_HIJAU : jenis == OTA_GAGAL ? W_MERAH : W_AKSEN;
+  lampuBangun();                                          // layar terang supaya peringatan terbaca
+  tft.fillScreen(W_LATAR);
+  tulis(judul, 240, 70, F_JUDUL, jenis == OTA_PROSES ? W_TEKS : warna, TC_DATUM);
+  tulisTengahMuat(ket, 140, F_BIASA, F_KECIL, F_KECIL, W_REDUP);
+  if (jenis == OTA_PROSES) {
+    tft.drawRoundRect(60, 180, 360, 28, 6, W_GARIS);
+    tulis("Jangan cabut listrik alat", 240, 250, F_TEBAL, W_KUNING, TC_DATUM);
+  }
+}
+
+// Bilah kemajuan unduhan 0-100 %.
+void uiOtaPersen(int persen) {
+  int lebar = 352 * persen / 100;
+  tft.fillRoundRect(64, 184, lebar, 20, 4, W_AKSEN);
+  tulisTimpa(String(persen) + " %", 240, 222, 2, W_TEKS, W_LATAR, TC_DATUM, 60);
 }
 
 // ---------- Layar mengirim & hasil ----------

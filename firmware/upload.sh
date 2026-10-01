@@ -5,15 +5,19 @@
 #   ./upload.sh                 -> compile + upload firmware utama (absensi)
 #   ./upload.sh -m              -> sama, lalu langsung buka monitor serial
 #   ./upload.sh -c              -> compile saja, tanpa upload (tidak butuh alat)
+#   ./upload.sh -b              -> compile, lalu simpan file untuk update jarak jauh (OTA) di build/:
+#                                  absensi-<versi>.bin (diunggah di halaman Firmware server) dan
+#                                  absensi-<versi>.elf (simpan, untuk menerjemahkan alamat crash)
 #   ./upload.sh tes_rfid -m     -> sketsa lain: nama folder di firmware/ atau firmware/tes/
 #   PORT=/dev/ttyUSB0 ./upload.sh            -> pilih port sendiri
 #   ARDUINO_CLI=/path/arduino-cli ./upload.sh -> pakai arduino-cli di lokasi lain
 #
 # Opsi board per sketsa (tidak wajib): kalau folder sketsa berisi board_options.txt, isinya
 # ditambahkan ke opsi board (satu opsi per baris; baris kosong dan baris diawali # diabaikan).
-# absensi/board_options.txt berisi PartitionScheme=huge_app, sehingga board menjadi
-#   esp32:esp32:esp32:UploadSpeed=460800,PartitionScheme=huge_app
-# (Huge APP = aplikasi 3 MB tanpa OTA; firmware utama +- 1,3 MB tidak muat di partisi bawaan.)
+# absensi/board_options.txt berisi PartitionScheme=min_spiffs, sehingga board menjadi
+#   esp32:esp32:esp32:UploadSpeed=460800,PartitionScheme=min_spiffs
+# (Minimal SPIFFS = 2 slot aplikasi 1,9 MB untuk update jarak jauh + 128 KB penyimpanan + coredump;
+#  firmware utama +- 1,35 MB tidak muat di partisi bawaan 1,25 MB.)
 
 set -e
 cd "$(dirname "$0")"
@@ -33,11 +37,13 @@ cari_port() {
 BOARD="esp32:esp32:esp32:UploadSpeed=460800"   # ESP32 Dev Module, 460800 baud (921600 sering gagal di CH340)
 MONITOR=""
 CEK=""
+BIN=""
 ARGS=()
 for a in "$@"; do
   case "$a" in
     -m) MONITOR=1 ;;
     -c) CEK=1 ;;
+    -b) BIN=1 ;;
     *) ARGS+=("$a") ;;
   esac
 done
@@ -68,6 +74,23 @@ if [ -n "$CEK" ]; then
   echo "Compile '$SKETCH' (board $BOARD) ..."
   "$CLI" compile --fqbn "$BOARD" "$SKETCH"
   echo "Compile berhasil."
+  exit 0
+fi
+
+if [ -n "$BIN" ]; then
+  DASAR="$(basename "$SKETCH")"
+  VERSI=$(sed -n 's/.*VERSI_FIRMWARE\[\] *= *"\([^"]*\)".*/\1/p' "$SKETCH/config.h" 2>/dev/null)
+  VERSI="${VERSI:-tanpa-versi}"
+  echo "Compile '$SKETCH' v$VERSI untuk update jarak jauh (board $BOARD) ..."
+  # OTA_BUILD: ID alat diambil dari yang tersimpan di tiap alat, bukan ID_ALAT (lihat pengaturan.h)
+  "$CLI" compile --fqbn "$BOARD" --build-property "compiler.cpp.extra_flags=-DOTA_BUILD=" \
+    --output-dir "build/$DASAR" "$SKETCH"
+  cp "build/$DASAR/$DASAR.ino.bin" "build/$DASAR-$VERSI.bin"
+  cp "build/$DASAR/$DASAR.ino.elf" "build/$DASAR-$VERSI.elf"
+  echo "Selesai:"
+  echo "  build/$DASAR-$VERSI.bin  -> unggah di halaman Firmware server (Admin > Firmware)"
+  echo "  build/$DASAR-$VERSI.elf  -> simpan, untuk menerjemahkan alamat crash dari halaman Alat"
+  echo "(ID_ALAT di config.h tidak dipakai: tiap alat tetap memakai ID yang sudah tersimpan.)"
   exit 0
 fi
 

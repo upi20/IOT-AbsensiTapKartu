@@ -395,8 +395,8 @@ class AdminPanelTest extends TestCase
 
         $this->actingAs($this->admin)->get(route('admin.devices.index'))
             ->assertOk()
-            ->assertSeeInOrder(['ABS-1A2B3C', 'Aktif', '1.1.0', '192.168.1.23', '-52 dBm', 'Kantor-2.4G'])
-            ->assertSeeInOrder(['ABS-OFFLINE', 'Tidak aktif']);
+            ->assertSeeInOrder(['ABS-1A2B3C', 'Online', '1.1.0', '192.168.1.23', 'Kantor-2.4G', '-52 dBm'])
+            ->assertSeeInOrder(['ABS-OFFLINE', 'Offline']);
 
         $this->put(route('admin.devices.update', $device), ['name' => 'Pintu Utama'])->assertRedirect(route('admin.devices.index'));
         $this->assertSame('Pintu Utama', $device->fresh()->name);

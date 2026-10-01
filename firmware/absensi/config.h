@@ -8,8 +8,15 @@
 // Kosongkan ("") kalau ingin dibuat otomatis dari MAC, contoh "ABS-79438C".
 const char ID_ALAT[] = "ABS-001";
 
+// ---------- Build untuk update jarak jauh / OTA (README 2.7) ----------
+// Hanya untuk pengguna Arduino IDE yang membuat file .bin lewat "Export Compiled Binary":
+// hapus "//" di depan #define di bawah SEBELUM export, lalu pasang lagi "//" SESUDAHNYA.
+// Selama aktif, ID_ALAT di atas tidak dipakai: tiap alat tetap memakai ID yang sudah tersimpan di alat.
+// Pengguna ./upload.sh -b tidak perlu mengubah baris ini (skrip mengaktifkannya sendiri).
+// #define OTA_BUILD
+
 // ---------- Versi & nilai bawaan pabrik ----------
-const char VERSI_FIRMWARE[] = "1.4.0";
+const char VERSI_FIRMWARE[] = "1.5.0";          // naikkan setiap membuat firmware baru (wajib untuk OTA)
 const char VERSI_SPEK[]     = "1";              // versi spesifikasi API (header X-Spec-Version)
 const char PIN_BAWAAN[]     = "2026";           // PIN menu Pengaturan sebelum diganti
 const char JUDUL_BAWAAN[]   = "Absensi RFID";   // judul layar utama sebelum diganti
@@ -68,6 +75,20 @@ const char     RESTART_BAWAAN[]     = "03:00";  // restart harian (jam alat); ""
 const int      RESTART_JENDELA_MENIT = 30;      // restart boleh terjadi dalam 30 menit sejak jadwal (menunggu alat diam)
 const uint32_t RESTART_DIAM_MS      = 120000;   // restart hanya kalau tidak ada kartu / sentuhan selama 2 menit
 const uint32_t RESTART_MIN_NYALA_S  = 3600;     // dan alat sudah menyala minimal 1 jam
+
+// ---------- Update firmware jarak jauh / OTA (ota.h) ----------
+const uint32_t OTA_DIAM_MS          = 60000;    // update hanya kalau tidak ada kartu / sentuhan selama 1 menit
+const uint32_t OTA_ULANG_MS         = 1800000;  // unduh gagal: coba lagi setelah 30 menit
+const uint32_t OTA_DATA_TIMEOUT_MS  = 20000;    // unduhan dianggap putus kalau tidak ada data selama ini
+const int      OTA_ULANG_MAKS       = 3;        // firmware baru terputus listrik / EN sebelum sehat: dicoba ulang
+                                                // sampai 3 kali, baru dianggap gagal
+const uint32_t OTA_SEHAT_S          = 300;      // firmware baru dianggap sehat setelah menyala 5 menit tanpa
+                                                // crash (atau lebih cepat: 1 menit + server tersambung).
+                                                // Kalau crash sebelum itu, alat kembali ke firmware lama.
+
+// ---------- Kode error (galat.h) ----------
+const uint32_t WIFI_DHCP_MS         = 10000;    // WiFi tersambung tapi belum dapat alamat IP selama ini -> E13
+const uint32_t JAM_TUNGGU_S         = 120;      // jam belum sinkron setelah menyala selama ini -> E31
 
 // ---------- Lain-lain ----------
 const bool BUZZER_AKTIF = true;                 // false = alat tidak berbunyi

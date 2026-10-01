@@ -5,12 +5,12 @@
 
 String hbHasil = "Belum dikirim";     // hasil heartbeat terakhir (untuk layar Info alat)
 uint32_t hbTerakhir = 0;              // kapan heartbeat terakhir dikirim
-int kodeServerTerakhir = 0;           // kode HTTP terakhir yang mengubah statusServer
 String revPengumuman = "";            // config.announcements_rev terakhir yang terlihat
 
 // ---------- Bagian yang sama untuk /ping dan /heartbeat ----------
 
-// Pakai server_time (jam) dan config (pin, title, dim_after, dim_level, restart_at, announcements_rev). Nilai yang tidak sesuai aturan diabaikan.
+// Pakai server_time (jam) dan config (pin, title, dim_after, dim_level, restart_at, announcements_rev,
+// firmware_update). Nilai yang tidak sesuai aturan diabaikan.
 void terapkanBalasanUmum(JsonDocument& doc) {
   const char* jam = doc["server_time"];
   if (jam) jamDariTeksServer(jam);
@@ -51,6 +51,8 @@ void terapkanBalasanUmum(JsonDocument& doc) {
     if (!restartValid(r)) Serial.println("config.restart_at diabaikan (harus \"HH:MM\" atau kosong)");
     else if (r != atur.restartAt) aturSimpanRestart(r);
   }
+  // Update firmware jarak jauh (ota.h). Tidak dikirim = tidak ada update.
+  otaTerapkanConfig(cfg["firmware_update"]);
   // Penanda versi pengumuman (teks bebas). Kalau berubah, daftar pengumuman diambil ulang.
   if (!cfg["announcements_rev"].isNull()) {
     String rev;
@@ -107,6 +109,8 @@ HasilPing apiPing(bool terapkan = true) {
     statusServer = h.kode == KODE_OFFLINE ? SERVER_BELUM : SERVER_GAGAL;
     String galat = kode2xx(h.kode) ? (json ? "Server menjawab ok=false" : "Balasan bukan JSON") : teksGalat(h.kode);
     h.pesan = h.pesan.length() > 0 ? galat + ": " + h.pesan : galat;
+    String kodeGalat = kodeGalatServer(h.kode);            // contoh "E21 HTTP 401: API key salah"
+    if (kodeGalat.length() > 0) h.pesan = kodeGalat + " " + h.pesan;
   }
   Serial.printf("Ping: %s\n", h.pesan.c_str());
   return h;
@@ -124,9 +128,21 @@ bool apiHeartbeat() {
   JsonObject raw = isi["raw"].to<JsonObject>();
   isiRawJaringan(raw);
   raw["free_heap"] = ESP.getFreeHeap();
+  raw["min_free_heap"] = ESP.getMinFreeHeap();            // RAM paling sedikit sejak menyala (tanda kebocoran)
   raw["reset_reason"] = alasanResetKode();
   raw["rfid_ok"] = rfidAda;
   raw["queue"] = jumlahAntrean;
+  String galat = galatSekarang();
+  if (galat.length() > 0) raw["error"] = galat;
+  if (otaGagal.length() > 0) raw["ota_failed"] = otaGagal;
+  bool kirimCrash = crashAda;                              // dikirim terus sampai heartbeat berhasil
+  if (kirimCrash) {
+    JsonObject crash = raw["crash"].to<JsonObject>();
+    crash["task"] = crashTask;
+    crash["pc"] = crashPc;
+    crash["backtrace"] = crashJejak;
+    crash["elf"] = crashElf;
+  }
   String teks;
   serializeJson(isi, teks);
 
@@ -139,9 +155,11 @@ bool apiHeartbeat() {
     if (!deserializeJson(doc, balasan)) terapkanBalasanUmum(doc);
     statusServer = SERVER_OK;
     hbHasil = "OK";
+    if (kirimCrash) crashHapus();
   } else {
     statusServer = kode == KODE_OFFLINE ? SERVER_BELUM : SERVER_GAGAL;
-    hbHasil = "Gagal: " + teksGalat(kode);
+    String kodeGalat = kodeGalatServer(kode);
+    hbHasil = "Gagal: " + (kodeGalat.length() > 0 ? kodeGalat + " " : String("")) + teksGalat(kode);
   }
   String jam = jamMenit();
   if (jam.length() > 0) hbHasil += " (" + jam + ")";

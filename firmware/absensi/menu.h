@@ -77,15 +77,15 @@ void gantiPin() {
 // ---------- Info alat ----------
 
 const char* const LABEL_INFO[] = {"ID alat", "Firmware", "WiFi", "IP", "Sinyal", "Base URL", "Antrean",
-                                  "Heartbeat", "Pengumuman", "RFID", "Jam", "RAM bebas", "Layar", "Restart"};
-const int JUMLAH_INFO = 14;
+                                  "Heartbeat", "Pengumuman", "RFID", "Jam", "RAM bebas", "Layar", "Restart", "Error"};
+const int JUMLAH_INFO = 15;
 
-int yInfo(int i) { return 56 + i * 19; }
+int yInfo(int i) { return 53 + i * 18; }
 
 void infoNilai() {
   String nilai[JUMLAH_INFO];
   nilai[0] = idAlat;
-  nilai[1] = VERSI_FIRMWARE;
+  nilai[1] = String(VERSI_FIRMWARE) + (otaStatus.length() > 0 ? " (update " + otaStatus + ")" : "");
   nilai[2] = atur.ssid.length() > 0 ? atur.ssid : "Belum diatur";
   nilai[3] = wifiTerhubung() ? WiFi.localIP().toString() : "-";
   nilai[4] = wifiTerhubung() ? String(WiFi.RSSI()) + " dBm (" + String(wifiBar()) + "/4)" : "Tidak tersambung";
@@ -98,16 +98,19 @@ void infoNilai() {
   nilai[9] = rfidAda ? String("OK (versi ") + versi + ")" : "Tidak terdeteksi";
   String sumber = jamDariServer ? "server" : jamDariNtp ? "NTP" : "belum sinkron";
   nilai[10] = jamValid() ? waktuIso().substring(11, 19) + " " + offsetTeks() + " (" + sumber + ")" : "Belum sinkron";
-  nilai[11] = String(ESP.getFreeHeap() / 1024) + " KB";
+  nilai[11] = String(ESP.getFreeHeap() / 1024) + " KB (paling sedikit " + String(ESP.getMinFreeHeap() / 1024) + " KB)";
   nilai[12] = atur.redupDetik == 0 ? String("Tidak pernah redup")
             : "Redup " + String(atur.redupPersen) + "% setelah " + String(atur.redupDetik) + " detik";
   nilai[13] = (atur.restartAt.length() ? "Tiap hari " + atur.restartAt : String("Tidak otomatis")) +
               " (terakhir: " + alasanResetTeks() + ")";
+  String galat = galatSekarang();
+  nilai[14] = galat.length() > 0 ? galatTeks(galat) : String("Tidak ada");
 
   tft.setTextFont(2);
   for (int i = 0; i < JUMLAH_INFO; i++) {
     bool buruk = (i == 9 && !rfidAda) || (i == 7 && hbHasil.startsWith("Gagal")) ||
-                 (i == 8 && pengumumanHasil.startsWith("Gagal"));
+                 (i == 8 && pengumumanHasil.startsWith("Gagal")) || (i == 14 && galat.length() > 0) ||
+                 (i == 1 && otaStatus.indexOf("gagal") >= 0);
     tulisTimpa(potong(nilai[i], 340, 2), 120, yInfo(i), 2, buruk ? W_MERAH : W_TEKS, W_LATAR, ML_DATUM, 350);
   }
 }

@@ -9,7 +9,7 @@ use App\Models\Device;
 use App\Models\Member;
 
 /**
- * Data dasbor: ringkasan hari ini, 20 tap terakhir, dan status alat.
+ * Data dasbor: ringkasan hari ini, 20 tap terakhir, status alat, dan alat yang perlu diperiksa.
  */
 class AdminDashboard
 {
@@ -27,6 +27,14 @@ class AdminDashboard
 
         $presentIds = (clone $acceptedToday)->distinct()->pluck('member_id');
 
+        // Sebelum migrasi kesehatan alat dijalankan, dasbor tetap tampil tanpa daftar alat yang perlu diperiksa.
+        $monitoring = Device::monitoringReady();
+        $devices = Device::query()
+            ->when($monitoring, fn ($q) => $q->with('bootEventsLastDay'))
+            ->orderByDesc('last_seen_at')
+            ->orderBy('id')
+            ->get();
+
         return [
             'counts' => [
                 'active' => Member::where('is_active', true)->count(),
@@ -40,7 +48,11 @@ class AdminDashboard
                 ->latest('id')
                 ->limit(20)
                 ->get(),
-            'devices' => Device::orderByDesc('last_seen_at')->orderBy('id')->get(),
+            'devices' => $devices,
+            // Alat dengan peringatan kesehatan (Device::healthIssues()) => daftar peringatannya.
+            'attention' => $monitoring
+                ? $devices->mapWithKeys(fn (Device $device) => [$device->id => $device->healthIssues()])->filter()
+                : collect(),
         ];
     }
 

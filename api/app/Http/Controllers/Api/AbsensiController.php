@@ -7,12 +7,14 @@ use App\Enums\AttendanceType;
 use App\Http\Controllers\Controller;
 use App\Models\Announcement;
 use App\Models\Device;
+use App\Models\FirmwareRelease;
 use App\Models\Member;
 use App\Models\Setting;
 use App\Services\AttendanceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
  * API standar alat absensi — implementasi acuan dari doc/spesifikasi-api.md.
@@ -31,13 +33,44 @@ class AbsensiController extends Controller
         ]);
     }
 
-    /** POST /heartbeat — tanda alat aktif (bagian 5). Status alat sudah dicatat oleh middleware. */
+    /**
+     * POST /heartbeat — tanda alat aktif (bagian 5). Kontak alat sudah dicatat oleh middleware; di sini data
+     * kesehatan (raw.uptime_s, reset_reason, rfid_ok, queue, RAM, error, ota_failed, crash) disimpan, kalau migrasinya
+     * sudah dijalankan.
+     */
     public function heartbeat(Request $request): JsonResponse
     {
+        /** @var Device $device */
+        $device = $request->attributes->get('device');
+        if (Device::monitoringReady()) {
+            $device->recordHeartbeat($request->json()->all());
+        }
+
         return response()->json([
             'ok' => true,
             'server_time' => now()->toIso8601String(),
             'config' => $this->deviceConfig($request->attributes->get('device')),
+        ]);
+    }
+
+    /**
+     * GET /firmware/{release} — file .bin untuk update jarak jauh (bagian 6, config.firmware_update).
+     * Hanya boleh diunduh alat yang dijadwalkan update ke firmware ini. Header x-MD5 diperiksa oleh alat.
+     */
+    public function firmware(Request $request, int $release): BinaryFileResponse|JsonResponse
+    {
+        /** @var Device $device */
+        $device = $request->attributes->get('device');
+        $firmware = FirmwareRelease::find($release);
+
+        if (! $firmware || $device->firmware_release_id !== $firmware->id || ! is_file($firmware->absolutePath())) {
+            return response()->json(['ok' => false, 'message' => 'Firmware tidak tersedia untuk alat ini'], 404);
+        }
+
+        return response()->file($firmware->absolutePath(), [
+            'Content-Type' => 'application/octet-stream',
+            'Content-Length' => (string) filesize($firmware->absolutePath()),
+            'x-MD5' => $firmware->md5,
         ]);
     }
 
@@ -143,13 +176,14 @@ class AbsensiController extends Controller
      * Pengaturan jarak jauh (bagian 6). Hanya kunci yang diisi di panel yang dikirim, kecuali restart_at.
      * PIN dan jam restart diatur per alat (halaman Alat), judul berlaku untuk semua alat. announcements_rev berubah
      * setiap pengumuman / pengaturan screensaver berubah, sehingga alat mengambil ulang GET /announcements.
+     * firmware_update hanya dikirim kalau alat dijadwalkan update dan versinya belum terpasang / belum pernah gagal.
      *
-     * @return object{pin?: string, title?: string, dim_after?: int, dim_level?: int, announcements_rev: string, restart_at: string}
+     * @return object{pin?: string, title?: string, dim_after?: int, dim_level?: int, announcements_rev: string, restart_at: string, firmware_update?: array{version: string, url: string, size: int, md5: string}}
      */
     private function deviceConfig(Device $device): object
     {
         // restart_at selalu dikirim: "" berarti alat tidak restart otomatis, jadi tidak ikut disaring.
-        return (object) (array_filter([
+        $config = array_filter([
             'pin' => $device->pin,
             'title' => Setting::getValue(Setting::TITLE),
             'dim_after' => Setting::dimAfter(),
@@ -157,7 +191,19 @@ class AbsensiController extends Controller
             'announcements_rev' => Announcement::revision(),
         ], fn ($value) => $value !== null && $value !== '') + [
             'restart_at' => $device->restart_at ?? '',
-        ]);
+        ];
+
+        // URL dibangun dari request alat (skema & host sama dengan Base URL alat), seperti photo_url.
+        if ($update = $device->pendingFirmwareUpdate()) {
+            $config['firmware_update'] = [
+                'version' => $update->version,
+                'url' => route('absensi.firmware', $update),
+                'size' => $update->size,
+                'md5' => $update->md5,
+            ];
+        }
+
+        return (object) $config;
     }
 
     /**

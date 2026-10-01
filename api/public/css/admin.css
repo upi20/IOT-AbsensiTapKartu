@@ -481,3 +481,22 @@ select.input { appearance: none; padding-right: 34px; background-image: linear-g
 .inline-edit { display: flex; gap: 6px; align-items: center; }
 .input.input-sm { min-height: 31px; padding: 4px 8px; font-size: .88rem; min-width: 140px; }
 @media (max-width: 680px) { .inline-edit { width: 100%; justify-content: flex-end; } .inline-edit .input { flex: 1; } }
+
+/* ---------- Kesehatan alat ---------- */
+
+.device-card .alert { margin: 14px 18px 0; }
+.issues { margin: 0; padding-left: 18px; }
+.health { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px 20px; margin: 0 0 18px; font-size: .9rem; }
+.health dt { font-size: .78rem; font-weight: 600; color: var(--muted); }
+.health dd { margin: 0; font-weight: 550; overflow-wrap: anywhere; }
+.health .sub, .event-list .sub { display: block; margin-top: 2px; font-size: .8rem; color: var(--muted); font-weight: 400; }
+.device-form .field label { margin-bottom: 4px; font-size: .78rem; color: var(--muted); }
+.device-form .grow { flex-basis: 180px; }
+.events { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
+.events summary { cursor: pointer; font-size: .88rem; font-weight: 600; }
+.events > p { margin: 8px 0 0; }
+.event-list { list-style: none; margin: 8px 0 0; padding: 0; font-size: .88rem; }
+.event-list li { display: flex; align-items: baseline; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.event-list li:last-child { border-bottom: 0; }
+.event-list .time { flex: none; font-variant-numeric: tabular-nums; color: var(--muted); font-size: .8rem; }
+.event-list .sub { overflow-wrap: anywhere; }

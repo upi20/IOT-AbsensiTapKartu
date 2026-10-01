@@ -274,7 +274,7 @@ td .sw { display: inline-block; width: 10px; height: 10px; border-radius: 50%; m
         <li><b>LED RGB</b> (4 kabel). Tes buzzer &amp; LED: merah, hijau, biru, putih.</li>
         <li><b>RFID</b> (7 kabel). Layar boot menulis "RC522 (0x..)". Tempelkan kartu rata di atas RC522, jarak 0–3 cm.</li>
       </ol>
-      <p style="margin:0">Pasang satu komponen, tes, baru lanjut. Upload lewat Arduino IDE (partisi <b>Huge APP</b>), atau di Mac/Linux dari folder <code>firmware/</code>:</p>
+      <p style="margin:0">Pasang satu komponen, tes, baru lanjut. Upload lewat Arduino IDE (partisi <b>Minimal SPIFFS (1.9MB APP with OTA)</b>), atau di Mac/Linux dari folder <code>firmware/</code>:</p>
       <div class="cmd"><code id="cmd">./upload.sh -m</code><button type="button" class="copy" id="copy">Salin</button></div>
       <div class="note"><b>Resistor LED:</b> idealnya pasang resistor 220–330 Ω di setiap kaki warna (pelintir satu kaki resistor ke kaki LED, kaki lainnya masuk kabel female). Kalau belum punya, untuk prototipe ini boleh tanpa resistor: firmware mengatur pin LED ke kekuatan arus terendah. Ini bukan cara ideal, LED bisa sedikit redup. Untuk alat final tetap pakai resistor.</div>
       <div class="note"><b>Kabel longgar di kaki buzzer/LED:</b> dorong kabel female sampai mentok. Kalau masih goyang, tekuk sedikit ujung kakinya atau pelintir supaya lebih menjepit.</div>

@@ -1026,6 +1026,7 @@ Content-Type: application/json
 
 File di folder `postman/`:
 - `AbsensiRFID.postman_collection.json`: semua kasus di bagian 7, satu request per kasus. Setiap request punya **contoh respons** (tab *Examples*) dan **tes otomatis** (kode HTTP dan field wajib). `tap_id` dibuat baru otomatis sebelum setiap request; kasus "kirim ulang" memakai `tap_id` dari kasus "Tap – masuk".
+  Request terakhir, "Unduh firmware (opsional)", hanya jalan kalau "Heartbeat – berhasil" membalas `config.firmware_update` (update firmware jarak jauh, spesifikasi bagian 6.1); selain itu dilewati.
 - `AbsensiRFID.postman_environment.json`: variabel `base_url`, `api_key`, `device_id`, `rfid_terdaftar`, `rfid_tidak_terdaftar`, `rfid_nonaktif`.
 
 Cara pakai:

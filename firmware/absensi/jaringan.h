@@ -19,12 +19,30 @@ const int KODE_URL_SALAH = -101;       // kode buatan: Base URL tidak bisa dipak
 // Status server untuk titik di bilah status = hasil heartbeat/ping terakhir
 enum StatusServer { SERVER_BELUM, SERVER_OK, SERVER_GAGAL };
 StatusServer statusServer = SERVER_BELUM;
+int kodeServerTerakhir = 0;     // kode HTTP terakhir yang mengubah statusServer (untuk kode error, galat.h)
 
 bool wifiJeda = false;          // true = jangan menyambung ulang otomatis (saat memindai / menyetel WiFi)
 bool heartbeatSegera = false;   // true = kirim heartbeat secepatnya (misalnya WiFi baru tersambung)
 bool pengumumanSegera = false;  // true = ambil daftar pengumuman secepatnya (lihat pengumuman.h)
 uint32_t wifiCobaTerakhir = 0;
 String wifiSsidDipakai, wifiPassDipakai;   // nama & password yang terakhir dipakai menyambung
+
+// Untuk kode error WiFi (galat.h). Diisi dari event WiFi (berjalan di task lain, jadi volatile).
+volatile int wifiAlasanPutus = 0;          // alasan putus terakhir dari ESP-IDF (0 = belum ada / sudah tersambung)
+volatile uint32_t wifiTanpaIpSejak = 0;    // millis() saat tersambung ke WiFi tapi belum dapat IP (0 = tidak)
+
+void wifiEvent(arduino_event_id_t event, arduino_event_info_t info) {
+  if (event == ARDUINO_EVENT_WIFI_STA_DISCONNECTED) {
+    // ASSOC_LEAVE = diputus program sendiri (WiFi.disconnect sebelum menyambung ulang): bukan galat
+    if (info.wifi_sta_disconnected.reason != WIFI_REASON_ASSOC_LEAVE) wifiAlasanPutus = info.wifi_sta_disconnected.reason;
+    wifiTanpaIpSejak = 0;
+  } else if (event == ARDUINO_EVENT_WIFI_STA_CONNECTED) {
+    wifiTanpaIpSejak = millis() | 1;       // | 1 supaya tidak pernah 0
+  } else if (event == ARDUINO_EVENT_WIFI_STA_GOT_IP) {
+    wifiAlasanPutus = 0;
+    wifiTanpaIpSejak = 0;
+  }
+}
 
 // Satu sambungan ke satu server. Ada dua: untuk API aplikasi, dan untuk foto (supaya unduh foto
 // tidak menutup sambungan API).
@@ -74,6 +92,7 @@ void wifiSambungLatar(const String& ssid, const String& pass) {
   wifiSsidDipakai = ssid;
   wifiPassDipakai = pass;
   WiFi.disconnect();
+  wifiAlasanPutus = 0;                  // WiFi lain: galat WiFi sebelumnya tidak berlaku lagi
   WiFi.begin(ssid.c_str(), pass.c_str());
 }
 
@@ -82,6 +101,7 @@ void wifiMulai() {
   WiFi.mode(WIFI_STA);
   WiFi.setSleep(false);                 // lebih cepat merespons
   WiFi.setAutoReconnect(true);
+  WiFi.onEvent(wifiEvent);              // catat alasan putus untuk kode error
   for (Sambungan* s : {&sambunganApi, &sambunganFoto}) {
     s->aman.setInsecure();              // HTTPS tanpa cek sertifikat
     s->http.setUserAgent(String("AbsensiRFID/") + VERSI_FIRMWARE);

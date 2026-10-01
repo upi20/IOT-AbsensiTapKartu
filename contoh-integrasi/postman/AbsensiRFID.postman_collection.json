@@ -1823,6 +1823,18 @@
                   "  if ('dim_after' in d.config) { pm.expect(Number.isInteger(d.config.dim_after)).to.be.true; pm.expect(d.config.dim_after === 0 || (d.config.dim_after >= 10 && d.config.dim_after <= 3600)).to.be.true; }",
                   "  if ('dim_level' in d.config) { pm.expect(Number.isInteger(d.config.dim_level)).to.be.true; pm.expect(d.config.dim_level).to.be.within(0, 100); }",
                   "  if ('restart_at' in d.config) { pm.expect(d.config.restart_at).to.be.a('string'); if (d.config.restart_at !== '') pm.expect(d.config.restart_at).to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); }",
+                  "});",
+                  "// Simpan URL firmware (kalau server menjadwalkan update) untuk request \"Unduh firmware\".",
+                  "pm.collectionVariables.set('firmware_url', (d.config && d.config.firmware_update && d.config.firmware_update.url) || '');",
+                  "pm.collectionVariables.set('firmware_md5', (d.config && d.config.firmware_update && d.config.firmware_update.md5) || '');",
+                  "pm.test('\"config.firmware_update\" lengkap (kalau ada)', () => {",
+                  "  const f = d.config && d.config.firmware_update;",
+                  "  if (f === undefined) return;",
+                  "  pm.expect(f.version).to.be.a('string');",
+                  "  pm.expect(f.url).to.match(/^https?:\\/\\//);",
+                  "  pm.expect(Number.isInteger(f.size)).to.be.true;",
+                  "  pm.expect(f.size).to.be.within(1, 1966080);",
+                  "  pm.expect(f.md5).to.match(/^[0-9a-f]{32}$/);",
                   "});"
                 ]
               }
@@ -2323,6 +2335,67 @@
           ]
         }
       ]
+    },
+    {
+      "name": "GET firmware_update.url",
+      "item": [
+        {
+          "name": "Unduh firmware (opsional)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Hanya dijalankan kalau heartbeat sebelumnya membalas config.firmware_update (alat dijadwalkan update).",
+                  "if (!pm.collectionVariables.get('firmware_url')) {",
+                  "  console.log('Unduh firmware dilewati: tidak ada config.firmware_update untuk alat ini.');",
+                  "  pm.execution.skipRequest();",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Ada header Content-Length', () => pm.expect(Number(pm.response.headers.get('Content-Length'))).to.be.above(0));",
+                  "pm.test('Byte pertama 0xE9 (image aplikasi ESP32)', () => pm.expect(pm.response.stream[0]).to.eql(0xE9));",
+                  "pm.test('MD5 cocok dengan config.firmware_update.md5', () => {",
+                  "  const md5 = pm.collectionVariables.get('firmware_md5');",
+                  "  if (!md5) return;",
+                  "  pm.expect(CryptoJS.MD5(CryptoJS.lib.WordArray.create(pm.response.stream)).toString()).to.eql(md5);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              },
+              {
+                "key": "X-Device-ID",
+                "value": "{{device_id}}"
+              },
+              {
+                "key": "X-Spec-Version",
+                "value": "1"
+              }
+            ],
+            "url": {
+              "raw": "{{firmware_url}}"
+            },
+            "description": "Opsional (spesifikasi bagian 6.1). URL diambil dari `config.firmware_update.url` di balasan \"Heartbeat – berhasil\"; dilewati kalau server tidak menjadwalkan update untuk alat ini. Alat mengirim header API hanya kalau URL-nya satu origin dengan Base URL. Balasan: HTTP 200, isi file .bin mentah (`application/octet-stream`) dengan `Content-Length`. Server acuan (`api/`) juga mengirim header `x-MD5`, dan membalas 404 `{\"ok\":false,\"message\":\"Firmware tidak tersedia untuk alat ini\"}` kalau alat tidak dijadwalkan ke firmware itu."
+          },
+          "response": []
+        }
+      ]
     }
   ],
   "event": [
@@ -2377,6 +2450,14 @@
     },
     {
       "key": "kemarin",
+      "value": ""
+    },
+    {
+      "key": "firmware_url",
+      "value": ""
+    },
+    {
+      "key": "firmware_md5",
       "value": ""
     }
   ]

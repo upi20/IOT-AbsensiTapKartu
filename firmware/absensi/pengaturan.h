@@ -124,15 +124,28 @@ void aturSimpanRestart(const String& r) {
   Serial.printf("Restart harian: %s\n", r.length() ? r.c_str() : "mati");
 }
 
-// ID alat: diambil dari ID_ALAT di config.h (diatur manual sebelum upload).
+// ID alat: diambil dari ID_ALAT di config.h (diatur manual sebelum upload lewat USB).
 // Kalau ID_ALAT kosong, dibuat dari MAC: "ABS-" + 3 byte terakhir MAC WiFi.
+// ID yang dipakai juga disimpan di namespace "identitas" (tidak ikut terhapus saat reset pabrik).
+// Firmware untuk update jarak jauh (./upload.sh -b, flag OTA_BUILD) TIDAK memakai ID_ALAT, tapi ID
+// yang tersimpan itu, jadi satu file .bin bisa dikirim ke semua alat tanpa membuat ID-nya sama.
 void idAlatBuat() {
   uint8_t mac[6];
   esp_read_mac(mac, ESP_MAC_WIFI_STA);
   char hex[7];
   snprintf(hex, sizeof(hex), "%02X%02X%02X", mac[3], mac[4], mac[5]);
   idAlatHex = hex;
+
+  Preferences identitas;
+  identitas.begin("identitas", false);
+  String tersimpan = identitas.getString("id", "");
+#ifdef OTA_BUILD
+  idAlat = tersimpan.length() > 0 ? tersimpan : "ABS-" + idAlatHex;
+#else
   idAlat = strlen(ID_ALAT) > 0 ? String(ID_ALAT) : "ABS-" + idAlatHex;
+#endif
+  if (idAlat != tersimpan) identitas.putString("id", idAlat);
+  identitas.end();
 }
 
 void aturMulai() {

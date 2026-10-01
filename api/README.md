@@ -5,8 +5,8 @@ Server Laravel untuk alat absensi tap RFID. Isinya dua bagian:
 1. **API standar alat** di `/api/absensi` — *implementasi acuan* dari
    [`doc/spesifikasi-api.md`](../doc/spesifikasi-api.md). Kalau Anda membuat aplikasi sendiri yang
    ingin dihubungkan ke alat, spesifikasi itulah acuannya; kode di sini contoh lengkap yang berjalan.
-2. **Panel admin sederhana** di `/admin` — kelola anggota & kartu, lihat tap hari ini, rekap, alat,
-   dan pengaturan.
+2. **Panel admin sederhana** di `/admin` — kelola anggota & kartu, lihat tap hari ini, rekap, alat
+   (termasuk **pemantauan kesehatan alat**), **update firmware jarak jauh**, dan pengaturan.
 
 - Laravel 13, PHP 8.3+, PostgreSQL, Blade + satu stylesheet (`public/css/admin.css`), tanpa build Node
 - Zona waktu `Asia/Jakarta` (ubah dengan `APP_TIMEZONE`), bahasa Indonesia
@@ -138,6 +138,7 @@ Lengkapnya di [`doc/spesifikasi-api.md`](../doc/spesifikasi-api.md). Ringkasnya:
 | `POST /tap` | Kartu ditempelkan → `check_in` / `check_out` / `duplicate` / `unknown` / `rejected` |
 | `POST /heartbeat` | Tiap 60 detik. Mencatat status alat, membalas `server_time` + `config` |
 | `GET /announcements` | Pengumuman screensaver: `{"ok":true,"interval":3,"idle":30,"items":[{"id":"12","title":"…","description":"…","icon":"rapat"}]}` |
+| `GET /firmware/{id}` | File `.bin` untuk update jarak jauh (URL-nya dari `config.firmware_update`). Hanya untuk alat yang dijadwalkan ke firmware itu, selain itu 404 |
 
 - Header wajib: `X-API-Key` (salah/kosong → **401** `{"ok":false,"message":"API key salah"}`) dan
   `X-Device-ID` (kosong → **400**). `X-Spec-Version` diterima tanpa diperiksa.
@@ -159,6 +160,9 @@ Lengkapnya di [`doc/spesifikasi-api.md`](../doc/spesifikasi-api.md). Ringkasnya:
 - `config.announcements_rev` = `"<jumlah pengumuman>-<unix perubahan terakhir>-<interval>-<idle>"`,
   mis. `"2-1790729112-3-30"`. Nilainya berubah setiap pengumuman ditambah/diubah/dihapus atau pengaturan
   screensaver diganti, sehingga alat mengambil ulang `/announcements` pada heartbeat berikutnya (±1 menit).
+- `config.firmware_update` (`version`, `url`, `size`, `md5`) hanya dikirim kalau alat dijadwalkan update,
+  versinya belum terpasang, dan belum pernah gagal dipasang di alat itu (`raw.ota_failed`). Lihat
+  [Update firmware jarak jauh](#update-firmware-jarak-jauh).
 
 ```bash
 curl -X POST http://localhost:8133/api/absensi/tap \
@@ -209,6 +213,42 @@ Per anggota, per hari kalender `Asia/Jakarta` (lihat `app/Services/AttendanceSer
   little-endian). Kartu lama yang dulu didaftarkan sebagai hex 4 byte (mis. `0A0B0C0D`) tetap dikenali
   karena nilainya sama.
 
+### Kesehatan alat
+
+Setiap `/heartbeat` menyimpan data kesehatan dari `raw` ke tabel `devices` (`uptime_s`, `reset_reason`,
+`rfid_ok`, `queue`, `free_heap`, `min_free_heap`, `error_code`, `ota_failed`, `heartbeat_at`). Kejadian
+penting dicatat di tabel `device_events` (200 terbaru per alat):
+
+| Kejadian | Kapan |
+|---|---|
+| `boot` | `uptime_s` lebih kecil dari heartbeat sebelumnya (alat restart), beserta `reset_reason` |
+| `crash` | `raw.crash` dikirim (crash yang sama dalam 10 menit tidak dicatat ulang) |
+| `firmware` | Versi firmware berganti, mis. `Firmware 1.4.0 -> 1.5.0` |
+| `ota_failed` | Alat melapor update firmware gagal (versi baru di `raw.ota_failed`) |
+
+Halaman **Alat** menampilkan peringatan (`Device::healthIssues()`), dan **Dasbor** menampilkan daftar alat
+yang perlu diperiksa. Batasnya konstanta di `app/Models/Device.php`: offline > 10 menit, pembaca RFID
+tidak terdeteksi, kode error di layar, sinyal < −80 dBm, antrean > 20 tap, ≥ 3 restart tidak normal
+(`watchdog`/`panic`/`brownout`) dalam 24 jam, update firmware gagal, RAM terendah < 20000 byte.
+
+### Update firmware jarak jauh
+
+Butuh firmware alat **1.5.0** ke atas.
+
+1. Kompilasi firmware dengan `VERSI_FIRMWARE` baru di `config.h` (`cd firmware && ./upload.sh -c absensi`,
+   lokasi file `.bin` dijelaskan di README firmware).
+2. Panel → **Firmware** → unggah: versi (`1.5.0`), file `.bin` (maks. 1966080 byte = slot OTA partisi
+   `min_spiffs`), catatan. Server menolak file yang byte pertamanya bukan `0xE9` (image aplikasi ESP32)
+   atau yang tidak memuat teks versinya. File disimpan di `storage/app/private/firmware/<versi>.bin`.
+3. Panel → **Alat** → "Update firmware ke" per alat, atau **Terapkan ke semua alat** di halaman Firmware.
+   Pada heartbeat berikutnya alat menerima `config.firmware_update`, mengunduh `GET /api/absensi/firmware/{id}`
+   (dengan `X-API-Key`; dibalas `application/octet-stream`, `Content-Length`, dan header `x-MD5`), lalu
+   restart. Status per alat: *Menunggu alat mengunduh*, *Sudah terpasang*, atau *Gagal, kembali ke …*.
+
+Alat tidak memeriksa sertifikat HTTPS, jadi pihak yang bisa menyadap jaringan alat bisa saja memasang
+firmware palsu. Jadwalkan update hanya untuk alat yang memang ingin diupdate, lalu kosongkan lagi bila perlu.
+Unggahan ±2 MB juga butuh `upload_max_filesize` dan `post_max_size` PHP minimal 2M (bawaan PHP sudah cukup).
+
 ### Foto anggota
 
 Diunggah di panel (JPG/PNG, maks. 8 MB), lalu diproses dengan GD menjadi **JPEG baseline**, muat di
@@ -222,12 +262,13 @@ dikunci 60 detik; selain itu maksimal 10 percobaan login per menit per IP.
 
 | Menu | Isi |
 |---|---|
-| **Dasbor** | Hari ini: masuk / pulang / belum hadir, 20 tap terakhir (diperbarui tiap 10 detik), status alat (aktif bila terlihat < 3 menit) |
+| **Dasbor** | Hari ini: masuk / pulang / belum hadir, 20 tap terakhir (diperbarui tiap 10 detik), status alat (aktif bila terlihat < 3 menit), daftar alat yang perlu diperiksa |
 | **Anggota** | Cari, tambah, ubah (nama, NIS/NIP, nomor kartu, foto, aktif), hapus |
 | **Kehadiran** | Semua tap kartu pada tanggal yang dipilih (bisa dicari); hapus satu tap atau semua tap tanggal itu (mis. untuk mengulang tes) |
 | **Kartu belum terdaftar** | Nomor kartu yang pernah ditempel tapi belum punya pemilik → tombol "Daftarkan" (nomor kartu terisi otomatis) |
 | **Rekap** | Rentang tanggal, per anggota per hari: jam masuk pertama & jam pulang terakhir; ekspor CSV |
-| **Alat** | ID alat, nama & **PIN menu Pengaturan per alat** (opsional, 4–8 digit; bisa diubah), **jam restart harian per alat** (bawaan 03:00, sebaiknya jam sepi; kosongkan = tidak restart otomatis; alat restart sendiri sekali sehari saat tidak dipakai), aktif/tidak, terakhir terlihat, firmware, IP, RSSI, WiFi, tap hari ini. Galat isian tampil di baris alat yang bersangkutan |
+| **Alat** | Satu kartu per alat: status Online/Offline, **peringatan kesehatan**, terakhir terlihat, firmware, IP, WiFi & RSSI, lama menyala, alasan restart terakhir, pembaca RFID, antrean offline, RAM, kode error di layar, tap hari ini, dan **riwayat 10 kejadian terakhir** (restart, crash, ganti firmware, update gagal). Bisa diubah: nama, **PIN menu Pengaturan per alat** (opsional, 4–8 digit), **jam restart harian per alat** (bawaan 03:00, sebaiknya jam sepi; kosongkan = tidak restart otomatis), dan **target update firmware**. Galat isian tampil di kartu alat yang bersangkutan |
+| **Firmware** | Unggah file `.bin` untuk update jarak jauh (versi, ukuran, MD5, jumlah alat yang dijadwalkan), **Terapkan ke semua alat**, hapus |
 | **Pengumuman** | Pengumuman untuk screensaver alat: judul (maks. 40), deskripsi (maks. 160), ikon, aktif, urutan; **aksi massal** (tampilkan / sembunyikan / hapus yang dicentang); plus pengaturan screensaver (lama tiap pengumuman 2–60 detik, muncul setelah diam 5–600 detik). Sampai ke alat dalam ±1 menit |
 | **Pengaturan** | Base URL & API key (bisa dibuat ulang), judul layar alat dan **layar redup** (redup setelah 0 atau 10–3600 detik, kecerahan 0–100 %; untuk semua alat), ganti password |
 
@@ -255,12 +296,15 @@ bootstrap/app.php                       proxy tepercaya, middleware, format gala
 app/Http/Middleware/AuthenticateAbsensiDevice.php   cek X-API-Key, X-Device-ID, catat alat
 app/Http/Middleware/CatatLogApi.php     log semua request API ke storage/logs/api-*.log
 app/Http/Middleware/SecureUrlsBehindTunnel.php      URL https & cookie Secure di belakang proxy
-app/Http/Controllers/Api/AbsensiController.php      ping / tap / heartbeat / announcements
+app/Http/Controllers/Api/AbsensiController.php      ping / tap / heartbeat / announcements / firmware
 app/Services/AttendanceService.php      aturan masuk / pulang / duplikat
 app/Services/MemberPhoto.php            olah foto untuk layar alat
 app/Http/Controllers/Admin/*            halaman panel
 app/Models/Setting.php                  api_key, title, screensaver_interval, screensaver_idle, dim_after, dim_level
 app/Models/Announcement.php             pengumuman, isi GET /announcements & announcements_rev
+app/Models/Device.php                   alat, data kesehatan dari heartbeat, peringatan (healthIssues)
+app/Models/DeviceEvent.php              riwayat kejadian alat (boot, crash, firmware, ota_failed)
+app/Models/FirmwareRelease.php          file firmware untuk update jarak jauh
 config/absensi.php                      jeda duplikat (ABSENSI_DUPLICATE_WINDOW_SECONDS)
 resources/views/admin/*                 tampilan Blade
 public/css/admin.css, public/js/admin.js

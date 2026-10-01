@@ -1,1 +1,1 @@
-PartitionScheme=huge_app
+PartitionScheme=min_spiffs

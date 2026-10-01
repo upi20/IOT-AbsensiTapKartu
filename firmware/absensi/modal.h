@@ -16,6 +16,7 @@ void urusLatar() {
   rfidUrus();
   bootHitungUrus();
   lampuUrus();
+  otaUrusSehat();                                         // firmware baru dari OTA: sahkan kalau sudah stabil
   // Paling sering sekali per menit (layar berhenti sebentar). Tidak saat WiFi sedang dipindai / disetel.
   if (heartbeatDiMenu && !wifiJeda) urusHeartbeat();
 }

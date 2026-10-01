@@ -1,5 +1,16 @@
 {{-- Bagian dasbor yang diperbarui tiap 10 detik (DashboardController@live). --}}
 @php($c = $counts)
+@if ($attention->isNotEmpty())
+    <div class="alert warning" role="status">
+        <p>
+            <strong>{{ $attention->count() }} alat perlu diperiksa:</strong>
+            @foreach ($attention as $deviceId => $issues)
+                <a href="{{ route('admin.devices.index') }}#alat-{{ $deviceId }}" title="{{ implode(' · ', $issues) }}">{{ $devices->firstWhere('id', $deviceId)->name }}</a>
+                <span class="small">({{ $issues[0] }}{{ count($issues) > 1 ? ', +'.(count($issues) - 1).' lainnya' : '' }})</span>@if (! $loop->last), @endif
+            @endforeach
+        </p>
+    </div>
+@endif
 <section class="stats" aria-label="Ringkasan hari ini">
     <div class="card stat tone-success">
         <div class="stat-label">Masuk</div>

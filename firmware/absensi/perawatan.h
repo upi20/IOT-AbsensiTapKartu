@@ -4,8 +4,12 @@
 //  - Restart harian: sekali sehari pada atur.restartAt (jam alat, "HH:MM"; "" = mati), hanya saat alat diam.
 //    Jamnya diatur per alat dari server lewat config.restart_at (doc/spesifikasi-api.md bagian 6).
 //  - Alasan restart terakhir dicatat di monitor serial, Info alat, dan heartbeat (raw.reset_reason).
+//  - Crash: ESP32 menyimpan "coredump" di flash (partisi coredump, ada di skema min_spiffs). Ringkasannya
+//    (task, alamat program, jejak panggilan) dikirim lewat heartbeat (raw.crash) lalu dihapus. Alamatnya
+//    bisa diterjemahkan ke nama fungsi + baris kode dengan file .elf build yang sama (README, Tahap 2).
 #pragma once
 #include <esp_task_wdt.h>
+#include <esp_core_dump.h>
 
 void watchdogMulai() {
   esp_task_wdt_config_t cfg = {};
@@ -74,4 +78,41 @@ void urusRestartHarian(bool diam) {
                 (unsigned long)lamaNyalaDetik());
   delay(200);                                              // beri waktu monitor serial menulis
   ESP.restart();
+}
+
+// ---------- Ringkasan crash terakhir (coredump) ----------
+
+bool crashAda = false;
+String crashTask, crashPc, crashJejak, crashElf;
+
+void crashBaca() {
+  if (esp_core_dump_image_check() != ESP_OK) return;       // tidak ada coredump
+  esp_core_dump_summary_t* r = (esp_core_dump_summary_t*)malloc(sizeof(esp_core_dump_summary_t));
+  if (!r) return;
+  if (esp_core_dump_get_summary(r) == ESP_OK) {
+    char b[24];
+    snprintf(b, sizeof(b), "%.16s", r->exc_task);
+    crashTask = b;
+    snprintf(b, sizeof(b), "0x%08lx", (unsigned long)r->exc_pc);
+    crashPc = b;
+    crashJejak = "";
+    for (uint32_t i = 0; i < r->exc_bt_info.depth && i < 16; i++) {
+      snprintf(b, sizeof(b), "%s0x%08lx", i ? " " : "", (unsigned long)r->exc_bt_info.bt[i]);
+      crashJejak += b;
+    }
+    snprintf(b, sizeof(b), "%.16s", (const char*)r->app_elf_sha256);
+    crashElf = b;
+    crashAda = true;
+    Serial.printf("Crash terakhir: task %s, PC %s, jejak %s (build %s)\n", crashTask.c_str(), crashPc.c_str(),
+                  crashJejak.c_str(), crashElf.c_str());
+  }
+  free(r);
+}
+
+// Dipanggil setelah ringkasan crash diterima server (heartbeat berhasil).
+void crashHapus() {
+  if (!crashAda) return;
+  esp_core_dump_image_erase();
+  crashAda = false;
+  Serial.println("Crash: ringkasan terkirim, coredump dihapus");
 }

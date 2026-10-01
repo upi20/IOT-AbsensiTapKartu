@@ -19,6 +19,7 @@
         ['admin.unknown-cards', 'admin.unknown-cards', 'card', 'Kartu belum terdaftar'],
         ['admin.reports.index', 'admin.reports.*', 'report', 'Rekap'],
         ['admin.devices.index', 'admin.devices.*', 'device', 'Alat'],
+        ['admin.firmware.index', 'admin.firmware.*', 'upload', 'Firmware'],
         ['admin.announcements.index', 'admin.announcements.*', 'megaphone', 'Pengumuman'],
         ['admin.settings', 'admin.settings*', 'settings', 'Pengaturan'],
     ];

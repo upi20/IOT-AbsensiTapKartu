@@ -206,7 +206,7 @@ Pasang **satu komponen, tes, baru lanjut**. Setiap kali memasang atau memindah k
 5. Hasil benar: kalibrasi 3 titik, lalu mode menggambar. Titik kuning muncul tepat di bawah stylus.
 
 ### Langkah 2: firmware utama
-1. Upload firmware utama (`./upload.sh -m`, atau buka `firmware/absensi/absensi.ino` dengan partisi **Huge APP**).
+1. Upload firmware utama (`./upload.sh -m`, atau buka `firmware/absensi/absensi.ino` dengan partisi **Minimal SPIFFS (1.9MB APP with OTA)**).
 2. Firmware tetap berjalan walau RFID, buzzer, dan LED belum dipasang (layar boot menulis "RFID tidak terdeteksi").
 3. Selesaikan panduan pertama kali di layar (WiFi, Base URL, API key). Lihat [README Tahap 2.4–2.5](../README.md#24-siapkan-server-sementara-kalau-website-belum-ada).
 

@@ -1,6 +1,6 @@
 # Spesifikasi API Alat Absensi Tap (v1)
 
-Dokumen ini untuk **pengembang aplikasi** yang ingin menghubungkan aplikasinya dengan alat absensi RFID. Aplikasi Anda cukup menyediakan **3 endpoint wajib** (`/ping`, `/tap`, `/heartbeat`), ditambah 1 endpoint opsional untuk pengumuman (`/announcements`). Logika bisnis sepenuhnya milik aplikasi: siapa pemilik kartu, kapan dianggap masuk atau pulang, terlambat atau tidak.
+Dokumen ini untuk **pengembang aplikasi** yang ingin menghubungkan aplikasinya dengan alat absensi RFID. Aplikasi Anda cukup menyediakan **3 endpoint wajib** (`/ping`, `/tap`, `/heartbeat`), ditambah endpoint opsional untuk pengumuman (`/announcements`) dan update firmware jarak jauh (bagian 6.1). Logika bisnis sepenuhnya milik aplikasi: siapa pemilik kartu, kapan dianggap masuk atau pulang, terlambat atau tidak.
 
 Versi spesifikasi: `1` · Terakhir diperbarui: 1 Oktober 2026
 
@@ -14,7 +14,8 @@ Versi spesifikasi: `1` · Terakhir diperbarui: 1 Oktober 2026
                      │
                      ├──── POST {base}/heartbeat (tiap 60 detik) ─▶ status alat aktif
                      ├──── GET  {base}/ping (tes koneksi & jam) ──▶
-                     └──── GET  {base}/announcements (opsional, screensaver) ──▶
+                     ├──── GET  {base}/announcements (opsional, screensaver) ──▶
+                     └──── GET  config.firmware_update.url (opsional, update firmware) ──▶
 ```
 
 Semua pengaturan dilakukan di alat lewat layar sentuh (menu **Pengaturan**, dilindungi PIN):
@@ -170,11 +171,40 @@ Dikirim **setiap 60 detik** sebagai tanda alat aktif, dan sekali lagi segera set
     "ip": "192.168.1.23",
     "uptime_s": 3660,
     "free_heap": 180000,
+    "min_free_heap": 152000,
+    "reset_reason": "poweron",
     "rfid_ok": true,
     "queue": 0
   }
 }
 ```
+
+Isi `raw` adalah info kesehatan alat. Semuanya **opsional untuk aplikasi**: boleh disimpan untuk pemantauan, boleh diabaikan.
+
+| Field `raw` | Keterangan |
+|---|---|
+| `wifi_ssid`, `rssi`, `ip` | Nama WiFi, kekuatan sinyal (dBm, di bawah −80 = lemah), IP alat |
+| `uptime_s` | Lama alat menyala sejak boot (detik). Nilai yang **lebih kecil** dari heartbeat sebelumnya berarti alat baru restart |
+| `free_heap` | RAM bebas saat ini (byte) |
+| `min_free_heap` | RAM bebas **terendah** sejak boot (byte). Firmware **1.5.0** ke atas |
+| `reset_reason` | Alasan restart terakhir: `poweron` (baru dinyalakan / tombol EN), `external`, `software` (restart oleh program, mis. restart harian atau setelah update), `panic` (program error), `watchdog` (program macet), `brownout` (listrik turun, cek adaptor/kabel daya), `deepsleep`, `other` |
+| `rfid_ok` | `false` = pembaca RFID tidak terdeteksi |
+| `queue` | Jumlah tap offline yang masih menunggu dikirim |
+| `error` | Kode error yang **sedang tampil di layar alat**, mis. `"E30"`. Tidak dikirim kalau tidak ada error. Firmware **1.5.0** ke atas |
+| `ota_failed` | Versi firmware yang **gagal dipasang** lewat update jarak jauh (alat kembali ke versi lama), mis. `"1.5.0"`. Tidak dikirim kalau tidak ada. Firmware **1.5.0** ke atas |
+| `crash` | Hanya dikirim setelah alat **crash**, sampai ada heartbeat yang berhasil (jadi bisa terkirim beberapa kali): `{"task":"loopTask","pc":"0x400d4634","backtrace":"0x400d4634 0x400880ed","elf":"<build id>"}`, semuanya teks. `backtrace` = daftar alamat PC dipisah spasi, `elf` = ID build firmware (untuk mencocokkan alamat dengan file ELF saat dianalisis). Firmware **1.5.0** ke atas |
+
+**Kode error di layar alat (`raw.error`):**
+
+| Kode | Arti | Kode | Arti |
+|---|---|---|---|
+| `E10` | Nama WiFi tidak ditemukan | `E22` | Alat ditolak server (403) |
+| `E11` | Password WiFi salah | `E23` | Alamat API tidak ditemukan (404) |
+| `E12` | Gagal tersambung ke WiFi (lainnya) | `E24` | Server error (5xx) |
+| `E13` | Tidak mendapat IP dari router (DHCP) | `E25` | Balasan server tidak valid |
+| `E20` | Server tidak terjangkau / DNS gagal | `E26` | Server tidak menjawab (timeout) |
+| `E21` | API key salah (401) | `E30` | Pembaca RFID tidak terdeteksi |
+| | | `E31` | Jam belum sinkron |
 
 **Respons:**
 ```json
@@ -199,6 +229,7 @@ Objek `config` boleh disertakan di respons `/ping` dan `/heartbeat`. Semua isiny
 | `dim_level` | `20` | Kecerahan lampu layar saat redup, dalam persen (`0`–`100`, `0` = mati). **Bawaan 20** |
 | `restart_at` | `"03:00"` | **Restart harian** alat ini pada jam tersebut (format `HH:MM` 24 jam, jam yang tampil di alat). Alat hanya restart kalau sedang diam (2 menit tanpa kartu/sentuhan), dalam 30 menit sejak jam itu, dan sudah menyala minimal 1 jam. `""` = tidak restart otomatis. Per alat, seperti `pin`. **Bawaan `"03:00"`** |
 | `announcements_rev` | `"7-1759212345"` | Penanda versi daftar pengumuman (teks bebas). Kalau berubah, alat segera mengambil ulang `GET /announcements` (lihat bagian 8) |
+| `firmware_update` | `{"version":"1.5.0","url":"…","size":1523456,"md5":"…"}` | **Update firmware jarak jauh** (lihat 6.1). Tidak dikirim = tidak ada update. Aplikasi lain boleh tidak pernah mengirimnya |
 
 - Nilai di luar aturan (PIN bukan 4–8 digit, judul lebih dari 30 karakter, `dim_after` 1–9 atau lebih dari 3600, `dim_level` di luar 0–100, atau bukan angka bulat, `restart_at` bukan `HH:MM` dan bukan `""`) **diabaikan** oleh alat.
 - `dim_after` dan `dim_level` tersimpan di alat. Kalau server tidak mengirimnya, alat memakai nilai terakhir yang diterima (atau bawaan 60 detik / 20 %). Butuh firmware **1.3.0** ke atas; firmware lama mengabaikannya.
@@ -207,6 +238,39 @@ Objek `config` boleh disertakan di respons `/ping` dan `/heartbeat`. Semua isiny
 - `server_time` yang berakhiran `Z` (UTC) tetap dipakai untuk mengatur jam, tetapi zona tampilan alat tidak berubah.
 - **PIN bawaan pabrik: `2026`.** Nilai ini tertanam di firmware dan dipakai sampai diganti dari menu alat atau lewat `config.pin`.
 - **Reset pabrik:** tekan tombol **EN 3 kali dalam 5 detik**, lalu konfirmasi di layar. Yang terhapus: WiFi, Base URL, API key, PIN (kembali ke `2026`), judul, zona waktu, kalibrasi layar sentuh, antrean tap offline, dan pengumuman tersimpan. **ID alat tidak terhapus.** Menu Pengaturan juga punya tombol "Reset pabrik".
+
+### 6.1 Update firmware jarak jauh (`config.firmware_update`, opsional)
+
+Butuh firmware **1.5.0** ke atas. Fitur ini sepenuhnya opsional: aplikasi yang tidak mengirim `firmware_update` tidak perlu menyediakan apa pun, dan alat mengabaikan kunci yang tidak ada.
+
+```json
+"config": {
+  "firmware_update": {
+    "version": "1.5.0",
+    "url": "https://app.contoh.com/api/absensi/firmware/3",
+    "size": 1523456,
+    "md5": "9e107d9d372bb6826bd81d3542a419d6"
+  }
+}
+```
+
+| Field | Keterangan |
+|---|---|
+| `version` | Versi firmware baru. Alat hanya memasang kalau berbeda dengan versinya sendiri |
+| `url` | URL **absolut** file `.bin` (image aplikasi ESP32, bukan file gabungan/bootloader) |
+| `size` | Ukuran file (byte). Maksimal **1966080** (slot OTA partisi `min_spiffs`) |
+| `md5` | MD5 file (32 huruf hex kecil). Alat menolak file yang MD5-nya tidak cocok |
+
+**Alur di alat:** setelah menerima `firmware_update`, alat mengunduh file dari `url`, memeriksa ukuran & MD5, memasangnya ke slot OTA, lalu restart. Kalau firmware baru gagal menyala, alat kembali ke versi lama dan mengirim `raw.ota_failed: "<versi>"` di heartbeat. Selama itu, aplikasi **sebaiknya berhenti mengirim** `firmware_update` untuk versi yang sama (perbaiki lalu terbitkan versi baru).
+
+Kirim `firmware_update` hanya kalau alat itu memang dijadwalkan update **dan** `version` berbeda dengan `firmware` yang dilaporkan alat **dan** berbeda dengan `raw.ota_failed`.
+
+**Unduhan `GET {url}`:**
+- Alat mengirim header `X-API-Key`, `X-Device-ID`, dan `X-Spec-Version` **hanya kalau `url` punya origin (skema + host + port) yang sama dengan Base URL**. Ke host lain (mis. CDN), header itu tidak dikirim, jadi URL-nya harus bisa diunduh tanpa autentikasi.
+- Balas **HTTP 200** dengan isi file `.bin` mentah (`Content-Type: application/octet-stream`) dan header **`Content-Length`** yang benar. Jangan memakai redirect. Header `x-MD5` (MD5 file) boleh disertakan.
+- Server acuan (`api/`): `GET {base}/firmware/{id}`, hanya untuk alat yang dijadwalkan ke firmware itu (selain itu **404** `{"ok":false,"message":"Firmware tidak tersedia untuk alat ini"}`).
+
+> **Keamanan.** Alat tidak memeriksa sertifikat HTTPS, dan MD5 hanya mendeteksi file rusak, bukan file palsu. Siapa pun yang bisa menyadap atau membelokkan lalu lintas antara alat dan server (WiFi publik, router yang dibobol, DNS palsu) bisa memasang firmware buatannya sendiri. Aktifkan update hanya per alat dengan sengaja, saat memang ada versi baru, dan sebaiknya di jaringan yang dipercaya.
 
 ## 7. Saat server tidak bisa dihubungi (antrean)
 
@@ -287,7 +351,8 @@ Isi pengumuman diambil otomatis dari aplikasi, jadi tidak ada yang perlu diisi d
 - [ ] Pakai `tapped_at` untuk tap `queued: true`.
 - [ ] Simpan `tap_id` dan abaikan tap dengan `tap_id` yang sudah pernah dicatat.
 - [ ] (Opsional) Kirim `photo_url` JPEG kecil, `config.pin` (per alat), `config.title`, `config.dim_after` / `config.dim_level` (layar redup), dan `config.restart_at` (per alat).
-- [ ] (Opsional) Tampilkan status alat aktif dari heartbeat.
+- [ ] (Opsional) Tampilkan status alat aktif dari heartbeat, plus kesehatan alat dari `raw` (restart, crash, `error`, RFID, antrean, RAM).
+- [ ] (Opsional) Update firmware jarak jauh: kirim `config.firmware_update` dan sediakan file `.bin` di `url` (bagian 6.1).
 - [ ] (Opsional) Sediakan `GET /announcements` untuk screensaver pengumuman, plus `config.announcements_rev`.
 
 ## 10. Contoh cepat (cURL)

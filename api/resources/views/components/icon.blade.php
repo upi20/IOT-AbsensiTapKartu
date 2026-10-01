@@ -13,6 +13,7 @@
     @case('menu')<path d="M4 7h16M4 12h16M4 17h16"/>@break
     @case('plus')<path d="M12 5v14M5 12h14"/>@break
     @case('search')<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>@break
+    @case('upload')<path d="M12 20V9"/><path d="m7 13.5 5-4.5 5 4.5"/><path d="M5 4h14"/>@break
     @case('download')<path d="M12 4v11"/><path d="m7 10.5 5 4.5 5-4.5"/><path d="M5 20h14"/>@break
     @case('copy')<rect x="8.5" y="8.5" width="11.5" height="11.5" rx="2"/><path d="M15.5 8.5V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7.5a2 2 0 0 0 2 2h2.5"/>@break
     @case('key')<circle cx="8" cy="15.5" r="4"/><path d="m10.9 12.6 8.6-8.6M16.5 7l2.5 2.5"/>@break

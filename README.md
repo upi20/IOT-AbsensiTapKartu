@@ -39,6 +39,7 @@ Repositori ini berisi **semua yang dibutuhkan dari nol sampai alat jadi**: dafta
 - Menu Pengaturan ber-PIN, kalibrasi layar, tes buzzer & LED, cek kabel RFID, reset pabrik (tekan EN 3 kali).
 - Heartbeat tiap menit, sehingga website tahu alat mana yang aktif.
 - Tahan menyala lama: **watchdog** (restart sendiri kalau program macet) dan **restart harian terjadwal** saat sepi (jamnya diatur per alat dari website, bawaan 03:00).
+- Mudah dirawat dari jauh: **kode error di layar** (contoh `E11` = password WiFi salah), laporan kesehatan dan **ringkasan crash** ke website, dan **update firmware jarak jauh (OTA)** yang kembali sendiri ke versi lama kalau firmware baru gagal.
 
 **Website**
 - **API sederhana** (`/ping`, `/tap`, `/heartbeat`, opsional `/announcements`) yang bisa diterapkan di aplikasi apa saja: lihat [doc/spesifikasi-api.md](doc/spesifikasi-api.md).
@@ -56,7 +57,8 @@ Supaya tidak ada yang tersesat: bagian di bawah ini dibedakan antara yang **suda
 | Prototipe kabel jumper di expansion board | ✅ Dirakit dan berjalan |
 | Firmware v1.3.0 | ✅ Berjalan di alat prototipe (tap, antrean, pengumuman, layar redup) |
 | Firmware v1.4.0 (watchdog, restart harian, identitas baru) | ✅ Berjalan di alat (boot, tap, heartbeat, watchdog aktif); ⚠️ restart harian **belum diuji** |
-| Server Laravel + panel admin | ✅ Dipakai di server percobaan; 127 tes otomatis lulus |
+| Firmware v1.5.0 (kode error, ringkasan crash, update jarak jauh) | ✅ Update jarak jauh diuji di alat (unduh ± 15 detik, rollback saat restart di masa percobaan juga terbukti); ⚠️ tiap kode error belum diuji satu per satu |
+| Server Laravel + panel admin | ✅ Dipakai di server percobaan; 145 tes otomatis lulus |
 | Contoh integrasi PHP/Node + Postman | ✅ Lolos skrip pemeriksa dan 114 pemeriksaan Postman |
 | PCB dot matrix (papan bolong) | ⚠️ Tata letak dan panduan selesai, **belum dirakit fisik** |
 | PCB cetak (KiCad) | ⚠️ Desain lolos DRC, **belum dipesan dan belum diuji** |
@@ -215,6 +217,8 @@ Kode ada di [firmware/absensi/](firmware/absensi/). Bahasa komentar: Indonesia.
 
 Buka [firmware/absensi/config.h](firmware/absensi/config.h), ubah `ID_ALAT` (bawaan `"ABS-001"`). **Setiap alat harus punya ID berbeda**; ID ini dikirim sebagai `X-Device-ID` dan tidak terhapus saat reset pabrik. Isi `""` supaya dibuat otomatis dari alamat MAC (contoh `ABS-79438C`).
 
+Sejak v1.5.0, ID yang dipakai juga disimpan di memori alat. Upload lewat USB memakai `ID_ALAT` di `config.h`. Update jarak jauh (2.7) tidak memakai `ID_ALAT`, tapi ID yang tersimpan di alat, jadi satu file firmware aman dikirim ke semua alat.
+
 Pengaturan lain di file yang sama (biasanya tidak perlu diubah): PIN bawaan `2026`, interval heartbeat 60 detik, batas antrean 200, batas waktu tap 3 detik, layar redup 60 detik ke 20 %.
 
 ### 2.3 Upload
@@ -222,7 +226,7 @@ Pengaturan lain di file yang sama (biasanya tidak perlu diubah): PIN bawaan `202
 **Lewat Arduino IDE (semua sistem operasi):**
 1. Buka `firmware/absensi/absensi.ino`.
 2. Board: **ESP32 Dev Module** (bukan "DOIT ESP32 DEVKIT V1", karena yang itu tidak punya menu partisi).
-3. **Partition Scheme: Huge APP (3MB No OTA/1MB SPIFFS)**. Wajib: firmware ± 1,3 MB tidak muat di partisi bawaan.
+3. **Partition Scheme: Minimal SPIFFS (1.9MB APP with OTA/128KB SPIFFS)**. Wajib: firmware ± 1,35 MB tidak muat di partisi bawaan, dan skema ini punya 2 slot untuk update jarak jauh.
 4. Upload Speed: **460800** (Mac/Linux). Kalau upload gagal atau di Windows, pakai **115200**.
 5. Pilih port, klik Upload. Kalau tertahan di `Connecting....`, tahan tombol **BOOT** sampai persentase muncul.
 
@@ -230,11 +234,14 @@ Pengaturan lain di file yang sama (biasanya tidak perlu diubah): PIN bawaan `202
 ```bash
 ./upload.sh -m              # compile + upload firmware utama, lalu buka monitor serial
 ./upload.sh -c              # compile saja (cek tanpa alat)
+./upload.sh -b              # buat file untuk update jarak jauh (lihat 2.7)
 ./upload.sh tes_rfid -m     # upload sketsa tes
 ./monitor.sh                # monitor serial 115200 baud, keluar: Ctrl+C
 PORT=/dev/ttyUSB0 ./upload.sh    # pilih port sendiri
 ```
-Skrip memakai partisi Huge APP dan kecepatan 460800 secara otomatis. `arduino-cli` dicari di `PATH`, lalu di dalam Arduino IDE (macOS). Lokasi lain: `ARDUINO_CLI=/path/arduino-cli ./upload.sh`.
+Skrip memakai partisi Minimal SPIFFS dan kecepatan 460800 secara otomatis. `arduino-cli` dicari di `PATH`, lalu di dalam Arduino IDE (macOS). Lokasi lain: `ARDUINO_CLI=/path/arduino-cli ./upload.sh`.
+
+> **Alat dengan firmware ≤ 1.4.0** (partisi lama Huge APP) harus di-upload **sekali lewat USB** ke v1.5.0, karena partisinya berubah. Pengaturan (WiFi, Base URL, API key, PIN, kalibrasi) tetap, tapi antrean tap dan pengumuman yang tersimpan terhapus. Kirim dulu antrean yang tersisa (tunggu sampai Info alat → Antrean = 0). Setelah itu, update berikutnya bisa lewat jarak jauh.
 
 ### 2.4 Siapkan server sementara (kalau website belum ada)
 
@@ -272,7 +279,103 @@ Monitor serial (115200 baud) menampilkan catatan seperti `RFID: RC522 terdeteksi
 | Antrean offline | Server tidak terjangkau → tap disimpan (maks. 200) dan dikirim ulang saat alat diam |
 | Restart harian | Sekali sehari pada jam yang diatur per alat di website (bawaan **03:00**, jam alat), hanya saat alat diam. Antrean tap tetap tersimpan. Kosongkan jamnya di website untuk mematikan |
 | Watchdog | Kalau program macet lebih dari 60 detik, alat restart sendiri. Alasan restart terakhir terlihat di **Info alat → Restart** dan dikirim ke website |
-| Pengaturan dari website | PIN menu (per alat), jam restart (per alat), judul layar, layar redup, pengumuman |
+| Kode error | Masalah tampil di baris bawah layar utama dengan kode, contoh **E11 Password WiFi salah**. Daftar lengkap di 2.8. Kode yang sedang aktif juga ada di **Info alat → Error** |
+| Laporan ke website | Tiap menit: sinyal, RAM, status RFID, antrean, kode error, alasan restart, dan ringkasan crash terakhir. Website menandai alat yang perlu diperhatikan |
+| Update jarak jauh | Firmware baru diunggah di website, lalu alat memasangnya sendiri saat diam (lihat 2.7) |
+| Pengaturan dari website | PIN menu (per alat), jam restart (per alat), judul layar, layar redup, pengumuman, update firmware (per alat) |
+
+### 2.7 Update firmware jarak jauh (OTA)
+
+Dipakai untuk memperbarui alat yang sudah terpasang di lokasi **tanpa kabel USB**: file firmware diunggah ke website, lalu alat mengunduh dan memasangnya sendiri.
+
+**Syarat (cukup dicek sekali):**
+- Alat sudah ber-firmware **1.5.0 atau lebih baru**. Alat dengan firmware lama harus di-upload lewat USB dulu (lihat catatan di 2.3), karena partisinya berbeda.
+- Website mendukung update firmware. Server acuan Laravel (Tahap 3.A) sudah punya menu **Firmware**. Aplikasi sendiri: lihat [doc/spesifikasi-api.md](doc/spesifikasi-api.md) bagian 6.1.
+
+#### Langkah 1 — Naikkan nomor versi
+
+Buka [firmware/absensi/config.h](firmware/absensi/config.h) dan ubah `VERSI_FIRMWARE`, contoh `"1.5.0"` → `"1.5.1"`.
+
+Wajib: alat **mengabaikan** update yang versinya sama dengan versi yang sedang terpasang, dan website menolak file yang di dalamnya tidak ada nomor versi yang Anda isi.
+
+#### Langkah 2 — Build file `.bin`
+
+File untuk OTA **bukan** hasil upload biasa. ID alat tidak boleh ikut tertanam, supaya satu file bisa dikirim ke semua alat dan tiap alat tetap memakai ID-nya sendiri. Pilih salah satu cara:
+
+**Cara A — skrip (Mac/Linux, disarankan).** Dari folder `firmware/`, tanpa alat tersambung:
+```bash
+./upload.sh -b
+```
+Hasilnya di folder `firmware/build/`:
+
+| File | Untuk apa |
+|---|---|
+| `absensi-1.5.1.bin` | **Diunggah ke website** (Langkah 3) |
+| `absensi-1.5.1.elf` | **Simpan baik-baik** (jangan diunggah). Hanya file ini yang bisa menerjemahkan laporan crash dari versi 1.5.1 (lihat 2.8) |
+| `absensi/` | File sementara hasil compile, abaikan |
+
+**Cara B — Arduino IDE (semua sistem operasi).**
+1. Di `config.h`, hapus `//` di depan baris `// #define OTA_BUILD`, sehingga menjadi `#define OTA_BUILD`.
+2. Board dan Partition Scheme sama seperti 2.3 (**ESP32 Dev Module**, **Minimal SPIFFS (1.9MB APP with OTA/128KB SPIFFS)**).
+3. Menu **Sketch → Export Compiled Binary**. Tunggu sampai selesai.
+4. Buka folder `firmware/absensi/build/esp32.esp32.esp32/`. Yang diunggah ke website adalah **`absensi.ino.bin`**. Jangan pakai `absensi.ino.merged.bin`, `absensi.ino.bootloader.bin`, atau `absensi.ino.partitions.bin`. Simpan juga `absensi.ino.elf`, beri nama sesuai versinya.
+5. **Kembalikan `//` di depan `#define OTA_BUILD`.** Kalau lupa, upload lewat USB ke alat baru tidak memakai `ID_ALAT`, tapi ID dari MAC (contoh `ABS-79438C`).
+
+#### Langkah 3 — Unggah dan pilih alat (server acuan)
+
+1. Panel admin → **Firmware** → **Unggah firmware**. Isi **Versi** sama persis dengan `VERSI_FIRMWARE` (contoh `1.5.1`), pilih file `.bin`, lalu klik **Unggah**.
+2. Panel admin → **Alat** → di kartu alat yang akan diperbarui, pilih **Update firmware ke: 1.5.1**, lalu simpan. Status alat menjadi **"Menunggu alat mengunduh"**.
+3. Untuk semua alat sekaligus, pakai tombol **Terapkan ke semua alat** di halaman Firmware. **Cobakan dulu ke satu alat** sampai statusnya "Sudah terpasang", baru ke semua.
+
+#### Langkah 4 — Tunggu alat memasang sendiri
+
+1. Alat menerima tawaran update lewat heartbeat (paling lama 1 menit).
+2. Update baru mulai saat **tidak ada kartu atau sentuhan selama 1 menit**, supaya orang yang sedang absen tidak terganggu.
+3. Layar menampilkan **"Memperbarui firmware v1.5.0 → v1.5.1"**, bilah kemajuan, dan **"Jangan cabut listrik alat"**. Unduhan memakan waktu ± 15–60 detik, tergantung internet.
+4. Alat mengecek isi file (MD5), menampilkan "Firmware terpasang", lalu restart dengan versi baru.
+5. Di halaman Alat, status menjadi **"Sudah terpasang"**, dan riwayat kejadian mencatat `Firmware 1.5.0 -> 1.5.1`.
+
+#### Kalau ada yang salah
+
+| Yang terjadi | Artinya / yang dilakukan |
+|---|---|
+| Lama di "Menunggu alat mengunduh" | Alat offline, sedang dipakai terus, atau firmware alat masih < 1.5.0. Cek status Online dan versi firmware alat |
+| Layar "Update firmware gagal" | Unduhan putus atau file rusak. Alat tetap memakai versi lama dan **mencoba lagi 30 menit kemudian**. Alasannya terlihat di Info alat → Firmware |
+| Riwayat: "Firmware 1.5.1 -> 1.5.0" tanpa status gagal | Listrik padam atau tombol EN ditekan di menit pertama setelah update, jadi alat kembali ke versi lama untuk berjaga-jaga. Bukan salah firmware: alat **mengulang update sendiri** (paling banyak 3 kali) |
+| Status "Gagal, kembali ke 1.5.0" | Firmware baru crash, macet (watchdog), atau listrik drop (brownout) sebelum dinyatakan sehat (5 menit, atau 1 menit setelah server tersambung), jadi alat **kembali sendiri ke versi lama**. Versi itu tidak dicoba lagi. Perbaiki kodenya (lihat laporan crash di riwayat kejadian), naikkan versi (1.5.2), lalu unggah ulang |
+| Website menolak file | Versi yang diisi tidak ditemukan di dalam file (lupa Langkah 1, atau salah ketik), file bukan `absensi.ino.bin`, atau ukuran lebih dari 1,9 MB |
+
+Jangan cabut listrik selama layar "Memperbarui firmware" dan di menit pertama setelah alat restart. Kalaupun terjadi, alat tidak rusak: saat mengunduh, firmware baru ditulis ke slot cadangan dan baru dipakai setelah selesai dicek; sesudah restart, alat kembali ke versi lama lalu mengulang update.
+
+Catatan keamanan: alat memakai HTTPS tanpa pemeriksaan sertifikat (sama seperti request lain). Orang yang bisa menyadap jaringan alat secara teori bisa mengirim firmware palsu. Karena itu, update hanya dikirim ke alat yang dipilih di website.
+
+### 2.8 Kode error di layar
+
+Konsumen cukup menyebutkan kode yang tampil di baris bawah layar (atau di **Info alat → Error**).
+
+| Kode | Arti | Yang dicek |
+|---|---|---|
+| E10 | WiFi tidak ditemukan | Router menyala? Nama WiFi benar? WiFi harus **2,4 GHz**. Alat terlalu jauh dari router? |
+| E11 | Password WiFi salah | Ganti password di Pengaturan → WiFi (password router mungkin baru diganti) |
+| E12 | WiFi gagal tersambung | Router penuh atau menolak perangkat baru (filter MAC). Restart router |
+| E13 | WiFi tidak memberi alamat IP | DHCP router mati atau alamat habis. Restart router |
+| E20 | Server tidak bisa dihubungi | Internet lokasi putus, atau Base URL salah alamat. Buka website dari HP di WiFi yang sama |
+| E21 | API key salah | Samakan API key di alat (Pengaturan → Server) dengan di website |
+| E22 | Alat ditolak server | Alat dinonaktifkan / belum diizinkan di website |
+| E23 | Alamat API salah | Base URL keliru (harus diakhiri jalur API, tanpa `/` di akhir), atau `http` vs `https` |
+| E24 | Server error / sibuk | Masalah di website (HTTP 5xx / 429). Tap tetap disimpan di antrean |
+| E25 | Balasan server tidak valid | Base URL mengarah ke halaman biasa, bukan API |
+| E26 | Server terlalu lama menjawab | Internet lambat atau server berat |
+| E30 | Pembaca RFID tidak terdeteksi | Kabel RC522 longgar. Menu → Cek kabel RFID |
+| E31 | Jam belum sinkron | Server tidak mengirim `server_time` dan NTP diblokir jaringan |
+
+**Membaca laporan crash.** Kalau alat pernah crash, halaman Alat di website menampilkan alamat seperti `0x400d4634 0x400880ed` beserta id build. Terjemahkan alamat itu dengan file `.elf` dari versi yang sama:
+
+```bash
+~/Library/Arduino15/packages/esp32/tools/esp-x32/*/bin/xtensa-esp32-elf-addr2line -pfiaC \
+  -e firmware/build/absensi-1.5.0.elf 0x400d4634 0x400880ed
+```
+Hasilnya berupa nama fungsi dan baris kode penyebab crash. Linux: ganti `~/Library/Arduino15` dengan `~/.arduino15`.
 
 ---
 
@@ -369,7 +472,8 @@ Panduan lengkap (pesan ke jasa cetak, urutan merakit, cara mengubah ukuran): [do
 
 | Gejala | Penyebab / solusi |
 |---|---|
-| `Sketch too big` | Partition Scheme belum **Huge APP** |
+| Layar menampilkan kode `E..` | Lihat tabel [kode error](#28-kode-error-di-layar) |
+| `Sketch too big` | Partition Scheme belum **Minimal SPIFFS (1.9MB APP with OTA)** |
 | `fork/exec .../ctags: bad CPU type` (Mac) | Rosetta 2 belum terpasang |
 | Upload gagal di 921600 baud | Chip CH340: pakai 460800 atau 115200 |
 | Tertahan di `Connecting....` | Tahan **BOOT** sampai upload mulai |

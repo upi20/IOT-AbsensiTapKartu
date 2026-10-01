@@ -9,11 +9,13 @@
 //   pengaturan.h  pengaturan tersimpan di memori (NVS), ID alat, hitungan tekan EN
 //   feedback.h    buzzer dan LED RGB
 //   lampu.h       lampu latar layar (D2): meredup saat alat diam
-//   perawatan.h   watchdog, restart harian terjadwal, alasan restart terakhir
+//   perawatan.h   watchdog, restart harian terjadwal, alasan restart terakhir, ringkasan crash
 //   rfid.h        pembaca kartu RC522 (dan cek kabel MOSI/MISO)
 //   waktu.h       jam (server_time / NTP) dan zona waktu
 //   antrean.h     antrean tap saat server tidak bisa dihubungi (LittleFS)
 //   jaringan.h    WiFi dan HTTP/HTTPS (sambungan keep-alive, satu batas waktu per request)
+//   galat.h       kode error singkat di layar (E10 WiFi tidak ditemukan, E21 API key salah, dst.)
+//   ota.h         update firmware jarak jauh dari server, kembali ke versi lama kalau gagal
 //   api.h         /ping, /tap, /heartbeat, pengaturan jarak jauh
 //   ui.h          warna, alat bantu gambar, layar utama, layar hasil
 //   ikon.h        ikon pengumuman (digambar dengan garis dan bentuk dasar)
@@ -54,6 +56,8 @@ TFT_eSPI tft = TFT_eSPI();   // layar, dipakai oleh file-file di bawah
 #include "perawatan.h"
 #include "antrean.h"
 #include "jaringan.h"
+#include "galat.h"
+#include "ota.h"
 #include "api.h"
 #include "ui.h"
 #include "ikon.h"
@@ -204,7 +208,8 @@ void urusBoot() {
         langkahBoot = BOOT_SERVER;
       } else if (millis() - waktuLangkah > WIFI_BOOT_TIMEOUT_MS) {
         Serial.println("WiFi: belum tersambung, lanjut dulu (dicoba terus di belakang)");
-        uiLangkah(3, LANGKAH_GAGAL, "Belum tersambung");
+        String kode = kodeGalatWifi();
+        uiLangkah(3, LANGKAH_GAGAL, kode.length() > 0 ? galatTeks(kode) : String("Belum tersambung"));
         uiLangkah(4, LANGKAH_LEWAT, "Dilewati");
         uiLangkah(5, LANGKAH_LEWAT, "Dilewati");
         bootSelesai();
@@ -235,7 +240,7 @@ void urusBoot() {
         bootSelesai();
       } else if (millis() - waktuLangkah > 8000) {
         Serial.println("Jam: belum sinkron, dicoba terus di belakang");
-        uiLangkah(5, LANGKAH_GAGAL, "Belum sinkron");
+        uiLangkah(5, LANGKAH_GAGAL, "E31 Belum sinkron");
         bootSelesai();
       }
       break;
@@ -254,7 +259,9 @@ void setup() {
   Serial.printf("\n##### ABSENSI RFID TERINTEGRASI v%s #####\n", VERSI_FIRMWARE);
   Serial.printf("Restart terakhir: %s\n", alasanResetTeks());
   watchdogMulai();
+  crashBaca();                                            // ringkasan crash sebelumnya (kalau ada)
   aturMulai();                                            // pengaturan tersimpan + ID alat
+  otaMulai();                                             // firmware baru dari OTA? / dulu gagal?
   bool tanyaReset = bootHitungNaik();                     // EN ditekan 3 kali?
   pinMode(PIN_TOMBOL_BOOT, INPUT_PULLUP);
   feedbackMulai();
@@ -282,7 +289,7 @@ void setup() {
   char versi[24];
   snprintf(versi, sizeof(versi), "RC522 (0x%02X)", rfidVersi);
   if (rfidAda) uiLangkah(2, LANGKAH_OK, versi);
-  else         uiLangkah(2, LANGKAH_GAGAL, "RFID tidak terdeteksi");
+  else         uiLangkah(2, LANGKAH_GAGAL, "E30 Tidak terdeteksi");
   uiLangkah(3, LANGKAH_PROSES, "Menyambung");
   waktuLangkah = millis();
 }
@@ -330,6 +337,10 @@ void loop() {
       return;
     }
     urusRestartHarian(millis() - aktifTerakhir >= RESTART_DIAM_MS);
+    if (urusOta(millis() - aktifTerakhir >= OTA_DIAM_MS)) {   // update gagal: gambar ulang layar utama
+      bukaUtama();
+      return;
+    }
     urusServer();
   } else if (layar == LAYAR_SCREENSAVER) {
     // Sentuhan apa pun hanya menutup screensaver (tidak menekan tombol di layar utama)
@@ -339,6 +350,10 @@ void loop() {
       return;
     }
     urusRestartHarian(millis() - aktifTerakhir >= RESTART_DIAM_MS);
+    if (urusOta(millis() - aktifTerakhir >= OTA_DIAM_MS)) {
+      bukaUtama();
+      return;
+    }
     urusServer();
   } else {                                                // LAYAR_HASIL
     uint32_t lewat = millis() - waktuLayar;

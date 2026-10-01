@@ -14,6 +14,7 @@ Route::prefix('absensi')->middleware(['throttle:absensi-api', AuthenticateAbsens
     Route::post('tap', [AbsensiController::class, 'tap']);
     Route::post('heartbeat', [AbsensiController::class, 'heartbeat']);
     Route::get('announcements', [AbsensiController::class, 'announcements']);
+    Route::get('firmware/{release}', [AbsensiController::class, 'firmware'])->whereNumber('release')->name('absensi.firmware');
 });
 
 // USANG: API lama untuk firmware lama. Header wajib "X-Device-Key: <kunci per alat>".
