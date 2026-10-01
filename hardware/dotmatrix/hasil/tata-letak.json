@@ -1,0 +1,2908 @@
+{
+ "grid": {
+  "kolom": 38,
+  "baris": 39,
+  "sambung": 33,
+  "x1": 3.02,
+  "y1": 2.5,
+  "jarak": 2.54
+ },
+ "tepi": {
+  "kiri": 1.75,
+  "kanan": 98.27,
+  "atas": 1.23,
+  "bawah": 100.29,
+  "sambung": 85.57
+ },
+ "bor": [
+  {
+   "id": "H1",
+   "xy": [
+    4.0,
+    4.42
+   ],
+   "untuk": "LCD",
+   "wajib": true
+  },
+  {
+   "id": "H2",
+   "xy": [
+    96.0,
+    4.42
+   ],
+   "untuk": "LCD",
+   "wajib": true
+  },
+  {
+   "id": "H3",
+   "xy": [
+    4.0,
+    53.92
+   ],
+   "untuk": "LCD",
+   "wajib": true
+  },
+  {
+   "id": "H4",
+   "xy": [
+    96.0,
+    53.92
+   ],
+   "untuk": "LCD",
+   "wajib": true
+  },
+  {
+   "id": "H5",
+   "xy": [
+    4.0,
+    96.0
+   ],
+   "untuk": "casing",
+   "wajib": true
+  },
+  {
+   "id": "H6",
+   "xy": [
+    96.0,
+    96.0
+   ],
+   "untuk": "casing",
+   "wajib": true
+  },
+  {
+   "id": "H7",
+   "xy": [
+    65.47,
+    95.88
+   ],
+   "untuk": "RC522",
+   "wajib": false
+  },
+  {
+   "id": "H8",
+   "xy": [
+    65.47,
+    60.88
+   ],
+   "untuk": "RC522",
+   "wajib": false
+  },
+  {
+   "id": "H9",
+   "xy": [
+    27.97,
+    91.08
+   ],
+   "untuk": "RC522",
+   "wajib": false
+  },
+  {
+   "id": "H10",
+   "xy": [
+    27.97,
+    65.23
+   ],
+   "untuk": "RC522",
+   "wajib": false
+  }
+ ],
+ "komponen": [
+  {
+   "id": "J2",
+   "nama": "Soket ESP32 (D23 ... 3V3)",
+   "jenis": "soket",
+   "sisi": "belakang",
+   "catatan": "Header female 1x15, dipasang di BELAKANG, disolder di depan",
+   "pin": [
+    {
+     "nama": "D23",
+     "cr": [
+      18,
+      6
+     ],
+     "xy": [
+      46.2,
+      15.2
+     ]
+    },
+    {
+     "nama": "D22",
+     "cr": [
+      17,
+      6
+     ],
+     "xy": [
+      43.66,
+      15.2
+     ]
+    },
+    {
+     "nama": "TX",
+     "cr": [
+      16,
+      6
+     ],
+     "xy": [
+      41.12,
+      15.2
+     ]
+    },
+    {
+     "nama": "RX",
+     "cr": [
+      15,
+      6
+     ],
+     "xy": [
+      38.58,
+      15.2
+     ]
+    },
+    {
+     "nama": "D21",
+     "cr": [
+      14,
+      6
+     ],
+     "xy": [
+      36.04,
+      15.2
+     ]
+    },
+    {
+     "nama": "D19",
+     "cr": [
+      13,
+      6
+     ],
+     "xy": [
+      33.5,
+      15.2
+     ]
+    },
+    {
+     "nama": "D18",
+     "cr": [
+      12,
+      6
+     ],
+     "xy": [
+      30.96,
+      15.2
+     ]
+    },
+    {
+     "nama": "D5",
+     "cr": [
+      11,
+      6
+     ],
+     "xy": [
+      28.42,
+      15.2
+     ]
+    },
+    {
+     "nama": "D17",
+     "cr": [
+      10,
+      6
+     ],
+     "xy": [
+      25.88,
+      15.2
+     ]
+    },
+    {
+     "nama": "D16",
+     "cr": [
+      9,
+      6
+     ],
+     "xy": [
+      23.34,
+      15.2
+     ]
+    },
+    {
+     "nama": "D4",
+     "cr": [
+      8,
+      6
+     ],
+     "xy": [
+      20.8,
+      15.2
+     ]
+    },
+    {
+     "nama": "D2",
+     "cr": [
+      7,
+      6
+     ],
+     "xy": [
+      18.26,
+      15.2
+     ]
+    },
+    {
+     "nama": "D15",
+     "cr": [
+      6,
+      6
+     ],
+     "xy": [
+      15.72,
+      15.2
+     ]
+    },
+    {
+     "nama": "GND",
+     "cr": [
+      5,
+      6
+     ],
+     "xy": [
+      13.18,
+      15.2
+     ]
+    },
+    {
+     "nama": "3V3",
+     "cr": [
+      4,
+      6
+     ],
+     "xy": [
+      10.64,
+      15.2
+     ]
+    }
+   ]
+  },
+  {
+   "id": "J1",
+   "nama": "Soket ESP32 (EN ... VIN)",
+   "jenis": "soket",
+   "sisi": "belakang",
+   "catatan": "Header female 1x15, dipasang di BELAKANG, disolder di depan",
+   "pin": [
+    {
+     "nama": "EN",
+     "cr": [
+      18,
+      16
+     ],
+     "xy": [
+      46.2,
+      40.6
+     ]
+    },
+    {
+     "nama": "VP",
+     "cr": [
+      17,
+      16
+     ],
+     "xy": [
+      43.66,
+      40.6
+     ]
+    },
+    {
+     "nama": "VN",
+     "cr": [
+      16,
+      16
+     ],
+     "xy": [
+      41.12,
+      40.6
+     ]
+    },
+    {
+     "nama": "D34",
+     "cr": [
+      15,
+      16
+     ],
+     "xy": [
+      38.58,
+      40.6
+     ]
+    },
+    {
+     "nama": "D35",
+     "cr": [
+      14,
+      16
+     ],
+     "xy": [
+      36.04,
+      40.6
+     ]
+    },
+    {
+     "nama": "D32",
+     "cr": [
+      13,
+      16
+     ],
+     "xy": [
+      33.5,
+      40.6
+     ]
+    },
+    {
+     "nama": "D33",
+     "cr": [
+      12,
+      16
+     ],
+     "xy": [
+      30.96,
+      40.6
+     ]
+    },
+    {
+     "nama": "D25",
+     "cr": [
+      11,
+      16
+     ],
+     "xy": [
+      28.42,
+      40.6
+     ]
+    },
+    {
+     "nama": "D26",
+     "cr": [
+      10,
+      16
+     ],
+     "xy": [
+      25.88,
+      40.6
+     ]
+    },
+    {
+     "nama": "D27",
+     "cr": [
+      9,
+      16
+     ],
+     "xy": [
+      23.34,
+      40.6
+     ]
+    },
+    {
+     "nama": "D14",
+     "cr": [
+      8,
+      16
+     ],
+     "xy": [
+      20.8,
+      40.6
+     ]
+    },
+    {
+     "nama": "D12",
+     "cr": [
+      7,
+      16
+     ],
+     "xy": [
+      18.26,
+      40.6
+     ]
+    },
+    {
+     "nama": "D13",
+     "cr": [
+      6,
+      16
+     ],
+     "xy": [
+      15.72,
+      40.6
+     ]
+    },
+    {
+     "nama": "GND",
+     "cr": [
+      5,
+      16
+     ],
+     "xy": [
+      13.18,
+      40.6
+     ]
+    },
+    {
+     "nama": "VIN",
+     "cr": [
+      4,
+      16
+     ],
+     "xy": [
+      10.64,
+      40.6
+     ]
+    }
+   ]
+  },
+  {
+   "id": "J3",
+   "nama": "Soket LCD",
+   "jenis": "soket",
+   "sisi": "depan",
+   "catatan": "Header female 1x14, dipasang di DEPAN. VCC paling bawah",
+   "pin": [
+    {
+     "nama": "VCC",
+     "cr": [
+      38,
+      18
+     ],
+     "xy": [
+      97.0,
+      45.68
+     ]
+    },
+    {
+     "nama": "GND",
+     "cr": [
+      38,
+      17
+     ],
+     "xy": [
+      97.0,
+      43.14
+     ]
+    },
+    {
+     "nama": "CS",
+     "cr": [
+      38,
+      16
+     ],
+     "xy": [
+      97.0,
+      40.6
+     ]
+    },
+    {
+     "nama": "RESET",
+     "cr": [
+      38,
+      15
+     ],
+     "xy": [
+      97.0,
+      38.06
+     ]
+    },
+    {
+     "nama": "DC",
+     "cr": [
+      38,
+      14
+     ],
+     "xy": [
+      97.0,
+      35.52
+     ]
+    },
+    {
+     "nama": "SDI",
+     "cr": [
+      38,
+      13
+     ],
+     "xy": [
+      97.0,
+      32.98
+     ]
+    },
+    {
+     "nama": "SCK",
+     "cr": [
+      38,
+      12
+     ],
+     "xy": [
+      97.0,
+      30.44
+     ]
+    },
+    {
+     "nama": "LED",
+     "cr": [
+      38,
+      11
+     ],
+     "xy": [
+      97.0,
+      27.9
+     ]
+    },
+    {
+     "nama": "SDO",
+     "cr": [
+      38,
+      10
+     ],
+     "xy": [
+      97.0,
+      25.36
+     ]
+    },
+    {
+     "nama": "T_CLK",
+     "cr": [
+      38,
+      9
+     ],
+     "xy": [
+      97.0,
+      22.82
+     ]
+    },
+    {
+     "nama": "T_CS",
+     "cr": [
+      38,
+      8
+     ],
+     "xy": [
+      97.0,
+      20.28
+     ]
+    },
+    {
+     "nama": "T_DIN",
+     "cr": [
+      38,
+      7
+     ],
+     "xy": [
+      97.0,
+      17.74
+     ]
+    },
+    {
+     "nama": "T_DO",
+     "cr": [
+      38,
+      6
+     ],
+     "xy": [
+      97.0,
+      15.2
+     ]
+    },
+    {
+     "nama": "T_IRQ",
+     "cr": [
+      38,
+      5
+     ],
+     "xy": [
+      97.0,
+      12.66
+     ]
+    }
+   ]
+  },
+  {
+   "id": "J4",
+   "nama": "Soket RC522",
+   "jenis": "soket",
+   "sisi": "depan",
+   "catatan": "Header female 1x8, dipasang di DEPAN. SDA paling bawah",
+   "pin": [
+    {
+     "nama": "SDA",
+     "cr": [
+      31,
+      35
+     ],
+     "xy": [
+      79.22,
+      88.86
+     ]
+    },
+    {
+     "nama": "SCK",
+     "cr": [
+      31,
+      34
+     ],
+     "xy": [
+      79.22,
+      86.32
+     ]
+    },
+    {
+     "nama": "MOSI",
+     "cr": [
+      31,
+      33
+     ],
+     "xy": [
+      79.22,
+      83.78
+     ]
+    },
+    {
+     "nama": "MISO",
+     "cr": [
+      31,
+      32
+     ],
+     "xy": [
+      79.22,
+      81.24
+     ]
+    },
+    {
+     "nama": "IRQ",
+     "cr": [
+      31,
+      31
+     ],
+     "xy": [
+      79.22,
+      78.7
+     ]
+    },
+    {
+     "nama": "GND",
+     "cr": [
+      31,
+      30
+     ],
+     "xy": [
+      79.22,
+      76.16
+     ]
+    },
+    {
+     "nama": "RST",
+     "cr": [
+      31,
+      29
+     ],
+     "xy": [
+      79.22,
+      73.62
+     ]
+    },
+    {
+     "nama": "3.3V",
+     "cr": [
+      31,
+      28
+     ],
+     "xy": [
+      79.22,
+      71.08
+     ]
+    }
+   ]
+  },
+  {
+   "id": "LED",
+   "nama": "LED RGB",
+   "jenis": "led",
+   "sisi": "depan",
+   "nilai": "5 mm katoda bersama",
+   "catatan": "Kubah LED +- 13 mm di atas papan (masuk tabung cahaya casing). Kaki terpanjang = K",
+   "pin": [
+    {
+     "nama": "R",
+     "cr": [
+      2,
+      25
+     ],
+     "xy": [
+      5.56,
+      63.46
+     ]
+    },
+    {
+     "nama": "K",
+     "cr": [
+      3,
+      25
+     ],
+     "xy": [
+      8.1,
+      63.46
+     ]
+    },
+    {
+     "nama": "G",
+     "cr": [
+      4,
+      25
+     ],
+     "xy": [
+      10.64,
+      63.46
+     ]
+    },
+    {
+     "nama": "B",
+     "cr": [
+      5,
+      25
+     ],
+     "xy": [
+      13.18,
+      63.46
+     ]
+    }
+   ]
+  },
+  {
+   "id": "R1",
+   "nama": "Resistor LED merah",
+   "jenis": "resistor",
+   "sisi": "depan",
+   "nilai": "220 ohm",
+   "catatan": "",
+   "pin": [
+    {
+     "nama": "1",
+     "cr": [
+      2,
+      28
+     ],
+     "xy": [
+      5.56,
+      71.08
+     ]
+    },
+    {
+     "nama": "2",
+     "cr": [
+      2,
+      32
+     ],
+     "xy": [
+      5.56,
+      81.24
+     ]
+    }
+   ]
+  },
+  {
+   "id": "R2",
+   "nama": "Resistor LED hijau",
+   "jenis": "resistor",
+   "sisi": "depan",
+   "nilai": "220 ohm",
+   "catatan": "",
+   "pin": [
+    {
+     "nama": "1",
+     "cr": [
+      4,
+      28
+     ],
+     "xy": [
+      10.64,
+      71.08
+     ]
+    },
+    {
+     "nama": "2",
+     "cr": [
+      4,
+      32
+     ],
+     "xy": [
+      10.64,
+      81.24
+     ]
+    }
+   ]
+  },
+  {
+   "id": "R3",
+   "nama": "Resistor LED biru",
+   "jenis": "resistor",
+   "sisi": "depan",
+   "nilai": "220 ohm",
+   "catatan": "",
+   "pin": [
+    {
+     "nama": "1",
+     "cr": [
+      6,
+      28
+     ],
+     "xy": [
+      15.72,
+      71.08
+     ]
+    },
+    {
+     "nama": "2",
+     "cr": [
+      6,
+      32
+     ],
+     "xy": [
+      15.72,
+      81.24
+     ]
+    }
+   ]
+  },
+  {
+   "id": "R4",
+   "nama": "Resistor basis transistor",
+   "jenis": "resistor",
+   "sisi": "depan",
+   "nilai": "1 kohm",
+   "catatan": "",
+   "pin": [
+    {
+     "nama": "1",
+     "cr": [
+      33,
+      34
+     ],
+     "xy": [
+      84.3,
+      86.32
+     ]
+    },
+    {
+     "nama": "2",
+     "cr": [
+      37,
+      34
+     ],
+     "xy": [
+      94.46,
+      86.32
+     ]
+    }
+   ]
+  },
+  {
+   "id": "R5",
+   "nama": "Resistor penarik basis",
+   "jenis": "resistor",
+   "sisi": "depan",
+   "nilai": "10 kohm",
+   "catatan": "",
+   "pin": [
+    {
+     "nama": "1",
+     "cr": [
+      33,
+      36
+     ],
+     "xy": [
+      84.3,
+      91.4
+     ]
+    },
+    {
+     "nama": "2",
+     "cr": [
+      37,
+      36
+     ],
+     "xy": [
+      94.46,
+      91.4
+     ]
+    }
+   ]
+  },
+  {
+   "id": "C1",
+   "nama": "Elco penstabil daya",
+   "jenis": "elco",
+   "sisi": "depan",
+   "nilai": "220 uF 25 V",
+   "catatan": "Kaki panjang (+) di kolom 5, sisi bergaris (-) di kolom 3. Rentangkan kaki ke jarak 2 lubang",
+   "pin": [
+    {
+     "nama": "+",
+     "cr": [
+      5,
+      35
+     ],
+     "xy": [
+      13.18,
+      88.86
+     ]
+    },
+    {
+     "nama": "-",
+     "cr": [
+      3,
+      35
+     ],
+     "xy": [
+      8.1,
+      88.86
+     ]
+    }
+   ]
+  },
+  {
+   "id": "C2",
+   "nama": "Keramik dekat LCD",
+   "jenis": "keramik",
+   "sisi": "depan",
+   "nilai": "47 nF (473)",
+   "catatan": "Bebas arah. Kaki dirapatkan ke 2 lubang bersebelahan",
+   "pin": [
+    {
+     "nama": "1",
+     "cr": [
+      37,
+      17
+     ],
+     "xy": [
+      94.46,
+      43.14
+     ]
+    },
+    {
+     "nama": "2",
+     "cr": [
+      37,
+      18
+     ],
+     "xy": [
+      94.46,
+      45.68
+     ]
+    }
+   ]
+  },
+  {
+   "id": "C3",
+   "nama": "Elco dekat RC522",
+   "jenis": "elco",
+   "sisi": "depan",
+   "nilai": "22 uF 100 V",
+   "catatan": "Kaki panjang (+) di kolom 37, sisi bergaris (-) di kolom 38",
+   "pin": [
+    {
+     "nama": "+",
+     "cr": [
+      37,
+      32
+     ],
+     "xy": [
+      94.46,
+      81.24
+     ]
+    },
+    {
+     "nama": "-",
+     "cr": [
+      38,
+      32
+     ],
+     "xy": [
+      97.0,
+      81.24
+     ]
+    }
+   ]
+  },
+  {
+   "id": "C4",
+   "nama": "Keramik dekat RC522",
+   "jenis": "keramik",
+   "sisi": "depan",
+   "nilai": "47 nF (473)",
+   "catatan": "Bebas arah",
+   "pin": [
+    {
+     "nama": "1",
+     "cr": [
+      32,
+      28
+     ],
+     "xy": [
+      81.76,
+      71.08
+     ]
+    },
+    {
+     "nama": "2",
+     "cr": [
+      32,
+      30
+     ],
+     "xy": [
+      81.76,
+      76.16
+     ]
+    }
+   ]
+  },
+  {
+   "id": "D1",
+   "nama": "Dioda pelindung buzzer",
+   "jenis": "dioda",
+   "sisi": "depan",
+   "nilai": "FR107 / 1N4007",
+   "catatan": "Sisi BERGARIS (K) di kolom 34",
+   "pin": [
+    {
+     "nama": "K",
+     "cr": [
+      34,
+      30
+     ],
+     "xy": [
+      86.84,
+      76.16
+     ]
+    },
+    {
+     "nama": "A",
+     "cr": [
+      38,
+      30
+     ],
+     "xy": [
+      97.0,
+      76.16
+     ]
+    }
+   ]
+  },
+  {
+   "id": "BZ1",
+   "nama": "Buzzer aktif",
+   "jenis": "buzzer",
+   "sisi": "depan",
+   "nilai": "aktif 12 mm",
+   "catatan": "Kaki + (lebih panjang, ada tanda +) di kolom 34",
+   "pin": [
+    {
+     "nama": "+",
+     "cr": [
+      34,
+      26
+     ],
+     "xy": [
+      86.84,
+      66.0
+     ]
+    },
+    {
+     "nama": "-",
+     "cr": [
+      37,
+      26
+     ],
+     "xy": [
+      94.46,
+      66.0
+     ]
+    }
+   ]
+  },
+  {
+   "id": "Q1",
+   "nama": "Transistor buzzer",
+   "jenis": "transistor",
+   "sisi": "depan",
+   "nilai": "2N3904 (atau S8050)",
+   "catatan": "Sisi DATAR menghadap ke tepi BAWAH papan. Kaki kiri-ke-kanan: E, B, C",
+   "pin": [
+    {
+     "nama": "E",
+     "cr": [
+      34,
+      32
+     ],
+     "xy": [
+      86.84,
+      81.24
+     ]
+    },
+    {
+     "nama": "B",
+     "cr": [
+      35,
+      32
+     ],
+     "xy": [
+      89.38,
+      81.24
+     ]
+    },
+    {
+     "nama": "C",
+     "cr": [
+      36,
+      32
+     ],
+     "xy": [
+      91.92,
+      81.24
+     ]
+    }
+   ]
+  }
+ ],
+ "modul": [
+  {
+   "id": "m-lcd",
+   "nama": "LCD 3.5\"",
+   "sisi": "depan",
+   "kotak": [
+    1.0,
+    1.0,
+    99.0,
+    57.34
+   ]
+  },
+  {
+   "id": "m-rc522",
+   "nama": "RC522",
+   "sisi": "depan",
+   "kotak": [
+    21.120000000000005,
+    58.36,
+    81.12,
+    98.36
+   ]
+  },
+  {
+   "id": "m-esp32",
+   "nama": "ESP32 DevKit",
+   "sisi": "belakang",
+   "kotak": [
+    0.74,
+    13.9,
+    52.24,
+    41.9
+   ]
+  }
+ ],
+ "jembatan": [
+  {
+   "id": "T-J2-D23",
+   "sisi": "depan",
+   "dari": [
+    18,
+    6
+   ],
+   "ke": [
+    18,
+    5
+   ],
+   "label": "J2 D23 ke lubang tembus"
+  },
+  {
+   "id": "T-J2-D22",
+   "sisi": "depan",
+   "dari": [
+    17,
+    6
+   ],
+   "ke": [
+    17,
+    5
+   ],
+   "label": "J2 D22 ke lubang tembus"
+  },
+  {
+   "id": "T-J2-D21",
+   "sisi": "depan",
+   "dari": [
+    14,
+    6
+   ],
+   "ke": [
+    14,
+    5
+   ],
+   "label": "J2 D21 ke lubang tembus"
+  },
+  {
+   "id": "T-J2-D19",
+   "sisi": "depan",
+   "dari": [
+    13,
+    6
+   ],
+   "ke": [
+    13,
+    5
+   ],
+   "label": "J2 D19 ke lubang tembus"
+  },
+  {
+   "id": "T-J2-D18",
+   "sisi": "depan",
+   "dari": [
+    12,
+    6
+   ],
+   "ke": [
+    12,
+    5
+   ],
+   "label": "J2 D18 ke lubang tembus"
+  },
+  {
+   "id": "T-J2-D5",
+   "sisi": "depan",
+   "dari": [
+    11,
+    6
+   ],
+   "ke": [
+    11,
+    5
+   ],
+   "label": "J2 D5 ke lubang tembus"
+  },
+  {
+   "id": "T-J2-D17",
+   "sisi": "depan",
+   "dari": [
+    10,
+    6
+   ],
+   "ke": [
+    10,
+    5
+   ],
+   "label": "J2 D17 ke lubang tembus"
+  },
+  {
+   "id": "T-J2-D16",
+   "sisi": "depan",
+   "dari": [
+    9,
+    6
+   ],
+   "ke": [
+    9,
+    5
+   ],
+   "label": "J2 D16 ke lubang tembus"
+  },
+  {
+   "id": "T-J2-D4",
+   "sisi": "depan",
+   "dari": [
+    8,
+    6
+   ],
+   "ke": [
+    8,
+    5
+   ],
+   "label": "J2 D4 ke lubang tembus"
+  },
+  {
+   "id": "T-J2-D2",
+   "sisi": "depan",
+   "dari": [
+    7,
+    6
+   ],
+   "ke": [
+    7,
+    5
+   ],
+   "label": "J2 D2 ke lubang tembus"
+  },
+  {
+   "id": "T-J2-D15",
+   "sisi": "depan",
+   "dari": [
+    6,
+    6
+   ],
+   "ke": [
+    6,
+    5
+   ],
+   "label": "J2 D15 ke lubang tembus"
+  },
+  {
+   "id": "T-J2-GND",
+   "sisi": "depan",
+   "dari": [
+    5,
+    6
+   ],
+   "ke": [
+    5,
+    5
+   ],
+   "label": "J2 GND ke lubang tembus"
+  },
+  {
+   "id": "T-J2-3V3",
+   "sisi": "depan",
+   "dari": [
+    4,
+    6
+   ],
+   "ke": [
+    4,
+    5
+   ],
+   "label": "J2 3V3 ke lubang tembus"
+  },
+  {
+   "id": "T-J1-D35",
+   "sisi": "depan",
+   "dari": [
+    14,
+    16
+   ],
+   "ke": [
+    14,
+    17
+   ],
+   "label": "J1 D35 ke lubang tembus"
+  },
+  {
+   "id": "T-J1-D32",
+   "sisi": "depan",
+   "dari": [
+    13,
+    16
+   ],
+   "ke": [
+    13,
+    17
+   ],
+   "label": "J1 D32 ke lubang tembus"
+  },
+  {
+   "id": "T-J1-D33",
+   "sisi": "depan",
+   "dari": [
+    12,
+    16
+   ],
+   "ke": [
+    12,
+    17
+   ],
+   "label": "J1 D33 ke lubang tembus"
+  },
+  {
+   "id": "T-J1-D25",
+   "sisi": "depan",
+   "dari": [
+    11,
+    16
+   ],
+   "ke": [
+    11,
+    17
+   ],
+   "label": "J1 D25 ke lubang tembus"
+  },
+  {
+   "id": "T-J1-D26",
+   "sisi": "depan",
+   "dari": [
+    10,
+    16
+   ],
+   "ke": [
+    10,
+    17
+   ],
+   "label": "J1 D26 ke lubang tembus"
+  },
+  {
+   "id": "T-J1-D27",
+   "sisi": "depan",
+   "dari": [
+    9,
+    16
+   ],
+   "ke": [
+    9,
+    17
+   ],
+   "label": "J1 D27 ke lubang tembus"
+  },
+  {
+   "id": "T-J1-D14",
+   "sisi": "depan",
+   "dari": [
+    8,
+    16
+   ],
+   "ke": [
+    8,
+    17
+   ],
+   "label": "J1 D14 ke lubang tembus"
+  },
+  {
+   "id": "T-J1-D13",
+   "sisi": "depan",
+   "dari": [
+    6,
+    16
+   ],
+   "ke": [
+    6,
+    17
+   ],
+   "label": "J1 D13 ke lubang tembus"
+  },
+  {
+   "id": "T-J1-GND",
+   "sisi": "depan",
+   "dari": [
+    5,
+    16
+   ],
+   "ke": [
+    5,
+    17
+   ],
+   "label": "J1 GND ke lubang tembus"
+  },
+  {
+   "id": "JB-C2a",
+   "sisi": "belakang",
+   "dari": [
+    37,
+    17
+   ],
+   "ke": [
+    38,
+    17
+   ],
+   "label": "C2 ke GND LCD"
+  },
+  {
+   "id": "JB-C2b",
+   "sisi": "belakang",
+   "dari": [
+    37,
+    18
+   ],
+   "ke": [
+    38,
+    18
+   ],
+   "label": "C2 ke VCC LCD"
+  },
+  {
+   "id": "JB-C4a",
+   "sisi": "belakang",
+   "dari": [
+    32,
+    28
+   ],
+   "ke": [
+    31,
+    28
+   ],
+   "label": "C4 ke 3.3V RC522"
+  },
+  {
+   "id": "JB-C4b",
+   "sisi": "belakang",
+   "dari": [
+    32,
+    30
+   ],
+   "ke": [
+    31,
+    30
+   ],
+   "label": "C4 ke GND RC522"
+  }
+ ],
+ "penguat": [
+  {
+   "id": "S1",
+   "dari": [
+    33,
+    1
+   ],
+   "ke": [
+    34,
+    1
+   ]
+  },
+  {
+   "id": "S20",
+   "dari": [
+    33,
+    20
+   ],
+   "ke": [
+    34,
+    20
+   ]
+  },
+  {
+   "id": "S39",
+   "dari": [
+    33,
+    39
+   ],
+   "ke": [
+    34,
+    39
+   ]
+  }
+ ],
+ "kabel": [
+  {
+   "id": "P1",
+   "kelompok": "daya",
+   "warna": "merah",
+   "dari": [
+    4,
+    5
+   ],
+   "ke": [
+    37,
+    18
+   ],
+   "label": "3V3 ke LCD (lewat C2)",
+   "jalur": [
+    [
+     10.64,
+     12.66
+    ],
+    [
+     10.64,
+     3.0
+    ],
+    [
+     91.8,
+     3.0
+    ],
+    [
+     91.8,
+     45.68
+    ],
+    [
+     94.46,
+     45.68
+    ]
+   ]
+  },
+  {
+   "id": "G8",
+   "kelompok": "gnd",
+   "warna": "hitam",
+   "dari": [
+    5,
+    5
+   ],
+   "ke": [
+    37,
+    17
+   ],
+   "label": "GND ke LCD (lewat C2)",
+   "jalur": [
+    [
+     13.18,
+     12.66
+    ],
+    [
+     13.18,
+     3.62
+    ],
+    [
+     91.2,
+     3.62
+    ],
+    [
+     91.2,
+     43.14
+    ],
+    [
+     94.46,
+     43.14
+    ]
+   ]
+  },
+  {
+   "id": "L8",
+   "kelompok": "lcd",
+   "warna": "hitam",
+   "dari": [
+    6,
+    5
+   ],
+   "ke": [
+    38,
+    8
+   ],
+   "label": "D15 ke T_CS",
+   "jalur": [
+    [
+     15.72,
+     12.66
+    ],
+    [
+     15.72,
+     4.24
+    ],
+    [
+     90.6,
+     4.24
+    ],
+    [
+     90.6,
+     20.28
+    ],
+    [
+     97.0,
+     20.28
+    ]
+   ]
+  },
+  {
+   "id": "L6",
+   "kelompok": "lcd",
+   "warna": "hitam",
+   "dari": [
+    7,
+    5
+   ],
+   "ke": [
+    38,
+    11
+   ],
+   "label": "D2 ke LED (lampu layar)",
+   "jalur": [
+    [
+     18.26,
+     12.66
+    ],
+    [
+     18.26,
+     4.86
+    ],
+    [
+     90.0,
+     4.86
+    ],
+    [
+     90.0,
+     27.9
+    ],
+    [
+     97.0,
+     27.9
+    ]
+   ]
+  },
+  {
+   "id": "L2",
+   "kelompok": "lcd",
+   "warna": "hitam",
+   "dari": [
+    8,
+    5
+   ],
+   "ke": [
+    38,
+    15
+   ],
+   "label": "D4 ke RESET",
+   "jalur": [
+    [
+     20.8,
+     12.66
+    ],
+    [
+     20.8,
+     5.48
+    ],
+    [
+     89.4,
+     5.48
+    ],
+    [
+     89.4,
+     38.06
+    ],
+    [
+     97.0,
+     38.06
+    ]
+   ]
+  },
+  {
+   "id": "L3",
+   "kelompok": "lcd",
+   "warna": "hitam",
+   "dari": [
+    9,
+    5
+   ],
+   "ke": [
+    38,
+    14
+   ],
+   "label": "D16 ke DC",
+   "jalur": [
+    [
+     23.34,
+     12.66
+    ],
+    [
+     23.34,
+     6.1
+    ],
+    [
+     88.8,
+     6.1
+    ],
+    [
+     88.8,
+     35.52
+    ],
+    [
+     97.0,
+     35.52
+    ]
+   ]
+  },
+  {
+   "id": "B1",
+   "kelompok": "buzzer",
+   "warna": "hitam",
+   "dari": [
+    10,
+    5
+   ],
+   "ke": [
+    33,
+    34
+   ],
+   "label": "D17 ke R4 (buzzer)",
+   "jalur": [
+    [
+     25.88,
+     12.66
+    ],
+    [
+     25.88,
+     6.72
+    ],
+    [
+     83.2,
+     6.72
+    ],
+    [
+     83.2,
+     86.32
+    ],
+    [
+     84.3,
+     86.32
+    ]
+   ]
+  },
+  {
+   "id": "L1",
+   "kelompok": "lcd",
+   "warna": "hitam",
+   "dari": [
+    11,
+    5
+   ],
+   "ke": [
+    38,
+    16
+   ],
+   "label": "D5 ke CS",
+   "jalur": [
+    [
+     28.42,
+     12.66
+    ],
+    [
+     28.42,
+     7.34
+    ],
+    [
+     87.6,
+     7.34
+    ],
+    [
+     87.6,
+     40.6
+    ],
+    [
+     97.0,
+     40.6
+    ]
+   ]
+  },
+  {
+   "id": "L5",
+   "kelompok": "lcd",
+   "warna": "hitam",
+   "dari": [
+    12,
+    5
+   ],
+   "ke": [
+    38,
+    12
+   ],
+   "label": "D18 ke SCK",
+   "jalur": [
+    [
+     30.96,
+     12.66
+    ],
+    [
+     30.96,
+     7.96
+    ],
+    [
+     87.0,
+     7.96
+    ],
+    [
+     87.0,
+     30.44
+    ],
+    [
+     97.0,
+     30.44
+    ]
+   ]
+  },
+  {
+   "id": "L10",
+   "kelompok": "lcd",
+   "warna": "hitam",
+   "dari": [
+    13,
+    5
+   ],
+   "ke": [
+    38,
+    6
+   ],
+   "label": "D19 ke T_DO",
+   "jalur": [
+    [
+     33.5,
+     12.66
+    ],
+    [
+     33.5,
+     8.58
+    ],
+    [
+     86.4,
+     8.58
+    ],
+    [
+     86.4,
+     15.2
+    ],
+    [
+     97.0,
+     15.2
+    ]
+   ]
+  },
+  {
+   "id": "L9",
+   "kelompok": "lcd",
+   "warna": "hitam",
+   "dari": [
+    14,
+    5
+   ],
+   "ke": [
+    38,
+    7
+   ],
+   "label": "D21 ke T_DIN",
+   "jalur": [
+    [
+     36.04,
+     12.66
+    ],
+    [
+     36.04,
+     9.2
+    ],
+    [
+     85.8,
+     9.2
+    ],
+    [
+     85.8,
+     17.74
+    ],
+    [
+     97.0,
+     17.74
+    ]
+   ]
+  },
+  {
+   "id": "L7",
+   "kelompok": "lcd",
+   "warna": "hitam",
+   "dari": [
+    17,
+    5
+   ],
+   "ke": [
+    38,
+    9
+   ],
+   "label": "D22 ke T_CLK",
+   "jalur": [
+    [
+     43.66,
+     12.66
+    ],
+    [
+     43.66,
+     9.82
+    ],
+    [
+     85.2,
+     9.82
+    ],
+    [
+     85.2,
+     22.82
+    ],
+    [
+     97.0,
+     22.82
+    ]
+   ]
+  },
+  {
+   "id": "L4",
+   "kelompok": "lcd",
+   "warna": "hitam",
+   "dari": [
+    18,
+    5
+   ],
+   "ke": [
+    38,
+    13
+   ],
+   "label": "D23 ke SDI",
+   "jalur": [
+    [
+     46.2,
+     12.66
+    ],
+    [
+     46.2,
+     10.44
+    ],
+    [
+     84.6,
+     10.44
+    ],
+    [
+     84.6,
+     32.98
+    ],
+    [
+     97.0,
+     32.98
+    ]
+   ]
+  },
+  {
+   "id": "F4",
+   "kelompok": "rfid",
+   "warna": "hitam",
+   "dari": [
+    14,
+    17
+   ],
+   "ke": [
+    31,
+    32
+   ],
+   "label": "D35 ke MISO RC522",
+   "jalur": [
+    [
+     36.04,
+     43.14
+    ],
+    [
+     36.04,
+     45.2
+    ],
+    [
+     77.5,
+     45.2
+    ],
+    [
+     77.5,
+     81.24
+    ],
+    [
+     79.22,
+     81.24
+    ]
+   ]
+  },
+  {
+   "id": "F5",
+   "kelompok": "rfid",
+   "warna": "hitam",
+   "dari": [
+    13,
+    17
+   ],
+   "ke": [
+    31,
+    29
+   ],
+   "label": "D32 ke RST RC522",
+   "jalur": [
+    [
+     33.5,
+     43.14
+    ],
+    [
+     33.5,
+     45.9
+    ],
+    [
+     76.8,
+     45.9
+    ],
+    [
+     76.8,
+     73.62
+    ],
+    [
+     79.22,
+     73.62
+    ]
+   ]
+  },
+  {
+   "id": "F1",
+   "kelompok": "rfid",
+   "warna": "hitam",
+   "dari": [
+    12,
+    17
+   ],
+   "ke": [
+    31,
+    35
+   ],
+   "label": "D33 ke SDA RC522",
+   "jalur": [
+    [
+     30.96,
+     43.14
+    ],
+    [
+     30.96,
+     46.6
+    ],
+    [
+     76.1,
+     46.6
+    ],
+    [
+     76.1,
+     88.86
+    ],
+    [
+     79.22,
+     88.86
+    ]
+   ]
+  },
+  {
+   "id": "F2",
+   "kelompok": "rfid",
+   "warna": "hitam",
+   "dari": [
+    8,
+    17
+   ],
+   "ke": [
+    31,
+    34
+   ],
+   "label": "D14 ke SCK RC522",
+   "jalur": [
+    [
+     20.8,
+     43.14
+    ],
+    [
+     20.8,
+     47.3
+    ],
+    [
+     75.4,
+     47.3
+    ],
+    [
+     75.4,
+     86.32
+    ],
+    [
+     79.22,
+     86.32
+    ]
+   ]
+  },
+  {
+   "id": "F3",
+   "kelompok": "rfid",
+   "warna": "hitam",
+   "dari": [
+    6,
+    17
+   ],
+   "ke": [
+    31,
+    33
+   ],
+   "label": "D13 ke MOSI RC522",
+   "jalur": [
+    [
+     15.72,
+     43.14
+    ],
+    [
+     15.72,
+     48.0
+    ],
+    [
+     74.7,
+     48.0
+    ],
+    [
+     74.7,
+     83.78
+    ],
+    [
+     79.22,
+     83.78
+    ]
+   ]
+  },
+  {
+   "id": "G3",
+   "kelompok": "gnd",
+   "warna": "hitam",
+   "dari": [
+    5,
+    17
+   ],
+   "ke": [
+    31,
+    30
+   ],
+   "label": "GND ke GND RC522",
+   "jalur": [
+    [
+     13.18,
+     43.14
+    ],
+    [
+     13.18,
+     48.7
+    ],
+    [
+     74.0,
+     48.7
+    ],
+    [
+     74.0,
+     76.16
+    ],
+    [
+     79.22,
+     76.16
+    ]
+   ]
+  },
+  {
+   "id": "E1",
+   "kelompok": "led",
+   "warna": "hitam",
+   "dari": [
+    11,
+    17
+   ],
+   "ke": [
+    2,
+    32
+   ],
+   "label": "D25 ke R1",
+   "jalur": [
+    [
+     28.42,
+     43.14
+    ],
+    [
+     28.42,
+     50.0
+    ],
+    [
+     17.4,
+     50.0
+    ],
+    [
+     17.4,
+     85.0
+    ],
+    [
+     5.56,
+     85.0
+    ],
+    [
+     5.56,
+     81.24
+    ]
+   ]
+  },
+  {
+   "id": "E2",
+   "kelompok": "led",
+   "warna": "hitam",
+   "dari": [
+    10,
+    17
+   ],
+   "ke": [
+    4,
+    32
+   ],
+   "label": "D26 ke R2",
+   "jalur": [
+    [
+     25.88,
+     43.14
+    ],
+    [
+     25.88,
+     50.7
+    ],
+    [
+     18.1,
+     50.7
+    ],
+    [
+     18.1,
+     84.3
+    ],
+    [
+     10.64,
+     84.3
+    ],
+    [
+     10.64,
+     81.24
+    ]
+   ]
+  },
+  {
+   "id": "E3",
+   "kelompok": "led",
+   "warna": "hitam",
+   "dari": [
+    9,
+    17
+   ],
+   "ke": [
+    6,
+    32
+   ],
+   "label": "D27 ke R3",
+   "jalur": [
+    [
+     23.34,
+     43.14
+    ],
+    [
+     23.34,
+     51.4
+    ],
+    [
+     18.8,
+     51.4
+    ],
+    [
+     18.8,
+     83.6
+    ],
+    [
+     15.72,
+     83.6
+    ],
+    [
+     15.72,
+     81.24
+    ]
+   ]
+  },
+  {
+   "id": "E4",
+   "kelompok": "led",
+   "warna": "hitam",
+   "dari": [
+    2,
+    25
+   ],
+   "ke": [
+    2,
+    28
+   ],
+   "label": "LED kaki R ke R1",
+   "jalur": [
+    [
+     5.56,
+     63.46
+    ],
+    [
+     5.56,
+     71.08
+    ]
+   ]
+  },
+  {
+   "id": "E5",
+   "kelompok": "led",
+   "warna": "hitam",
+   "dari": [
+    4,
+    25
+   ],
+   "ke": [
+    4,
+    28
+   ],
+   "label": "LED kaki G ke R2",
+   "jalur": [
+    [
+     10.64,
+     63.46
+    ],
+    [
+     10.64,
+     71.08
+    ]
+   ]
+  },
+  {
+   "id": "E6",
+   "kelompok": "led",
+   "warna": "hitam",
+   "dari": [
+    5,
+    25
+   ],
+   "ke": [
+    6,
+    28
+   ],
+   "label": "LED kaki B ke R3",
+   "jalur": [
+    [
+     13.18,
+     63.46
+    ],
+    [
+     13.18,
+     67.0
+    ],
+    [
+     15.72,
+     67.0
+    ],
+    [
+     15.72,
+     71.08
+    ]
+   ]
+  },
+  {
+   "id": "G1",
+   "kelompok": "gnd",
+   "warna": "hitam",
+   "dari": [
+    5,
+    17
+   ],
+   "ke": [
+    3,
+    25
+   ],
+   "label": "GND ke LED kaki K",
+   "jalur": [
+    [
+     13.18,
+     43.14
+    ],
+    [
+     13.18,
+     58.5
+    ],
+    [
+     8.1,
+     58.5
+    ],
+    [
+     8.1,
+     63.46
+    ]
+   ]
+  },
+  {
+   "id": "G2",
+   "kelompok": "gnd",
+   "warna": "hitam",
+   "dari": [
+    3,
+    25
+   ],
+   "ke": [
+    3,
+    35
+   ],
+   "label": "LED K ke C1 (-)",
+   "jalur": [
+    [
+     8.1,
+     63.46
+    ],
+    [
+     8.1,
+     88.86
+    ]
+   ]
+  },
+  {
+   "id": "P3",
+   "kelompok": "daya",
+   "warna": "merah",
+   "dari": [
+    4,
+    5
+   ],
+   "ke": [
+    5,
+    35
+   ],
+   "label": "3V3 ke C1 (+)",
+   "jalur": [
+    [
+     10.64,
+     12.66
+    ],
+    [
+     8.6,
+     12.66
+    ],
+    [
+     8.6,
+     59.5
+    ],
+    [
+     14.45,
+     59.5
+    ],
+    [
+     14.45,
+     86.6
+    ],
+    [
+     13.18,
+     86.6
+    ],
+    [
+     13.18,
+     88.86
+    ]
+   ]
+  },
+  {
+   "id": "P4",
+   "kelompok": "daya",
+   "warna": "merah",
+   "dari": [
+    37,
+    18
+   ],
+   "ke": [
+    32,
+    28
+   ],
+   "label": "3V3 LCD ke C4 (RC522)",
+   "jalur": [
+    [
+     94.46,
+     45.68
+    ],
+    [
+     94.46,
+     49.5
+    ],
+    [
+     82.6,
+     49.5
+    ],
+    [
+     82.6,
+     71.08
+    ],
+    [
+     81.76,
+     71.08
+    ]
+   ]
+  },
+  {
+   "id": "P5",
+   "kelompok": "daya",
+   "warna": "merah",
+   "dari": [
+    32,
+    28
+   ],
+   "ke": [
+    34,
+    26
+   ],
+   "label": "3V3 ke buzzer (+)",
+   "jalur": [
+    [
+     81.76,
+     71.08
+    ],
+    [
+     81.76,
+     68.5
+    ],
+    [
+     86.84,
+     68.5
+    ],
+    [
+     86.84,
+     66.0
+    ]
+   ]
+  },
+  {
+   "id": "P6",
+   "kelompok": "daya",
+   "warna": "merah",
+   "dari": [
+    34,
+    26
+   ],
+   "ke": [
+    34,
+    30
+   ],
+   "label": "Buzzer (+) ke D1 bergaris",
+   "jalur": [
+    [
+     86.84,
+     66.0
+    ],
+    [
+     86.84,
+     76.16
+    ]
+   ]
+  },
+  {
+   "id": "P7",
+   "kelompok": "daya",
+   "warna": "merah",
+   "dari": [
+    34,
+    30
+   ],
+   "ke": [
+    37,
+    32
+   ],
+   "label": "D1 bergaris ke C3 (+)",
+   "jalur": [
+    [
+     86.84,
+     76.16
+    ],
+    [
+     86.84,
+     78.2
+    ],
+    [
+     94.46,
+     78.2
+    ],
+    [
+     94.46,
+     81.24
+    ]
+   ]
+  },
+  {
+   "id": "G4",
+   "kelompok": "gnd",
+   "warna": "hitam",
+   "dari": [
+    32,
+    30
+   ],
+   "ke": [
+    34,
+    32
+   ],
+   "label": "GND RC522 ke Q1 E",
+   "jalur": [
+    [
+     81.76,
+     76.16
+    ],
+    [
+     81.76,
+     80.0
+    ],
+    [
+     86.84,
+     80.0
+    ],
+    [
+     86.84,
+     81.24
+    ]
+   ]
+  },
+  {
+   "id": "G5",
+   "kelompok": "gnd",
+   "warna": "hitam",
+   "dari": [
+    34,
+    32
+   ],
+   "ke": [
+    37,
+    36
+   ],
+   "label": "Q1 E ke R5",
+   "jalur": [
+    [
+     86.84,
+     81.24
+    ],
+    [
+     86.84,
+     89.4
+    ],
+    [
+     94.46,
+     89.4
+    ],
+    [
+     94.46,
+     91.4
+    ]
+   ]
+  },
+  {
+   "id": "G6",
+   "kelompok": "gnd",
+   "warna": "hitam",
+   "dari": [
+    37,
+    36
+   ],
+   "ke": [
+    38,
+    32
+   ],
+   "label": "R5 ke C3 (-)",
+   "jalur": [
+    [
+     94.46,
+     91.4
+    ],
+    [
+     97.0,
+     91.4
+    ],
+    [
+     97.0,
+     81.24
+    ]
+   ]
+  },
+  {
+   "id": "B2",
+   "kelompok": "buzzer",
+   "warna": "hitam",
+   "dari": [
+    37,
+    34
+   ],
+   "ke": [
+    35,
+    32
+   ],
+   "label": "R4 ke Q1 B",
+   "jalur": [
+    [
+     94.46,
+     86.32
+    ],
+    [
+     94.46,
+     84.0
+    ],
+    [
+     89.38,
+     84.0
+    ],
+    [
+     89.38,
+     81.24
+    ]
+   ]
+  },
+  {
+   "id": "B3",
+   "kelompok": "buzzer",
+   "warna": "hitam",
+   "dari": [
+    33,
+    36
+   ],
+   "ke": [
+    35,
+    32
+   ],
+   "label": "R5 ke Q1 B",
+   "jalur": [
+    [
+     84.3,
+     91.4
+    ],
+    [
+     86.0,
+     91.4
+    ],
+    [
+     86.0,
+     83.0
+    ],
+    [
+     89.38,
+     83.0
+    ],
+    [
+     89.38,
+     81.24
+    ]
+   ]
+  },
+  {
+   "id": "B4",
+   "kelompok": "buzzer",
+   "warna": "hitam",
+   "dari": [
+    37,
+    26
+   ],
+   "ke": [
+    38,
+    30
+   ],
+   "label": "Buzzer (-) ke D1 polos",
+   "jalur": [
+    [
+     94.46,
+     66.0
+    ],
+    [
+     97.0,
+     66.0
+    ],
+    [
+     97.0,
+     76.16
+    ]
+   ]
+  },
+  {
+   "id": "B5",
+   "kelompok": "buzzer",
+   "warna": "hitam",
+   "dari": [
+    38,
+    30
+   ],
+   "ke": [
+    36,
+    32
+   ],
+   "label": "D1 polos ke Q1 C",
+   "jalur": [
+    [
+     97.0,
+     76.16
+    ],
+    [
+     97.0,
+     79.0
+    ],
+    [
+     91.92,
+     79.0
+    ],
+    [
+     91.92,
+     81.24
+    ]
+   ]
+  }
+ ]
+}

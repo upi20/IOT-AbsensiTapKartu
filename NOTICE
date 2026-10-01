@@ -1,0 +1,11 @@
+Absensi RFID Terintegrasi
+Copyright 2026 upi20 dan para kontributor
+
+Proyek ini dilisensikan di bawah Apache License, Version 2.0 (lihat berkas LICENSE).
+
+Bagian pihak ketiga yang dipakai tetapi tidak disertakan di repositori ini
+(diunduh terpisah sesuai lisensinya masing-masing):
+- Laravel dan paket Composer di api/ (lisensi MIT, lihat api/composer.lock)
+- Pustaka Arduino: TFT_eSPI, RFID_MFRC522v2, ArduinoJson, TJpg_Decoder, XPT2046_Touchscreen
+- Footprint KiCad bawaan (KiCad Libraries, CC-BY-SA 4.0 dengan pengecualian)
+- Freerouting (GPL-3.0) dan Eclipse Temurin JRE, diunduh oleh hardware/pcb/buat.sh ke hardware/pcb/alat/

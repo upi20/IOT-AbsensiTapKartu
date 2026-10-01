@@ -1,0 +1,50 @@
+# Sistem operasi & editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# Asisten AI (konfigurasi lokal)
+.claude/
+**/.claude/
+**/.factory/
+.cursor/
+CLAUDE.local.md
+
+# Rahasia
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Log, cache, Python
+*.log
+*.tmp
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# KiCad
+*.kicad_prl
+fp-info-cache
+*-backups/
+*.lck
+_autosave-*
+
+# Alat unduhan untuk menarik jalur PCB (diunduh otomatis oleh hardware/pcb/buat.sh)
+hardware/pcb/alat/
+
+# Hasil build Arduino
+build/
+*.bin
+*.elf
+
+# Arsip pribadi (dokumen & sketsa lama, tidak dipublikasikan)
+arsip/
+
+# Foto mentah (bisa berisi lokasi GPS)
+*.HEIC
+*.heic

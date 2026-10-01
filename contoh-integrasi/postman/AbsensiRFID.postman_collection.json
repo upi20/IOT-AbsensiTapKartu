@@ -1,0 +1,2380 @@
+{
+  "info": {
+    "_postman_id": "4b95ffa2-8fd7-56a2-ad62-00dfe3ca7555",
+    "name": "Absensi RFID Terintegrasi – API alat (spesifikasi v1)",
+    "description": "Uji semua endpoint alat absensi (doc/spesifikasi-api.md, versi 1). Pilih environment \"Absensi RFID Terintegrasi\", lalu Run collection.\n\nPERINGATAN: kasus tap mengirim tap sungguhan dan membuat baris absensi. Jalankan di server uji (contoh PHP/Node, base_url http://localhost:8080), bukan server live.\n\nUrutan penting: jalankan seluruh koleksi dari atas. Kasus \"Tap – masuk\" butuh kartu yang belum tap hari ini, dan kasus \"pulang\" menunggu 61 detik.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "GET /ping",
+      "item": [
+        {
+          "name": "Ping – berhasil",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const d = pm.response.json();",
+                  "pm.test('\"ok\" = true', () => pm.expect(d.ok).to.eql(true));",
+                  "pm.test('\"server_time\" ISO 8601 + zona waktu (disarankan)', () => {",
+                  "  if (d.server_time === undefined) return;",
+                  "  pm.expect(d.server_time).to.match(/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?([+-]\\d{2}:\\d{2}|Z)$/);",
+                  "});",
+                  "pm.test('\"config\" sesuai aturan (kalau ada)', () => {",
+                  "  if (d.config === undefined) return;",
+                  "  pm.expect(d.config).to.be.an('object');",
+                  "  if ('pin' in d.config) pm.expect(d.config.pin).to.match(/^\\d{4,8}$/);",
+                  "  if ('title' in d.config) { pm.expect(d.config.title).to.be.a('string'); pm.expect(d.config.title.length).to.be.at.most(30); }",
+                  "  if ('announcements_rev' in d.config) pm.expect(d.config.announcements_rev).to.be.a('string');",
+                  "  if ('dim_after' in d.config) { pm.expect(Number.isInteger(d.config.dim_after)).to.be.true; pm.expect(d.config.dim_after === 0 || (d.config.dim_after >= 10 && d.config.dim_after <= 3600)).to.be.true; }",
+                  "  if ('dim_level' in d.config) { pm.expect(Number.isInteger(d.config.dim_level)).to.be.true; pm.expect(d.config.dim_level).to.be.within(0, 100); }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              },
+              {
+                "key": "X-Device-ID",
+                "value": "{{device_id}}"
+              },
+              {
+                "key": "X-Spec-Version",
+                "value": "1"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/ping",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "ping"
+              ]
+            },
+            "description": "Tombol \"Tes koneksi\" di alat. `config.pin` hanya dikirim kalau server mengatur PIN untuk alat ini. Contoh 429: server boleh membatasi jumlah request; alat menganggapnya gagal dan mencoba lagi nanti (tidak dipicu oleh koleksi ini)."
+          },
+          "response": [
+            {
+              "name": "Berhasil",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "X-API-Key",
+                    "value": "{{api_key}}"
+                  },
+                  {
+                    "key": "X-Device-ID",
+                    "value": "{{device_id}}"
+                  },
+                  {
+                    "key": "X-Spec-Version",
+                    "value": "1"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/ping",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "ping"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"ok\": true,\n  \"message\": \"Terhubung ke Aplikasi Contoh\",\n  \"server_time\": \"2026-10-01T07:45:12+07:00\",\n  \"config\": {\n    \"title\": \"Aplikasi Contoh\",\n    \"dim_after\": 60,\n    \"dim_level\": 20,\n    \"announcements_rev\": \"1\",\n    \"pin\": \"4321\"\n  }\n}"
+            },
+            {
+              "name": "Terlalu banyak request (429)",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "X-API-Key",
+                    "value": "{{api_key}}"
+                  },
+                  {
+                    "key": "X-Device-ID",
+                    "value": "{{device_id}}"
+                  },
+                  {
+                    "key": "X-Spec-Version",
+                    "value": "1"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/ping",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "ping"
+                  ]
+                }
+              },
+              "status": "Too Many Requests",
+              "code": 429,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"ok\": false,\n  \"message\": \"Terlalu banyak permintaan\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Ping – API key salah (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401', () => pm.response.to.have.status(401));",
+                  "const d = pm.response.json();",
+                  "pm.test('\"ok\" = false', () => pm.expect(d.ok).to.eql(false));",
+                  "pm.test('\"message\" berupa teks', () => pm.expect(d.message).to.be.a('string'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "kunci-salah-xyz"
+              },
+              {
+                "key": "X-Device-ID",
+                "value": "{{device_id}}"
+              },
+              {
+                "key": "X-Spec-Version",
+                "value": "1"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/ping",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "ping"
+              ]
+            },
+            "description": "API key salah wajib dibalas HTTP 401. Tap yang ditolak 401 tidak masuk antrean alat."
+          },
+          "response": [
+            {
+              "name": "API key salah",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "X-API-Key",
+                    "value": "kunci-salah-xyz"
+                  },
+                  {
+                    "key": "X-Device-ID",
+                    "value": "{{device_id}}"
+                  },
+                  {
+                    "key": "X-Spec-Version",
+                    "value": "1"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/ping",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "ping"
+                  ]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"ok\": false,\n  \"message\": \"API key salah\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Ping – tanpa X-Device-ID (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));",
+                  "const d = pm.response.json();",
+                  "pm.test('\"ok\" = false', () => pm.expect(d.ok).to.eql(false));",
+                  "pm.test('\"message\" berupa teks', () => pm.expect(d.message).to.be.a('string'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              },
+              {
+                "key": "X-Spec-Version",
+                "value": "1"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/ping",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "ping"
+              ]
+            },
+            "description": "Alat selalu mengirim X-Device-ID. Request tanpa header ini dijawab HTTP 400."
+          },
+          "response": [
+            {
+              "name": "Tanpa X-Device-ID",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "X-API-Key",
+                    "value": "{{api_key}}"
+                  },
+                  {
+                    "key": "X-Spec-Version",
+                    "value": "1"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/ping",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "ping"
+                  ]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"ok\": false,\n  \"message\": \"Header X-Device-ID wajib\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "POST /tap",
+      "item": [
+        {
+          "name": "Tap – masuk (check_in)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const d = pm.response.json();",
+                  "pm.test('status = check_in (gagal? kartu ini sudah tap hari ini: hapus data server lalu ulangi)', () => pm.expect(d.status).to.eql('check_in'));",
+                  "pm.test('\"ok\" = true', () => pm.expect(d.ok).to.eql(true));",
+                  "pm.test('\"name\" dan \"message\" berupa teks', () => { pm.expect(d.name).to.be.a('string'); pm.expect(d.message).to.be.a('string'); });",
+                  "const STANDAR = ['check_in', 'check_out', 'duplicate', 'unknown', 'rejected'];",
+                  "pm.test('\"status\" salah satu nilai standar', () => pm.expect(STANDAR).to.include(d.status));",
+                  "pm.test('\"ok\" sesuai status (true untuk check_in/check_out/duplicate)', () =>",
+                  "  pm.expect(d.ok).to.eql(['check_in', 'check_out', 'duplicate'].includes(d.status)));",
+                  "pm.test('\"time\" format HH:MM (kalau ada)', () => { if (d.time != null) pm.expect(d.time).to.match(/^\\d{2}:\\d{2}$/); });",
+                  "pm.test('\"info\" maks. 2 baris teks (kalau ada)', () => { if (d.info != null) { pm.expect(d.info).to.be.an('array'); pm.expect(d.info.length).to.be.at.most(2); } });",
+                  "pm.test('\"photo_url\" URL http(s) atau null (kalau ada)', () => { if (d.photo_url != null) pm.expect(d.photo_url).to.match(/^https?:\\/\\//); });",
+                  "// simpan tap_id dan respons ini untuk kasus \"kirim ulang tap_id yang sama\"",
+                  "pm.collectionVariables.set('tap_id_awal', pm.collectionVariables.get('tap_id'));",
+                  "pm.collectionVariables.set('respons_awal', pm.response.text());"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              },
+              {
+                "key": "X-Device-ID",
+                "value": "{{device_id}}"
+              },
+              {
+                "key": "X-Spec-Version",
+                "value": "1"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tap",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tap"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_id\": \"{{device_id}}\",\n  \"tap_id\": \"{{tap_id}}\",\n  \"rfid\": \"{{rfid_terdaftar}}\",\n  \"tapped_at\": \"{{sekarang}}\",\n  \"queued\": false,\n  \"raw\": {\n    \"uid_hex\": \"0A0B0C0D\",\n    \"wifi_ssid\": \"Kantor-2.4G\",\n    \"rssi\": -52,\n    \"ip\": \"192.168.1.23\",\n    \"firmware\": \"1.1.0\",\n    \"uptime_s\": 3600,\n    \"server_status\": \"online\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Tap pertama hari itu untuk kartu terdaftar. Tap biasa (`queued: false`) memakai jam server."
+          },
+          "response": [
+            {
+              "name": "Masuk",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "X-API-Key",
+                    "value": "{{api_key}}"
+                  },
+                  {
+                    "key": "X-Device-ID",
+                    "value": "{{device_id}}"
+                  },
+                  {
+                    "key": "X-Spec-Version",
+                    "value": "1"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tap",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tap"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"device_id\": \"{{device_id}}\",\n  \"tap_id\": \"{{tap_id}}\",\n  \"rfid\": \"{{rfid_terdaftar}}\",\n  \"tapped_at\": \"{{sekarang}}\",\n  \"queued\": false,\n  \"raw\": {\n    \"uid_hex\": \"0A0B0C0D\",\n    \"wifi_ssid\": \"Kantor-2.4G\",\n    \"rssi\": -52,\n    \"ip\": \"192.168.1.23\",\n    \"firmware\": \"1.1.0\",\n    \"uptime_s\": 3600,\n    \"server_status\": \"online\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"ok\": true,\n  \"status\": \"check_in\",\n  \"message\": \"Selamat datang\",\n  \"name\": \"Budi Santoso\",\n  \"time\": \"07:45\",\n  \"photo_url\": null\n}"
+            }
+          ]
+        },
+        {
+          "name": "Tap – kirim ulang tap_id yang sama (tidak dicatat dua kali)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const d = pm.response.json();",
+                  "const lama = JSON.parse(pm.collectionVariables.get('respons_awal') || '{}');",
+                  "pm.test('respons sama seperti tap awal, atau \"duplicate\"', () => pm.expect(_.isEqual(d, lama) || d.status === 'duplicate').to.eql(true));",
+                  "const STANDAR = ['check_in', 'check_out', 'duplicate', 'unknown', 'rejected'];",
+                  "pm.test('\"status\" salah satu nilai standar', () => pm.expect(STANDAR).to.include(d.status));",
+                  "pm.test('\"ok\" sesuai status (true untuk check_in/check_out/duplicate)', () =>",
+                  "  pm.expect(d.ok).to.eql(['check_in', 'check_out', 'duplicate'].includes(d.status)));",
+                  "pm.test('\"time\" format HH:MM (kalau ada)', () => { if (d.time != null) pm.expect(d.time).to.match(/^\\d{2}:\\d{2}$/); });",
+                  "pm.test('\"info\" maks. 2 baris teks (kalau ada)', () => { if (d.info != null) { pm.expect(d.info).to.be.an('array'); pm.expect(d.info.length).to.be.at.most(2); } });",
+                  "pm.test('\"photo_url\" URL http(s) atau null (kalau ada)', () => { if (d.photo_url != null) pm.expect(d.photo_url).to.match(/^https?:\\/\\//); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              },
+              {
+                "key": "X-Device-ID",
+                "value": "{{device_id}}"
+              },
+              {
+                "key": "X-Spec-Version",
+                "value": "1"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tap",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tap"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_id\": \"{{device_id}}\",\n  \"tap_id\": \"{{tap_id_awal}}\",\n  \"rfid\": \"{{rfid_terdaftar}}\",\n  \"tapped_at\": \"{{sekarang}}\",\n  \"queued\": true,\n  \"raw\": {\n    \"uid_hex\": \"0A0B0C0D\",\n    \"wifi_ssid\": \"Kantor-2.4G\",\n    \"rssi\": -52,\n    \"ip\": \"192.168.1.23\",\n    \"firmware\": \"1.1.0\",\n    \"uptime_s\": 3600,\n    \"server_status\": \"online\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Tap yang sama terkirim lagi dari antrean (misal balasan pertama lewat 8 detik). `tap_id` sama dengan kasus \"Tap – masuk\". Server tidak boleh mencatat baris baru: balas respons yang sama, atau `duplicate`."
+          },
+          "response": [
+            {
+              "name": "Sama seperti tap awal",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "X-API-Key",
+                    "value": "{{api_key}}"
+                  },
+                  {
+                    "key": "X-Device-ID",
+                    "value": "{{device_id}}"
+                  },
+                  {
+                    "key": "X-Spec-Version",
+                    "value": "1"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tap",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tap"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"device_id\": \"{{device_id}}\",\n  \"tap_id\": \"{{tap_id_awal}}\",\n  \"rfid\": \"{{rfid_terdaftar}}\",\n  \"tapped_at\": \"{{sekarang}}\",\n  \"queued\": true,\n  \"raw\": {\n    \"uid_hex\": \"0A0B0C0D\",\n    \"wifi_ssid\": \"Kantor-2.4G\",\n    \"rssi\": -52,\n    \"ip\": \"192.168.1.23\",\n    \"firmware\": \"1.1.0\",\n    \"uptime_s\": 3600,\n    \"server_status\": \"online\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"ok\": true,\n  \"status\": \"check_in\",\n  \"message\": \"Selamat datang\",\n  \"name\": \"Budi Santoso\",\n  \"time\": \"07:45\",\n  \"photo_url\": null\n}"
+            },
+            {
+              "name": "Atau duplicate (server acuan)",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "X-API-Key",
+                    "value": "{{api_key}}"
+                  },
+                  {
+                    "key": "X-Device-ID",
+                    "value": "{{device_id}}"
+                  },
+                  {
+                    "key": "X-Spec-Version",
+                    "value": "1"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tap",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tap"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"device_id\": \"{{device_id}}\",\n  \"tap_id\": \"{{tap_id_awal}}\",\n  \"rfid\": \"{{rfid_terdaftar}}\",\n  \"tapped_at\": \"{{sekarang}}\",\n  \"queued\": true,\n  \"raw\": {\n    \"uid_hex\": \"0A0B0C0D\",\n    \"wifi_ssid\": \"Kantor-2.4G\",\n    \"rssi\": -52,\n    \"ip\": \"192.168.1.23\",\n    \"firmware\": \"1.1.0\",\n    \"uptime_s\": 3600,\n    \"server_status\": \"online\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"ok\": true,\n  \"status\": \"duplicate\",\n  \"message\": \"Sudah tercatat\",\n  \"name\": \"Budi Santoso\",\n  \"time\": \"07:45\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Tap – sudah tercatat (duplicate, < 60 detik)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const d = pm.response.json();",
+                  "pm.test('status = duplicate', () => pm.expect(d.status).to.eql('duplicate'));",
+                  "pm.test('\"ok\" = true', () => pm.expect(d.ok).to.eql(true));",
+                  "const STANDAR = ['check_in', 'check_out', 'duplicate', 'unknown', 'rejected'];",
+                  "pm.test('\"status\" salah satu nilai standar', () => pm.expect(STANDAR).to.include(d.status));",
+                  "pm.test('\"ok\" sesuai status (true untuk check_in/check_out/duplicate)', () =>",
+                  "  pm.expect(d.ok).to.eql(['check_in', 'check_out', 'duplicate'].includes(d.status)));",
+                  "pm.test('\"time\" format HH:MM (kalau ada)', () => { if (d.time != null) pm.expect(d.time).to.match(/^\\d{2}:\\d{2}$/); });",
+                  "pm.test('\"info\" maks. 2 baris teks (kalau ada)', () => { if (d.info != null) { pm.expect(d.info).to.be.an('array'); pm.expect(d.info.length).to.be.at.most(2); } });",
+                  "pm.test('\"photo_url\" URL http(s) atau null (kalau ada)', () => { if (d.photo_url != null) pm.expect(d.photo_url).to.match(/^https?:\\/\\//); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              },
+              {
+                "key": "X-Device-ID",
+                "value": "{{device_id}}"
+              },
+              {
+                "key": "X-Spec-Version",
+                "value": "1"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tap",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tap"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_id\": \"{{device_id}}\",\n  \"tap_id\": \"{{tap_id}}\",\n  \"rfid\": \"{{rfid_terdaftar}}\",\n  \"tapped_at\": \"{{sekarang}}\",\n  \"queued\": false,\n  \"raw\": {\n    \"uid_hex\": \"0A0B0C0D\",\n    \"wifi_ssid\": \"Kantor-2.4G\",\n    \"rssi\": -52,\n    \"ip\": \"192.168.1.23\",\n    \"firmware\": \"1.1.0\",\n    \"uptime_s\": 3600,\n    \"server_status\": \"online\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Kartu yang sama ditempel lagi kurang dari 60 detik setelah tap yang diterima. `time` = jam tap sebelumnya. (Jeda 60 detik adalah aturan contoh, boleh diubah.)"
+          },
+          "response": [
+            {
+              "name": "Sudah tercatat",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "X-API-Key",
+                    "value": "{{api_key}}"
+                  },
+                  {
+                    "key": "X-Device-ID",
+                    "value": "{{device_id}}"
+                  },
+                  {
+                    "key": "X-Spec-Version",
+                    "value": "1"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tap",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tap"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"device_id\": \"{{device_id}}\",\n  \"tap_id\": \"{{tap_id}}\",\n  \"rfid\": \"{{rfid_terdaftar}}\",\n  \"tapped_at\": \"{{sekarang}}\",\n  \"queued\": false,\n  \"raw\": {\n    \"uid_hex\": \"0A0B0C0D\",\n    \"wifi_ssid\": \"Kantor-2.4G\",\n    \"rssi\": -52,\n    \"ip\": \"192.168.1.23\",\n    \"firmware\": \"1.1.0\",\n    \"uptime_s\": 3600,\n    \"server_status\": \"online\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"ok\": true,\n  \"status\": \"duplicate\",\n  \"message\": \"Sudah tercatat\",\n  \"name\": \"Budi Santoso\",\n  \"time\": \"07:45\",\n  \"photo_url\": null\n}"
+            }
+          ]
+        },
+        {
+          "name": "Tap – pulang (check_out), menunggu 61 detik",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Tunggu 61 detik: tap dalam 60 detik sejak tap yang diterima dianggap \"duplicate\".",
+                  "setTimeout(() => {}, 61000);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const d = pm.response.json();",
+                  "pm.test('status = check_out', () => pm.expect(d.status).to.eql('check_out'));",
+                  "pm.test('\"ok\" = true', () => pm.expect(d.ok).to.eql(true));",
+                  "pm.test('\"name\" dan \"message\" berupa teks', () => { pm.expect(d.name).to.be.a('string'); pm.expect(d.message).to.be.a('string'); });",
+                  "const STANDAR = ['check_in', 'check_out', 'duplicate', 'unknown', 'rejected'];",
+                  "pm.test('\"status\" salah satu nilai standar', () => pm.expect(STANDAR).to.include(d.status));",
+                  "pm.test('\"ok\" sesuai status (true untuk check_in/check_out/duplicate)', () =>",
+                  "  pm.expect(d.ok).to.eql(['check_in', 'check_out', 'duplicate'].includes(d.status)));",
+                  "pm.test('\"time\" format HH:MM (kalau ada)', () => { if (d.time != null) pm.expect(d.time).to.match(/^\\d{2}:\\d{2}$/); });",
+                  "pm.test('\"info\" maks. 2 baris teks (kalau ada)', () => { if (d.info != null) { pm.expect(d.info).to.be.an('array'); pm.expect(d.info.length).to.be.at.most(2); } });",
+                  "pm.test('\"photo_url\" URL http(s) atau null (kalau ada)', () => { if (d.photo_url != null) pm.expect(d.photo_url).to.match(/^https?:\\/\\//); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              },
+              {
+                "key": "X-Device-ID",
+                "value": "{{device_id}}"
+              },
+              {
+                "key": "X-Spec-Version",
+                "value": "1"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tap",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tap"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_id\": \"{{device_id}}\",\n  \"tap_id\": \"{{tap_id}}\",\n  \"rfid\": \"{{rfid_terdaftar}}\",\n  \"tapped_at\": \"{{sekarang}}\",\n  \"queued\": false,\n  \"raw\": {\n    \"uid_hex\": \"0A0B0C0D\",\n    \"wifi_ssid\": \"Kantor-2.4G\",\n    \"rssi\": -52,\n    \"ip\": \"192.168.1.23\",\n    \"firmware\": \"1.1.0\",\n    \"uptime_s\": 3600,\n    \"server_status\": \"online\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Tap berikutnya di hari yang sama (lebih dari 60 detik setelah tap diterima). `info` maks. 2 baris. Di Postman, request ini menunggu 61 detik sebelum dikirim."
+          },
+          "response": [
+            {
+              "name": "Pulang",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "X-API-Key",
+                    "value": "{{api_key}}"
+                  },
+                  {
+                    "key": "X-Device-ID",
+                    "value": "{{device_id}}"
+                  },
+                  {
+                    "key": "X-Spec-Version",
+                    "value": "1"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tap",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tap"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"device_id\": \"{{device_id}}\",\n  \"tap_id\": \"{{tap_id}}\",\n  \"rfid\": \"{{rfid_terdaftar}}\",\n  \"tapped_at\": \"{{sekarang}}\",\n  \"queued\": false,\n  \"raw\": {\n    \"uid_hex\": \"0A0B0C0D\",\n    \"wifi_ssid\": \"Kantor-2.4G\",\n    \"rssi\": -52,\n    \"ip\": \"192.168.1.23\",\n    \"firmware\": \"1.1.0\",\n    \"uptime_s\": 3600,\n    \"server_status\": \"online\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"ok\": true,\n  \"status\": \"check_out\",\n  \"message\": \"Hati-hati di jalan\",\n  \"name\": \"Budi Santoso\",\n  \"time\": \"16:05\",\n  \"photo_url\": null,\n  \"info\": [\n    \"Masuk tadi 07:45\"\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Tap – antrean dengan tapped_at (queued)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const d = pm.response.json();",
+                  "const STANDAR = ['check_in', 'check_out', 'duplicate', 'unknown', 'rejected'];",
+                  "pm.test('\"status\" salah satu nilai standar', () => pm.expect(STANDAR).to.include(d.status));",
+                  "pm.test('\"ok\" sesuai status (true untuk check_in/check_out/duplicate)', () =>",
+                  "  pm.expect(d.ok).to.eql(['check_in', 'check_out', 'duplicate'].includes(d.status)));",
+                  "pm.test('\"time\" format HH:MM (kalau ada)', () => { if (d.time != null) pm.expect(d.time).to.match(/^\\d{2}:\\d{2}$/); });",
+                  "pm.test('\"info\" maks. 2 baris teks (kalau ada)', () => { if (d.info != null) { pm.expect(d.info).to.be.an('array'); pm.expect(d.info.length).to.be.at.most(2); } });",
+                  "pm.test('\"photo_url\" URL http(s) atau null (kalau ada)', () => { if (d.photo_url != null) pm.expect(d.photo_url).to.match(/^https?:\\/\\//); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              },
+              {
+                "key": "X-Device-ID",
+                "value": "{{device_id}}"
+              },
+              {
+                "key": "X-Spec-Version",
+                "value": "1"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tap",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tap"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_id\": \"{{device_id}}\",\n  \"tap_id\": \"{{tap_id}}\",\n  \"rfid\": \"{{rfid_terdaftar}}\",\n  \"tapped_at\": \"{{kemarin}}\",\n  \"queued\": true,\n  \"raw\": {\n    \"uid_hex\": \"0A0B0C0D\",\n    \"wifi_ssid\": \"Kantor-2.4G\",\n    \"rssi\": -52,\n    \"ip\": \"192.168.1.23\",\n    \"firmware\": \"1.1.0\",\n    \"uptime_s\": 3600,\n    \"server_status\": \"online\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Tap yang tersimpan di alat saat server mati, dikirim belakangan dengan `queued: true`. Pakai `tapped_at` (di sini kemarin 07:30) sebagai waktu absen. Respons tap antrean tidak ditampilkan alat; alat hanya melihat kode HTTP (2xx/3xx/4xx = dihapus dari antrean, 5xx/timeout = dicoba lagi). Server boleh memakai waktu diterima kalau `tapped_at` lebih dari 5 menit di masa depan atau lebih lama dari 30 hari."
+          },
+          "response": [
+            {
+              "name": "Dicatat pada jam tapped_at",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "X-API-Key",
+                    "value": "{{api_key}}"
+                  },
+                  {
+                    "key": "X-Device-ID",
+                    "value": "{{device_id}}"
+                  },
+                  {
+                    "key": "X-Spec-Version",
+                    "value": "1"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tap",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tap"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"device_id\": \"{{device_id}}\",\n  \"tap_id\": \"{{tap_id}}\",\n  \"rfid\": \"{{rfid_terdaftar}}\",\n  \"tapped_at\": \"{{kemarin}}\",\n  \"queued\": true,\n  \"raw\": {\n    \"uid_hex\": \"0A0B0C0D\",\n    \"wifi_ssid\": \"Kantor-2.4G\",\n    \"rssi\": -52,\n    \"ip\": \"192.168.1.23\",\n    \"firmware\": \"1.1.0\",\n    \"uptime_s\": 3600,\n    \"server_status\": \"online\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"ok\": true,\n  \"status\": \"check_in\",\n  \"message\": \"Selamat datang\",\n  \"name\": \"Budi Santoso\",\n  \"time\": \"07:30\",\n  \"photo_url\": null\n}"
+            }
+          ]
+        },
+        {
+          "name": "Tap – antrean dengan tapped_at null",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const d = pm.response.json();",
+                  "const STANDAR = ['check_in', 'check_out', 'duplicate', 'unknown', 'rejected'];",
+                  "pm.test('\"status\" salah satu nilai standar', () => pm.expect(STANDAR).to.include(d.status));",
+                  "pm.test('\"ok\" sesuai status (true untuk check_in/check_out/duplicate)', () =>",
+                  "  pm.expect(d.ok).to.eql(['check_in', 'check_out', 'duplicate'].includes(d.status)));",
+                  "pm.test('\"time\" format HH:MM (kalau ada)', () => { if (d.time != null) pm.expect(d.time).to.match(/^\\d{2}:\\d{2}$/); });",
+                  "pm.test('\"info\" maks. 2 baris teks (kalau ada)', () => { if (d.info != null) { pm.expect(d.info).to.be.an('array'); pm.expect(d.info.length).to.be.at.most(2); } });",
+                  "pm.test('\"photo_url\" URL http(s) atau null (kalau ada)', () => { if (d.photo_url != null) pm.expect(d.photo_url).to.match(/^https?:\\/\\//); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              },
+              {
+                "key": "X-Device-ID",
+                "value": "{{device_id}}"
+              },
+              {
+                "key": "X-Spec-Version",
+                "value": "1"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tap",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tap"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_id\": \"{{device_id}}\",\n  \"tap_id\": \"{{tap_id}}\",\n  \"rfid\": \"{{rfid_terdaftar}}\",\n  \"tapped_at\": null,\n  \"queued\": true,\n  \"raw\": {\n    \"uid_hex\": \"0A0B0C0D\",\n    \"wifi_ssid\": \"Kantor-2.4G\",\n    \"rssi\": -52,\n    \"ip\": \"192.168.1.23\",\n    \"firmware\": \"1.1.0\",\n    \"uptime_s\": 3600,\n    \"server_status\": \"online\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Jam alat belum tersinkron saat kartu ditempel, jadi `tapped_at` = `null`. Server memakai waktu diterima. Status bisa apa saja sesuai aturan bisnis."
+          },
+          "response": [
+            {
+              "name": "Dicatat pada waktu diterima",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "X-API-Key",
+                    "value": "{{api_key}}"
+                  },
+                  {
+                    "key": "X-Device-ID",
+                    "value": "{{device_id}}"
+                  },
+                  {
+                    "key": "X-Spec-Version",
+                    "value": "1"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tap",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tap"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"device_id\": \"{{device_id}}\",\n  \"tap_id\": \"{{tap_id}}\",\n  \"rfid\": \"{{rfid_terdaftar}}\",\n  \"tapped_at\": null,\n  \"queued\": true,\n  \"raw\": {\n    \"uid_hex\": \"0A0B0C0D\",\n    \"wifi_ssid\": \"Kantor-2.4G\",\n    \"rssi\": -52,\n    \"ip\": \"192.168.1.23\",\n    \"firmware\": \"1.1.0\",\n    \"uptime_s\": 3600,\n    \"server_status\": \"online\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"ok\": true,\n  \"status\": \"duplicate\",\n  \"message\": \"Sudah tercatat\",\n  \"name\": \"Budi Santoso\",\n  \"time\": \"16:05\",\n  \"photo_url\": null\n}"
+            }
+          ]
+        },
+        {
+          "name": "Tap – kartu tidak terdaftar (unknown)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const d = pm.response.json();",
+                  "pm.test('status = unknown', () => pm.expect(d.status).to.eql('unknown'));",
+                  "pm.test('\"ok\" = false', () => pm.expect(d.ok).to.eql(false));",
+                  "const STANDAR = ['check_in', 'check_out', 'duplicate', 'unknown', 'rejected'];",
+                  "pm.test('\"status\" salah satu nilai standar', () => pm.expect(STANDAR).to.include(d.status));",
+                  "pm.test('\"ok\" sesuai status (true untuk check_in/check_out/duplicate)', () =>",
+                  "  pm.expect(d.ok).to.eql(['check_in', 'check_out', 'duplicate'].includes(d.status)));",
+                  "pm.test('\"time\" format HH:MM (kalau ada)', () => { if (d.time != null) pm.expect(d.time).to.match(/^\\d{2}:\\d{2}$/); });",
+                  "pm.test('\"info\" maks. 2 baris teks (kalau ada)', () => { if (d.info != null) { pm.expect(d.info).to.be.an('array'); pm.expect(d.info.length).to.be.at.most(2); } });",
+                  "pm.test('\"photo_url\" URL http(s) atau null (kalau ada)', () => { if (d.photo_url != null) pm.expect(d.photo_url).to.match(/^https?:\\/\\//); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              },
+              {
+                "key": "X-Device-ID",
+                "value": "{{device_id}}"
+              },
+              {
+                "key": "X-Spec-Version",
+                "value": "1"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tap",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tap"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_id\": \"{{device_id}}\",\n  \"tap_id\": \"{{tap_id}}\",\n  \"rfid\": \"{{rfid_tidak_terdaftar}}\",\n  \"tapped_at\": \"{{sekarang}}\",\n  \"queued\": false,\n  \"raw\": {\n    \"uid_hex\": \"0A0B0C0D\",\n    \"wifi_ssid\": \"Kantor-2.4G\",\n    \"rssi\": -52,\n    \"ip\": \"192.168.1.23\",\n    \"firmware\": \"1.1.0\",\n    \"uptime_s\": 3600,\n    \"server_status\": \"online\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Tetap HTTP 200. Alat menampilkan KARTU TIDAK TERDAFTAR beserta nomor kartu."
+          },
+          "response": [
+            {
+              "name": "Kartu tidak terdaftar",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "X-API-Key",
+                    "value": "{{api_key}}"
+                  },
+                  {
+                    "key": "X-Device-ID",
+                    "value": "{{device_id}}"
+                  },
+                  {
+                    "key": "X-Spec-Version",
+                    "value": "1"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tap",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tap"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"device_id\": \"{{device_id}}\",\n  \"tap_id\": \"{{tap_id}}\",\n  \"rfid\": \"{{rfid_tidak_terdaftar}}\",\n  \"tapped_at\": \"{{sekarang}}\",\n  \"queued\": false,\n  \"raw\": {\n    \"uid_hex\": \"0A0B0C0D\",\n    \"wifi_ssid\": \"Kantor-2.4G\",\n    \"rssi\": -52,\n    \"ip\": \"192.168.1.23\",\n    \"firmware\": \"1.1.0\",\n    \"uptime_s\": 3600,\n    \"server_status\": \"online\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"ok\": false,\n  \"status\": \"unknown\",\n  \"message\": \"Kartu tidak terdaftar\",\n  \"time\": \"07:47\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Tap – kartu nonaktif (rejected)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const d = pm.response.json();",
+                  "pm.test('status = rejected (gagal? nonaktifkan dulu kartu rfid_nonaktif di server)', () => pm.expect(d.status).to.eql('rejected'));",
+                  "pm.test('\"ok\" = false', () => pm.expect(d.ok).to.eql(false));",
+                  "const STANDAR = ['check_in', 'check_out', 'duplicate', 'unknown', 'rejected'];",
+                  "pm.test('\"status\" salah satu nilai standar', () => pm.expect(STANDAR).to.include(d.status));",
+                  "pm.test('\"ok\" sesuai status (true untuk check_in/check_out/duplicate)', () =>",
+                  "  pm.expect(d.ok).to.eql(['check_in', 'check_out', 'duplicate'].includes(d.status)));",
+                  "pm.test('\"time\" format HH:MM (kalau ada)', () => { if (d.time != null) pm.expect(d.time).to.match(/^\\d{2}:\\d{2}$/); });",
+                  "pm.test('\"info\" maks. 2 baris teks (kalau ada)', () => { if (d.info != null) { pm.expect(d.info).to.be.an('array'); pm.expect(d.info.length).to.be.at.most(2); } });",
+                  "pm.test('\"photo_url\" URL http(s) atau null (kalau ada)', () => { if (d.photo_url != null) pm.expect(d.photo_url).to.match(/^https?:\\/\\//); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              },
+              {
+                "key": "X-Device-ID",
+                "value": "{{device_id}}"
+              },
+              {
+                "key": "X-Spec-Version",
+                "value": "1"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tap",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tap"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_id\": \"{{device_id}}\",\n  \"tap_id\": \"{{tap_id}}\",\n  \"rfid\": \"{{rfid_nonaktif}}\",\n  \"tapped_at\": \"{{sekarang}}\",\n  \"queued\": false,\n  \"raw\": {\n    \"uid_hex\": \"0A0B0C0D\",\n    \"wifi_ssid\": \"Kantor-2.4G\",\n    \"rssi\": -52,\n    \"ip\": \"192.168.1.23\",\n    \"firmware\": \"1.1.0\",\n    \"uptime_s\": 3600,\n    \"server_status\": \"online\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Tetap HTTP 200. Alasan penolakan di `message` (misal \"Kartu nonaktif\", \"Di luar jam kerja\")."
+          },
+          "response": [
+            {
+              "name": "Ditolak",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "X-API-Key",
+                    "value": "{{api_key}}"
+                  },
+                  {
+                    "key": "X-Device-ID",
+                    "value": "{{device_id}}"
+                  },
+                  {
+                    "key": "X-Spec-Version",
+                    "value": "1"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tap",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tap"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"device_id\": \"{{device_id}}\",\n  \"tap_id\": \"{{tap_id}}\",\n  \"rfid\": \"{{rfid_nonaktif}}\",\n  \"tapped_at\": \"{{sekarang}}\",\n  \"queued\": false,\n  \"raw\": {\n    \"uid_hex\": \"0A0B0C0D\",\n    \"wifi_ssid\": \"Kantor-2.4G\",\n    \"rssi\": -52,\n    \"ip\": \"192.168.1.23\",\n    \"firmware\": \"1.1.0\",\n    \"uptime_s\": 3600,\n    \"server_status\": \"online\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"ok\": false,\n  \"status\": \"rejected\",\n  \"message\": \"Kartu nonaktif\",\n  \"name\": \"Rina Kurnia\",\n  \"time\": \"07:48\",\n  \"photo_url\": null\n}"
+            }
+          ]
+        },
+        {
+          "name": "Tap – raw null",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const d = pm.response.json();",
+                  "const STANDAR = ['check_in', 'check_out', 'duplicate', 'unknown', 'rejected'];",
+                  "pm.test('\"status\" salah satu nilai standar', () => pm.expect(STANDAR).to.include(d.status));",
+                  "pm.test('\"ok\" sesuai status (true untuk check_in/check_out/duplicate)', () =>",
+                  "  pm.expect(d.ok).to.eql(['check_in', 'check_out', 'duplicate'].includes(d.status)));",
+                  "pm.test('\"time\" format HH:MM (kalau ada)', () => { if (d.time != null) pm.expect(d.time).to.match(/^\\d{2}:\\d{2}$/); });",
+                  "pm.test('\"info\" maks. 2 baris teks (kalau ada)', () => { if (d.info != null) { pm.expect(d.info).to.be.an('array'); pm.expect(d.info.length).to.be.at.most(2); } });",
+                  "pm.test('\"photo_url\" URL http(s) atau null (kalau ada)', () => { if (d.photo_url != null) pm.expect(d.photo_url).to.match(/^https?:\\/\\//); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              },
+              {
+                "key": "X-Device-ID",
+                "value": "{{device_id}}"
+              },
+              {
+                "key": "X-Spec-Version",
+                "value": "1"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tap",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tap"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_id\": \"{{device_id}}\",\n  \"tap_id\": \"{{tap_id}}\",\n  \"rfid\": \"{{rfid_tidak_terdaftar}}\",\n  \"tapped_at\": \"{{sekarang}}\",\n  \"queued\": false,\n  \"raw\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "`raw` boleh `null` (atau tidak ada). Server tidak boleh gagal karena itu."
+          },
+          "response": [
+            {
+              "name": "raw null tetap diterima",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "X-API-Key",
+                    "value": "{{api_key}}"
+                  },
+                  {
+                    "key": "X-Device-ID",
+                    "value": "{{device_id}}"
+                  },
+                  {
+                    "key": "X-Spec-Version",
+                    "value": "1"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tap",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tap"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"device_id\": \"{{device_id}}\",\n  \"tap_id\": \"{{tap_id}}\",\n  \"rfid\": \"{{rfid_tidak_terdaftar}}\",\n  \"tapped_at\": \"{{sekarang}}\",\n  \"queued\": false,\n  \"raw\": null\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"ok\": false,\n  \"status\": \"unknown\",\n  \"message\": \"Kartu tidak terdaftar\",\n  \"time\": \"07:49\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Tap – rfid kosong (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));",
+                  "const d = pm.response.json();",
+                  "pm.test('\"ok\" = false', () => pm.expect(d.ok).to.eql(false));",
+                  "pm.test('\"message\" berupa teks', () => pm.expect(d.message).to.be.a('string'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              },
+              {
+                "key": "X-Device-ID",
+                "value": "{{device_id}}"
+              },
+              {
+                "key": "X-Spec-Version",
+                "value": "1"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tap",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tap"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_id\": \"{{device_id}}\",\n  \"tap_id\": \"{{tap_id}}\",\n  \"rfid\": \"\",\n  \"tapped_at\": \"{{sekarang}}\",\n  \"queued\": false,\n  \"raw\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Format salah dijawab HTTP 400 dengan `message`. Server acuan membalas \"Nomor kartu tidak valid\"."
+          },
+          "response": [
+            {
+              "name": "rfid kosong",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "X-API-Key",
+                    "value": "{{api_key}}"
+                  },
+                  {
+                    "key": "X-Device-ID",
+                    "value": "{{device_id}}"
+                  },
+                  {
+                    "key": "X-Spec-Version",
+                    "value": "1"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tap",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tap"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"device_id\": \"{{device_id}}\",\n  \"tap_id\": \"{{tap_id}}\",\n  \"rfid\": \"\",\n  \"tapped_at\": \"{{sekarang}}\",\n  \"queued\": false,\n  \"raw\": null\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"ok\": false,\n  \"message\": \"rfid kosong\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Tap – body bukan JSON (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400', () => pm.response.to.have.status(400));",
+                  "const d = pm.response.json();",
+                  "pm.test('\"ok\" = false', () => pm.expect(d.ok).to.eql(false));",
+                  "pm.test('\"message\" berupa teks', () => pm.expect(d.message).to.be.a('string'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              },
+              {
+                "key": "X-Device-ID",
+                "value": "{{device_id}}"
+              },
+              {
+                "key": "X-Spec-Version",
+                "value": "1"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tap",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tap"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "ini-bukan-json",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Body yang bukan JSON dijawab HTTP 400. Contoh PHP/Node membalas \"rfid kosong\", server acuan \"Body harus berupa JSON\"."
+          },
+          "response": [
+            {
+              "name": "Body bukan JSON",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "X-API-Key",
+                    "value": "{{api_key}}"
+                  },
+                  {
+                    "key": "X-Device-ID",
+                    "value": "{{device_id}}"
+                  },
+                  {
+                    "key": "X-Spec-Version",
+                    "value": "1"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/tap",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "tap"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "ini-bukan-json",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"ok\": false,\n  \"message\": \"Body harus berupa JSON\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "POST /heartbeat",
+      "item": [
+        {
+          "name": "Heartbeat – berhasil",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const d = pm.response.json();",
+                  "pm.test('\"ok\" = true', () => pm.expect(d.ok).to.eql(true));",
+                  "pm.test('\"server_time\" ISO 8601 + zona waktu (disarankan)', () => {",
+                  "  if (d.server_time === undefined) return;",
+                  "  pm.expect(d.server_time).to.match(/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?([+-]\\d{2}:\\d{2}|Z)$/);",
+                  "});",
+                  "pm.test('\"config\" sesuai aturan (kalau ada)', () => {",
+                  "  if (d.config === undefined) return;",
+                  "  pm.expect(d.config).to.be.an('object');",
+                  "  if ('pin' in d.config) pm.expect(d.config.pin).to.match(/^\\d{4,8}$/);",
+                  "  if ('title' in d.config) { pm.expect(d.config.title).to.be.a('string'); pm.expect(d.config.title.length).to.be.at.most(30); }",
+                  "  if ('announcements_rev' in d.config) pm.expect(d.config.announcements_rev).to.be.a('string');",
+                  "  if ('dim_after' in d.config) { pm.expect(Number.isInteger(d.config.dim_after)).to.be.true; pm.expect(d.config.dim_after === 0 || (d.config.dim_after >= 10 && d.config.dim_after <= 3600)).to.be.true; }",
+                  "  if ('dim_level' in d.config) { pm.expect(Number.isInteger(d.config.dim_level)).to.be.true; pm.expect(d.config.dim_level).to.be.within(0, 100); }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              },
+              {
+                "key": "X-Device-ID",
+                "value": "{{device_id}}"
+              },
+              {
+                "key": "X-Spec-Version",
+                "value": "1"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/heartbeat",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "heartbeat"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_id\": \"{{device_id}}\",\n  \"firmware\": \"1.1.0\",\n  \"time\": \"{{sekarang}}\",\n  \"raw\": {\n    \"wifi_ssid\": \"Kantor-2.4G\",\n    \"rssi\": -52,\n    \"ip\": \"192.168.1.23\",\n    \"uptime_s\": 3660,\n    \"free_heap\": 180000,\n    \"rfid_ok\": true,\n    \"queue\": 0\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Dikirim alat tiap 60 detik. Server cukup mencatat \"terakhir terlihat\" untuk X-Device-ID ini. Alat dianggap tidak aktif kalau tidak ada heartbeat lebih dari ±3 menit."
+          },
+          "response": [
+            {
+              "name": "Berhasil",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "X-API-Key",
+                    "value": "{{api_key}}"
+                  },
+                  {
+                    "key": "X-Device-ID",
+                    "value": "{{device_id}}"
+                  },
+                  {
+                    "key": "X-Spec-Version",
+                    "value": "1"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/heartbeat",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "heartbeat"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"device_id\": \"{{device_id}}\",\n  \"firmware\": \"1.1.0\",\n  \"time\": \"{{sekarang}}\",\n  \"raw\": {\n    \"wifi_ssid\": \"Kantor-2.4G\",\n    \"rssi\": -52,\n    \"ip\": \"192.168.1.23\",\n    \"uptime_s\": 3660,\n    \"free_heap\": 180000,\n    \"rfid_ok\": true,\n    \"queue\": 0\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"ok\": true,\n  \"server_time\": \"2026-10-01T07:46:01+07:00\",\n  \"config\": {\n    \"title\": \"Aplikasi Contoh\",\n    \"dim_after\": 60,\n    \"dim_level\": 20,\n    \"announcements_rev\": \"1\",\n    \"pin\": \"4321\"\n  }\n}"
+            },
+            {
+              "name": "Terlalu banyak request (429)",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "X-API-Key",
+                    "value": "{{api_key}}"
+                  },
+                  {
+                    "key": "X-Device-ID",
+                    "value": "{{device_id}}"
+                  },
+                  {
+                    "key": "X-Spec-Version",
+                    "value": "1"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/heartbeat",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "heartbeat"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"device_id\": \"{{device_id}}\",\n  \"firmware\": \"1.1.0\",\n  \"time\": \"{{sekarang}}\",\n  \"raw\": {\n    \"wifi_ssid\": \"Kantor-2.4G\",\n    \"rssi\": -52,\n    \"ip\": \"192.168.1.23\",\n    \"uptime_s\": 3660,\n    \"free_heap\": 180000,\n    \"rfid_ok\": true,\n    \"queue\": 0\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Too Many Requests",
+              "code": 429,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"ok\": false,\n  \"message\": \"Terlalu banyak permintaan\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Heartbeat – time null dan raw null",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const d = pm.response.json();",
+                  "pm.test('\"ok\" = true', () => pm.expect(d.ok).to.eql(true));",
+                  "pm.test('\"server_time\" ISO 8601 + zona waktu (disarankan)', () => {",
+                  "  if (d.server_time === undefined) return;",
+                  "  pm.expect(d.server_time).to.match(/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?([+-]\\d{2}:\\d{2}|Z)$/);",
+                  "});",
+                  "pm.test('\"config\" sesuai aturan (kalau ada)', () => {",
+                  "  if (d.config === undefined) return;",
+                  "  pm.expect(d.config).to.be.an('object');",
+                  "  if ('pin' in d.config) pm.expect(d.config.pin).to.match(/^\\d{4,8}$/);",
+                  "  if ('title' in d.config) { pm.expect(d.config.title).to.be.a('string'); pm.expect(d.config.title.length).to.be.at.most(30); }",
+                  "  if ('announcements_rev' in d.config) pm.expect(d.config.announcements_rev).to.be.a('string');",
+                  "  if ('dim_after' in d.config) { pm.expect(Number.isInteger(d.config.dim_after)).to.be.true; pm.expect(d.config.dim_after === 0 || (d.config.dim_after >= 10 && d.config.dim_after <= 3600)).to.be.true; }",
+                  "  if ('dim_level' in d.config) { pm.expect(Number.isInteger(d.config.dim_level)).to.be.true; pm.expect(d.config.dim_level).to.be.within(0, 100); }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              },
+              {
+                "key": "X-Device-ID",
+                "value": "{{device_id}}"
+              },
+              {
+                "key": "X-Spec-Version",
+                "value": "1"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/heartbeat",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "heartbeat"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_id\": \"{{device_id}}\",\n  \"firmware\": \"1.1.0\",\n  \"time\": null,\n  \"raw\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "`time` = `null` kalau jam alat belum tersinkron; `raw` boleh `null`. Kirim `server_time` supaya jam alat disetel."
+          },
+          "response": [
+            {
+              "name": "Berhasil",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "X-API-Key",
+                    "value": "{{api_key}}"
+                  },
+                  {
+                    "key": "X-Device-ID",
+                    "value": "{{device_id}}"
+                  },
+                  {
+                    "key": "X-Spec-Version",
+                    "value": "1"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/heartbeat",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "heartbeat"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"device_id\": \"{{device_id}}\",\n  \"firmware\": \"1.1.0\",\n  \"time\": null,\n  \"raw\": null\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"ok\": true,\n  \"server_time\": \"2026-10-01T07:47:01+07:00\",\n  \"config\": {\n    \"title\": \"Aplikasi Contoh\",\n    \"dim_after\": 60,\n    \"dim_level\": 20,\n    \"announcements_rev\": \"1\",\n    \"pin\": \"4321\"\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "GET /announcements",
+      "item": [
+        {
+          "name": "Pengumuman (opsional)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 404) {",
+                  "  pm.test('Tidak disediakan (404): boleh, endpoint ini opsional', () => {});",
+                  "} else {",
+                  "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                  "const d = pm.response.json();",
+                  "pm.test('\"ok\" = true', () => pm.expect(d.ok).to.eql(true));",
+                  "pm.test('\"items\" berupa daftar', () => pm.expect(d.items).to.be.an('array'));",
+                  "pm.test('setiap item punya \"title\" teks', () => (d.items || []).slice(0, 10).forEach((it) => pm.expect(it.title).to.be.a('string')));",
+                  "pm.test('\"icon\" dan \"id\" berupa teks (kalau ada)', () => (d.items || []).forEach((it) => {",
+                  "  if (it.icon != null) pm.expect(it.icon).to.be.a('string');",
+                  "  if (it.id != null) pm.expect(it.id).to.be.a('string');",
+                  "}));",
+                  "pm.test('\"interval\" 2–60 dan \"idle\" 5–600 (kalau ada)', () => {",
+                  "  if (d.interval !== undefined) pm.expect(d.interval).to.be.within(2, 60);",
+                  "  if (d.idle !== undefined) pm.expect(d.idle).to.be.within(5, 600);",
+                  "});",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{api_key}}"
+              },
+              {
+                "key": "X-Device-ID",
+                "value": "{{device_id}}"
+              },
+              {
+                "key": "X-Spec-Version",
+                "value": "1"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/announcements",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "announcements"
+              ]
+            },
+            "description": "Opsional, untuk screensaver. Isi balasan tergantung data di server, jadi request ini punya 3 contoh balasan: ada pengumuman, daftar kosong, dan 404 (tidak disediakan). Maks. 10 item, `title` maks. 40 karakter, `description` maks. 160. Kode ikon: info, pengumuman, kalender, jam, peringatan, rapat, libur, selamat, kesehatan, buku."
+          },
+          "response": [
+            {
+              "name": "Ada pengumuman",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "X-API-Key",
+                    "value": "{{api_key}}"
+                  },
+                  {
+                    "key": "X-Device-ID",
+                    "value": "{{device_id}}"
+                  },
+                  {
+                    "key": "X-Spec-Version",
+                    "value": "1"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/announcements",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "announcements"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"ok\": true,\n  \"interval\": 3,\n  \"idle\": 30,\n  \"items\": [\n    {\n      \"id\": \"1\",\n      \"title\": \"Rapat Guru\",\n      \"description\": \"Hari ini pukul 13.00 di aula lantai 2.\",\n      \"icon\": \"rapat\"\n    },\n    {\n      \"id\": \"2\",\n      \"title\": \"Libur Nasional\",\n      \"description\": \"Kamis, 2 Oktober 2026 kantor tutup.\",\n      \"icon\": \"libur\"\n    }\n  ]\n}"
+            },
+            {
+              "name": "Daftar kosong (screensaver tidak tampil)",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "X-API-Key",
+                    "value": "{{api_key}}"
+                  },
+                  {
+                    "key": "X-Device-ID",
+                    "value": "{{device_id}}"
+                  },
+                  {
+                    "key": "X-Spec-Version",
+                    "value": "1"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/announcements",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "announcements"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"ok\": true,\n  \"interval\": 3,\n  \"idle\": 30,\n  \"items\": []\n}"
+            },
+            {
+              "name": "Tidak disediakan (404)",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "X-API-Key",
+                    "value": "{{api_key}}"
+                  },
+                  {
+                    "key": "X-Device-ID",
+                    "value": "{{device_id}}"
+                  },
+                  {
+                    "key": "X-Spec-Version",
+                    "value": "1"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/announcements",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "announcements"
+                  ]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"ok\": false,\n  \"message\": \"Endpoint tidak ada\"\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Dijalankan sebelum SETIAP request: tap_id baru, waktu sekarang, dan kemarin 07:30 (ISO 8601 + zona waktu).",
+          "function iso(t) {",
+          "  const m = -t.getTimezoneOffset();",
+          "  const dua = (n) => String(Math.floor(Math.abs(n))).padStart(2, '0');",
+          "  return new Date(t.getTime() + m * 60000).toISOString().slice(0, 19) + (m >= 0 ? '+' : '-') + dua(m / 60) + ':' + dua(m % 60);",
+          "}",
+          "const sekarang = new Date();",
+          "const kemarin = new Date(sekarang.getTime() - 86400000);",
+          "kemarin.setHours(7, 30, 0, 0);",
+          "pm.collectionVariables.set('sekarang', iso(sekarang));",
+          "pm.collectionVariables.set('kemarin', iso(kemarin));",
+          "const acak = Math.floor(Math.random() * 0xffffff).toString(16).toUpperCase().padStart(6, '0');",
+          "pm.collectionVariables.set('tap_id', 'PM-' + Date.now().toString(16).toUpperCase() + '-' + acak);"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Dijalankan setelah SETIAP request.",
+          "pm.test('Dibalas di bawah 8 detik (batas tunggu alat)', () => pm.expect(pm.response.responseTime).to.be.below(8000));"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "tap_id",
+      "value": ""
+    },
+    {
+      "key": "tap_id_awal",
+      "value": ""
+    },
+    {
+      "key": "respons_awal",
+      "value": ""
+    },
+    {
+      "key": "sekarang",
+      "value": ""
+    },
+    {
+      "key": "kemarin",
+      "value": ""
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+(version 1)
+(rule "Thermal GND minimal 1 jari"
+  (condition "A.NetName == 'GND'")
+  (constraint thermal_spoke_count (min 1)))
