@@ -25,6 +25,8 @@ Repositori ini berisi **semua yang dibutuhkan dari nol sampai alat jadi**: dafta
 - [Untuk kontributor](#untuk-kontributor)
 - [Lisensi](#lisensi)
 
+Dokumen lain: [Panduan pengguna untuk klien](doc/panduan-pengguna.md) · [Panduan integrasi aplikasi](doc/integrasi-aplikasi.md) · [Riwayat perubahan](CHANGELOG.md)
+
 ---
 
 ## Fitur
@@ -39,6 +41,7 @@ Repositori ini berisi **semua yang dibutuhkan dari nol sampai alat jadi**: dafta
 - Menu Pengaturan ber-PIN, kalibrasi layar, tes buzzer & LED, cek kabel RFID, reset pabrik (tekan EN 3 kali).
 - Heartbeat tiap menit, sehingga website tahu alat mana yang aktif.
 - Tahan menyala lama: **watchdog** (restart sendiri kalau program macet) dan **restart harian terjadwal** saat sepi (jamnya diatur per alat dari website, bawaan 03:00).
+- **Mode absen**: otomatis (server menentukan datang/pulang) atau **pilih DATANG / PULANG** lewat dua tombol di layar utama (endpoint `/check-in` & `/check-out`), diatur dari menu alat atau dari website.
 - Mudah dirawat dari jauh: **kode error di layar** (contoh `E11` = password WiFi salah), laporan kesehatan dan **ringkasan crash** ke website, dan **update firmware jarak jauh (OTA)** yang kembali sendiri ke versi lama kalau firmware baru gagal.
 
 **Website**
@@ -60,7 +63,8 @@ Supaya tidak ada yang tersesat: bagian di bawah ini dibedakan antara yang **suda
 | Firmware v1.5.0 (kode error, ringkasan crash, update jarak jauh) | ✅ Update jarak jauh diuji di alat (unduh ± 15 detik, rollback saat restart di masa percobaan juga terbukti); ⚠️ tiap kode error belum diuji satu per satu |
 | Server Laravel + panel admin | ✅ Dipakai di server percobaan; 145 tes otomatis lulus |
 | Contoh integrasi PHP/Node + Postman | ✅ Lolos skrip pemeriksa dan 114 pemeriksaan Postman |
-| PCB dot matrix (papan bolong) | ⚠️ Tata letak dan panduan selesai, **belum dirakit fisik** |
+| Firmware v1.6.0–1.9.1 (mode absen DATANG/PULANG, menu Update firmware, buzzer langsung ke D17) | ✅ Dikirim ke alat lewat update jarak jauh: otomatis 1.5.0 → 1.6.0 → 1.7.0, manual 1.7.0 → 1.8.0 → 1.9.0 → 1.9.1. ⚠️ Mode Pilih Datang/Pulang **belum diuji dengan tap sungguhan** |
+| PCB dot matrix (papan bolong 1 sisi 30 × 50) | ✅ Alat pertama dirakit dengan tata letak ini dan berjalan (layar, sentuh, RFID, WiFi, tap, buzzer). ⚠️ Kabel LED (tahap 16) belum diuji; casing belum disesuaikan |
 | PCB cetak (KiCad) | ⚠️ Desain lolos DRC, **belum dipesan dan belum diuji** |
 | Casing cetak 3D | ⚠️ Desain lolos cek tabrakan otomatis, **belum dicetak** |
 
@@ -96,7 +100,7 @@ Website juga bisa mengirim **pengaturan jarak jauh** (PIN menu, judul layar, lay
 | 0. Persiapan | Komponen, alat, software siap | bagian di bawah |
 | 1. Prototipe | Rangkaian kabel jumper berjalan | [doc/skema-lengkap.md](doc/skema-lengkap.md), [doc/rakit-lengkap.html](doc/rakit-lengkap.html) |
 | 2. Firmware | Alat membaca kartu dan tampil di layar | [firmware/](firmware/) |
-| 3. Backend | Website menerima tap, panel admin | [api/README.md](api/README.md), [doc/spesifikasi-api.md](doc/spesifikasi-api.md), [contoh-integrasi/](contoh-integrasi/README.md) |
+| 3. Backend | Website menerima tap, panel admin | [api/README.md](api/README.md), [doc/integrasi-aplikasi.md](doc/integrasi-aplikasi.md), [doc/spesifikasi-api.md](doc/spesifikasi-api.md), [contoh-integrasi/](contoh-integrasi/README.md) |
 | 4. PCB | Rangkaian rapi tanpa kabel jumper | [doc/rakit-dotmatrix.html](doc/rakit-dotmatrix.html), [doc/pcb-papan-induk.md](doc/pcb-papan-induk.md) |
 | 5. Casing | Alat jadi, siap dipasang di dinding | [doc/casing.md](doc/casing.md) |
 
@@ -272,7 +276,8 @@ Monitor serial (115200 baud) menampilkan catatan seperti `RFID: RC522 terdeteksi
 | Fitur | Cara |
 |---|---|
 | Menu Pengaturan | Ikon gir di layar utama, PIN bawaan **2026** (5 kali salah = terkunci 60 detik). Menu tertutup sendiri setelah 60 detik tanpa sentuhan |
-| Isi menu | WiFi, Server, Tes koneksi, Info alat, Ganti PIN, Kalibrasi layar, Tes buzzer & LED, Tes screensaver, Cek kabel RFID, Reset pabrik |
+| Isi menu | WiFi, Server, Tes koneksi, Info alat, Ganti PIN, Kalibrasi layar, Tes buzzer & LED, Tes screensaver, Cek kabel RFID, Mode absen, Update firmware, Reset pabrik |
+| Mode absen | Menu **Mode absen**: **Otomatis** (semua tap ke `/tap`, server menentukan datang/pulang) atau **Pilih Datang / Pulang**: layar utama menampilkan tombol **DATANG** dan **PULANG**. Petugas memilih sekali, lalu semua tap dikirim ke `/check-in` atau `/check-out` sampai diganti. Pilihan dikosongkan otomatis saat tanggal berganti; tap sebelum memilih tidak dikirim. Bisa juga diatur per alat dari website (`config.tap_mode`) |
 | Kalibrasi ulang layar | Menu **Kalibrasi layar**, atau tekan **EN** lalu tekan **BOOT** saat muncul "Tekan BOOT sekarang" (jeda 1 detik) |
 | Reset pabrik | Tekan **EN 3 kali berturut-turut** (masing-masing sebelum alat menyala 5 detik), lalu pilih "Ya, reset"; atau lewat menu. Menghapus WiFi, URL, API key, PIN, judul, kalibrasi, antrean, pengumuman. **ID alat tidak terhapus** |
 | Layar redup | Setelah diam 60 detik, layar meredup ke 20 %. Kartu tetap diproses. Sentuhan pertama hanya menyalakan layar. Angka bisa diubah dari website (`dim_after`, `dim_level`) |
@@ -281,7 +286,7 @@ Monitor serial (115200 baud) menampilkan catatan seperti `RFID: RC522 terdeteksi
 | Watchdog | Kalau program macet lebih dari 60 detik, alat restart sendiri. Alasan restart terakhir terlihat di **Info alat → Restart** dan dikirim ke website |
 | Kode error | Masalah tampil di baris bawah layar utama dengan kode, contoh **E11 Password WiFi salah**. Daftar lengkap di 2.8. Kode yang sedang aktif juga ada di **Info alat → Error** |
 | Laporan ke website | Tiap menit: sinyal, RAM, status RFID, antrean, kode error, alasan restart, dan ringkasan crash terakhir. Website menandai alat yang perlu diperhatikan |
-| Update jarak jauh | Firmware baru diunggah di website, lalu alat memasangnya sendiri saat diam (lihat 2.7) |
+| Update jarak jauh | Firmware baru diunggah di website, lalu alat memasangnya sendiri saat diam, **atau langsung lewat menu Update firmware** (lihat 2.7) |
 | Pengaturan dari website | PIN menu (per alat), jam restart (per alat), judul layar, layar redup, pengumuman, update firmware (per alat) |
 
 ### 2.7 Update firmware jarak jauh (OTA)
@@ -335,10 +340,15 @@ Hasilnya di folder `firmware/build/`:
 4. Alat mengecek isi file (MD5), menampilkan "Firmware terpasang", lalu restart dengan versi baru.
 5. Di halaman Alat, status menjadi **"Sudah terpasang"**, dan riwayat kejadian mencatat `Firmware 1.5.0 -> 1.5.1`.
 
+**Atau pasang sekarang juga (manual, firmware 1.7.0 ke atas):** di alat buka **Pengaturan → Update firmware**. Alat langsung bertanya ke server. Kalau muncul **"Tersedia v…"**, tekan **Pasang sekarang** → **Pasang**. Cara ini tidak menunggu alat diam dan tidak menunggu jeda 30 menit setelah gagal, dan alasan kegagalan tampil di layar. Server hanya menawarkan versi yang **sudah dijadwalkan untuk alat itu** (Langkah 3). Kalau belum dijadwalkan, menu menjawab "Sudah versi terbaru".
+
+Selama update, buzzer diam, LED menyala biru, dan tampilan lain (jam, sinyal) berhenti sebentar: semua kemampuan alat dipakai untuk mengunduh. Itu wajar selama bilah kemajuan bergerak.
+
 #### Kalau ada yang salah
 
 | Yang terjadi | Artinya / yang dilakukan |
 |---|---|
+| Server sudah menawarkan update tapi alat tidak kunjung memasang | Alat sedang dipakai, menu Pengaturan sedang terbuka, atau percobaan pertama gagal tersambung (alat lalu menunggu 30 menit). Pakai **menu Update firmware** untuk memasang langsung dan melihat alasannya |
 | Lama di "Menunggu alat mengunduh" | Alat offline, sedang dipakai terus, atau firmware alat masih < 1.5.0. Cek status Online dan versi firmware alat |
 | Layar "Update firmware gagal" | Unduhan putus atau file rusak. Alat tetap memakai versi lama dan **mencoba lagi 30 menit kemudian**. Alasannya terlihat di Info alat → Firmware |
 | Riwayat: "Firmware 1.5.1 -> 1.5.0" tanpa status gagal | Listrik padam atau tombol EN ditekan di menit pertama setelah update, jadi alat kembali ke versi lama untuk berjaga-jaga. Bukan salah firmware: alat **mengulang update sendiri** (paling banyak 3 kali) |
@@ -409,13 +419,12 @@ Langkah lengkap, opsi, dan perintah artisan: [api/README.md](api/README.md).
 
 ### 3.B Integrasikan ke aplikasi Anda sendiri
 
-Alat tidak terikat ke Laravel. Aplikasi apa pun (PHP, Node, Python, Go, ...) cukup menyediakan 3 endpoint:
+Alat tidak terikat ke Laravel. Aplikasi apa pun (PHP, Node, Python, Go, ...) bisa memakainya.
 
-1. Baca kontraknya: [doc/spesifikasi-api.md](doc/spesifikasi-api.md).
-2. Salin pola dari [contoh-integrasi/php/index.php](contoh-integrasi/php/index.php) atau [contoh-integrasi/node/server.js](contoh-integrasi/node/server.js).
-3. Uji server Anda dengan [contoh-integrasi/tes/cek-server.sh](contoh-integrasi/tes/cek-server.sh) atau koleksi Postman di [contoh-integrasi/postman/](contoh-integrasi/postman/) (impor collection + environment).
-
-Panduan lengkap: [contoh-integrasi/README.md](contoh-integrasi/README.md).
+1. **Mulai dari [doc/integrasi-aplikasi.md](doc/integrasi-aplikasi.md)**: gambaran besar, **6 fitur wajib** (Kartu belum terdaftar, Rekap, Alat, Firmware, Pengumuman, Pengaturan), data yang perlu disimpan, urutan kerja, dan checklist siap pakai.
+2. Kontrak teknis alat ↔ aplikasi: [doc/spesifikasi-api.md](doc/spesifikasi-api.md).
+3. Salin pola dari server contoh yang sudah menjalankan keenam fitur: [contoh-integrasi/php/index.php](contoh-integrasi/php/index.php) atau [contoh-integrasi/node/server.js](contoh-integrasi/node/server.js) ([cara pakai](contoh-integrasi/README.md)).
+4. Uji aplikasi Anda dengan [contoh-integrasi/tes/cek-server.sh](contoh-integrasi/tes/cek-server.sh) dan koleksi Postman di [contoh-integrasi/postman/](contoh-integrasi/postman/) (bisa otomatis dengan Newman).
 
 ### 3.C Online di internet
 
@@ -440,9 +449,11 @@ Pada kedua pilihan, ESP32, LCD, dan RC522 **dicolokkan ke header female** (tidak
 
 ### 4.A PCB dot matrix
 
-1. Bahan per unit: papan dot matrix **2 sisi** 9 × 15 cm (+ potongan 5 kolom dari papan lain), header female 1×15 ×2, 1×14 ×1, 1×8 ×1, resistor 220 Ω ×3, 1 kΩ ×1, 10 kΩ ×1, transistor **2N3904** (atau S8050), dioda **FR107** (atau 1N4007), elko **220 µF** dan **22 µF**, keramik **47 nF** ×2, kabel silikon 24 AWG merah dan hitam.
-2. Cetak templat 1:1 [hardware/dotmatrix/hasil/templat-1-1.pdf](hardware/dotmatrix/hasil/templat-1-1.pdf) (skala 100 %, garis skala harus tepat 50 mm) untuk memotong dan mengebor.
-3. Buka [doc/rakit-dotmatrix.html](doc/rakit-dotmatrix.html) di browser dan ikuti 23 langkahnya. Papan di halaman itu bisa dibalik depan/belakang, dan setiap kabel punya kode serta posisi lubang (`K11·B5` = kolom 11, baris 5).
+1. Bahan per unit: papan dot matrix **1 sisi** 9 × 15 cm berisi **30 × 50 lubang** (label kolom `1a`–`1z`, `2a`–`2d`, baris `001`–`050`), header female 1×15 ×2, 1×14 ×1, 1×8 ×1, header male 1×4 (kabel LED), resistor 220 Ω ×3, elko **220 µF**, keramik **47 nF** ×2, buzzer aktif 12 mm, kabel silikon 24 AWG merah dan hitam, kabel jumper female 4 jalur untuk LED. Papan dipakai utuh; baris 042–050 tidak dipakai.
+2. Buka [doc/rakit-dotmatrix.html](doc/rakit-dotmatrix.html) di browser dan ikuti langkahnya. Semua komponen dipasang di **depan** (sisi polos) dan disolder di **belakang** (sisi tembaga); kabel disolder langsung menempel ke kaki, tanpa lubang tembus. Buzzer langsung ke D17 (tanpa transistor), LED dipasang di casing lewat kabel. Papan di halaman itu bisa dibalik depan/belakang, dan setiap kabel punya kode serta posisi lubang yang ditulis **sama dengan label di papan** (`1z-024` = kolom 1z, baris 024).
+3. Opsional: cetak templat 1:1 [hardware/dotmatrix/hasil/templat-1-1.pdf](hardware/dotmatrix/hasil/templat-1-1.pdf) (A4 tegak, skala 100 %, garis skala harus tepat 50 mm) sebagai peta di samping papan.
+
+> Tata letak ini memakai papan 30 × 50. LCD lebih lebar dari papan dan menjorok ke kiri dan atas, jadi **casing (Tahap 5) belum cocok** untuk versi dot matrix ini dan akan dirancang ulang.
 
 Semua posisi berasal dari satu file, [hardware/dotmatrix/tata_letak.py](hardware/dotmatrix/tata_letak.py). Kalau diubah, jalankan `python3 hardware/dotmatrix/tata_letak.py` untuk memperbarui panduan HTML, data JSON, dan templat (PDF dibuat kalau PyMuPDF terpasang; kalau tidak, cetak file SVG-nya dari browser dengan skala 100 %).
 
@@ -503,15 +514,18 @@ firmware/
   upload.sh, monitor.sh   ← compile/upload & monitor serial (Mac/Linux)
 api/                      ← server acuan Laravel + panel admin
 contoh-integrasi/         ← contoh server PHP & Node, skrip pemeriksa, koleksi Postman
+CHANGELOG.md              ← riwayat perubahan firmware, server, dokumentasi
 hardware/
   dotmatrix/              ← tata letak PCB dot matrix (tata_letak.py) + templat 1:1
   pcb/                    ← PCB cetak (KiCad 10): buat_pcb.py, rute.py, buat.sh, hasil/
   casing/                 ← casing 3D (OpenSCAD): casing.scad, buat.sh, hasil/
 doc/
+  integrasi-aplikasi.md   ← panduan integrasi ke aplikasi lain (6 fitur wajib, Postman)
   spesifikasi-api.md      ← kontrak API alat ↔ website
   skema-lengkap.md        ← kabel prototipe (acuan pin)
   rakit-lengkap.html      ← panduan interaktif kabel prototipe
-  rakit-dotmatrix.html    ← panduan interaktif PCB dot matrix
+  rakit-dotmatrix.html    ← panduan interaktif PCB dot matrix (papan 1 sisi 30 × 50)
+  panduan-pengguna.md     ← panduan pengguna/klien: absen, mode, menu, kode error, update, perawatan
   pcb-papan-induk.md      ← PCB cetak: pesan, cek, rakit
   casing.md               ← casing: cetak, baut, rakit
 ```
