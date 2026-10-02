@@ -48,3 +48,11 @@ arsip/
 # Foto mentah (bisa berisi lokasi GPS)
 *.HEIC
 *.heic
+
+# Contoh integrasi: data uji & firmware hasil unggah (dibuat otomatis saat server contoh dijalankan)
+contoh-integrasi/php/data.sqlite
+contoh-integrasi/php/data.sqlite-*
+contoh-integrasi/php/firmware/
+
+# Firmware palsu kecil untuk uji Postman/Newman (bukan firmware sungguhan, sengaja ikut repo)
+!contoh-integrasi/postman/contoh-firmware.bin
