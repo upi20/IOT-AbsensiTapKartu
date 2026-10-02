@@ -35,8 +35,8 @@ class AbsensiController extends Controller
 
     /**
      * POST /heartbeat — tanda alat aktif (bagian 5). Kontak alat sudah dicatat oleh middleware; di sini data
-     * kesehatan (raw.uptime_s, reset_reason, rfid_ok, queue, RAM, error, ota_failed, crash) disimpan, kalau migrasinya
-     * sudah dijalankan.
+     * kesehatan (raw.uptime_s, reset_reason, rfid_ok, queue, RAM, error, ota_failed, crash) dan mode absen (raw.tap_mode,
+     * tap_select) disimpan, kalau migrasinya sudah dijalankan.
      */
     public function heartbeat(Request $request): JsonResponse
     {
@@ -83,6 +83,30 @@ class AbsensiController extends Controller
     /** POST /tap — kartu ditempelkan (bagian 4). Semua hasil bisnis dibalas HTTP 200. */
     public function tap(Request $request, AttendanceService $service): JsonResponse
     {
+        return $this->recordTap($request, $service);
+    }
+
+    /**
+     * POST /check-in — mode pilih, petugas memilih DATANG di alat (bagian 4.1). Body & respons sama dengan /tap
+     * (ditambah field "mode", yang tidak dipakai: jenisnya ditentukan endpoint).
+     */
+    public function checkIn(Request $request, AttendanceService $service): JsonResponse
+    {
+        return $this->recordTap($request, $service, AttendanceType::CheckIn);
+    }
+
+    /** POST /check-out — mode pilih, petugas memilih PULANG di alat (bagian 4.1). */
+    public function checkOut(Request $request, AttendanceService $service): JsonResponse
+    {
+        return $this->recordTap($request, $service, AttendanceType::CheckOut);
+    }
+
+    /**
+     * Catat satu tap dan bangun respons untuk /tap ($mode null) atau mode pilih /check-in & /check-out.
+     * tap_id berlaku lintas ketiga endpoint: tap yang sudah dicatat di endpoint mana pun tidak dicatat lagi.
+     */
+    private function recordTap(Request $request, AttendanceService $service, ?AttendanceType $mode = null): JsonResponse
+    {
         $rfid = Member::normalizeUid(is_string($request->json('rfid')) ? $request->json('rfid') : '');
 
         if (! Member::isValidUid($rfid)) {
@@ -102,7 +126,7 @@ class AbsensiController extends Controller
 
         /** @var Device $device */
         $device = $request->attributes->get('device');
-        $result = $service->tap($device, $rfid, $at, $request->json()->all(), $tapId);
+        $result = $service->tap($device, $rfid, $at, $request->json()->all(), $tapId, $mode);
 
         $member = $result->member;
         $tappedAt = $result->attendance->tapped_at;
@@ -132,7 +156,7 @@ class AbsensiController extends Controller
                 'ok' => true,
                 'status' => 'duplicate',
                 'name' => $member?->name,
-                'message' => 'Sudah tercatat',
+                'message' => $mode === AttendanceType::CheckIn && ! $result->resent ? 'Sudah absen datang' : 'Sudah tercatat',
                 'time' => $duplicateOf->format('H:i'),
             ],
             AttendanceStatus::Success => $result->type() === AttendanceType::CheckIn
@@ -147,9 +171,11 @@ class AbsensiController extends Controller
                     'ok' => true,
                     'status' => 'check_out',
                     'name' => $member->name,
-                    'message' => 'Sampai jumpa',
+                    'message' => $mode === null ? 'Sampai jumpa' : 'Hati-hati di jalan',
                     'time' => $tappedAt->format('H:i'),
-                    'info' => $this->checkOutInfo($service, $member, $tappedAt),
+                    'info' => $mode === null
+                        ? $this->checkOutInfo($service, $member, $tappedAt)
+                        : $this->selectedCheckOutInfo($service, $member, $tappedAt),
                 ],
         };
 
@@ -173,12 +199,25 @@ class AbsensiController extends Controller
     }
 
     /**
+     * Baris keterangan saat pulang di mode pilih: ["Masuk tadi 07:45"] atau ["Belum absen datang hari ini"].
+     *
+     * @return list<string>
+     */
+    private function selectedCheckOutInfo(AttendanceService $service, Member $member, Carbon $tappedAt): array
+    {
+        $checkIn = $service->checkInTime($member, $tappedAt);
+
+        return [$checkIn ? 'Masuk tadi '.$checkIn->format('H:i') : 'Belum absen datang hari ini'];
+    }
+
+    /**
      * Pengaturan jarak jauh (bagian 6). Hanya kunci yang diisi di panel yang dikirim, kecuali restart_at.
      * PIN dan jam restart diatur per alat (halaman Alat), judul berlaku untuk semua alat. announcements_rev berubah
      * setiap pengumuman / pengaturan screensaver berubah, sehingga alat mengambil ulang GET /announcements.
      * firmware_update hanya dikirim kalau alat dijadwalkan update dan versinya belum terpasang / belum pernah gagal.
+     * tap_mode hanya dikirim kalau diatur di panel (null = alat memakai pengaturannya sendiri).
      *
-     * @return object{pin?: string, title?: string, dim_after?: int, dim_level?: int, announcements_rev: string, restart_at: string, firmware_update?: array{version: string, url: string, size: int, md5: string}}
+     * @return object{pin?: string, title?: string, dim_after?: int, dim_level?: int, announcements_rev: string, restart_at: string, tap_mode?: string, firmware_update?: array{version: string, url: string, size: int, md5: string}}
      */
     private function deviceConfig(Device $device): object
     {
@@ -192,6 +231,11 @@ class AbsensiController extends Controller
         ], fn ($value) => $value !== null && $value !== '') + [
             'restart_at' => $device->restart_at ?? '',
         ];
+
+        // Sebelum migrasi mode absen kolomnya belum ada (atribut null), jadi tap_mode tidak dikirim.
+        if ($tapMode = Device::validTapMode($device->tap_mode)) {
+            $config['tap_mode'] = $tapMode;
+        }
 
         // URL dibangun dari request alat (skema & host sama dengan Base URL alat), seperti photo_url.
         if ($update = $device->pendingFirmwareUpdate()) {

@@ -6,7 +6,8 @@ Server Laravel untuk alat absensi tap RFID. Isinya dua bagian:
    [`doc/spesifikasi-api.md`](../doc/spesifikasi-api.md). Kalau Anda membuat aplikasi sendiri yang
    ingin dihubungkan ke alat, spesifikasi itulah acuannya; kode di sini contoh lengkap yang berjalan.
 2. **Panel admin sederhana** di `/admin` — kelola anggota & kartu, lihat tap hari ini, rekap, alat
-   (termasuk **pemantauan kesehatan alat**), **update firmware jarak jauh**, dan pengaturan.
+   (termasuk **pemantauan kesehatan alat** dan **mode absen** Otomatis / Pilih Datang/Pulang),
+   **update firmware jarak jauh**, dan pengaturan.
 
 - Laravel 13, PHP 8.3+, PostgreSQL, Blade + satu stylesheet (`public/css/admin.css`), tanpa build Node
 - Zona waktu `Asia/Jakarta` (ubah dengan `APP_TIMEZONE`), bahasa Indonesia
@@ -136,6 +137,7 @@ Lengkapnya di [`doc/spesifikasi-api.md`](../doc/spesifikasi-api.md). Ringkasnya:
 |---|---|
 | `GET /ping` | Tes koneksi. `{"ok":true,"message":"Terhubung ke <judul>","server_time":"…+07:00","config":{…}}` |
 | `POST /tap` | Kartu ditempelkan → `check_in` / `check_out` / `duplicate` / `unknown` / `rejected` |
+| `POST /check-in`, `POST /check-out` | Mode absen **Pilih Datang/Pulang** (firmware 1.6.0+): body & respons sama dengan `/tap` (+ `"mode"`), jenis tap ditentukan endpoint. Lihat [Mode absen](#mode-absen) |
 | `POST /heartbeat` | Tiap 60 detik. Mencatat status alat, membalas `server_time` + `config` |
 | `GET /announcements` | Pengumuman screensaver: `{"ok":true,"interval":3,"idle":30,"items":[{"id":"12","title":"…","description":"…","icon":"rapat"}]}` |
 | `GET /firmware/{id}` | File `.bin` untuk update jarak jauh (URL-nya dari `config.firmware_update`). Hanya untuk alat yang dijadwalkan ke firmware itu, selain itu 404 |
@@ -154,7 +156,8 @@ Lengkapnya di [`doc/spesifikasi-api.md`](../doc/spesifikasi-api.md). Ringkasnya:
   di panel), `dim_after` & `dim_level` (layar redup setelah diam sekian detik ke sekian persen, bawaan
   60 detik & 20 %), `announcements_rev` (penanda versi pengumuman), dan `restart_at` (jam restart harian
   alat ini, `"HH:MM"` menurut jam di layar alat; selalu dikirim, `""` = alat tidak restart otomatis; bawaan
-  `"03:00"`, diatur per alat di halaman **Alat**).
+  `"03:00"`, diatur per alat di halaman **Alat**), serta `tap_mode` (`"auto"` / `"select"`, hanya dikirim kalau
+  mode absen alat itu diatur di halaman **Alat**).
 - `GET /announcements`: hanya pengumuman aktif, urut nomor urutan, maks. 10; `id` berupa teks,
   `description` tidak dikirim kalau kosong. `interval`/`idle` dari menu **Pengumuman** (bawaan 3 dan 30 detik).
 - `config.announcements_rev` = `"<jumlah pengumuman>-<unix perubahan terakhir>-<interval>-<idle>"`,
@@ -212,6 +215,26 @@ Per anggota, per hari kalender `Asia/Jakarta` (lihat `app/Services/AttendanceSer
 - Nomor kartu disimpan sebagai 10 digit (mis. `0218893066`, yaitu UID `0A 0B 0C 0D` dibaca
   little-endian). Kartu lama yang dulu didaftarkan sebagai hex 4 byte (mis. `0A0B0C0D`) tetap dikenali
   karena nilainya sama.
+
+### Mode absen
+
+Butuh firmware alat **1.6.0** ke atas (spesifikasi bagian 4.1). Di halaman **Alat**, pilihan **Mode absen** per alat:
+*Ikuti pengaturan di alat* (`devices.tap_mode` null, `config.tap_mode` tidak dikirim), *Otomatis (1 endpoint /tap)*
+(`auto`), atau *Pilih Datang/Pulang di alat* (`select`: petugas memilih DATANG/PULANG di layar alat, tap dikirim ke
+`/check-in` atau `/check-out`). Mode yang sedang dipakai alat dan pilihan saat ini (Datang / Pulang / belum dipilih)
+diambil dari heartbeat (`raw.tap_mode`, `raw.tap_select`) dan ditampilkan di kartu alat.
+
+| Endpoint | Kondisi | `status` | `message` | Lainnya |
+|---|---|---|---|---|
+| `/check-in` | Sudah ada `check_in` di tanggal yang sama | `duplicate` | Sudah absen datang | `time` = jam `check_in` pertama |
+| `/check-in` | Selain itu | `check_in` | Selamat datang | `time` |
+| `/check-out` | Ada `check_out` < 60 detik (jeda tap ganda) di tanggal yang sama | `duplicate` | Sudah tercatat | `time` = jam `check_out` itu |
+| `/check-out` | Selain itu | `check_out` | Hati-hati di jalan | `info: ["Masuk tadi 07:45"]` atau `["Belum absen datang hari ini"]` |
+
+Kartu tidak terdaftar / nonaktif, `tap_id` (berlaku lintas `/tap`, `/check-in`, `/check-out`), tap antrean, foto, dan
+penyimpanan `payload` sama dengan `/tap`; barisnya masuk ke tabel `attendances` yang sama, jadi rekap tetap satu.
+Kolom `devices.tap_mode`, `reported_tap_mode`, `tap_select` dibuat migrasi `2026_10_02_000001`; sebelum migrasi itu
+dijalankan API & halaman Alat tetap jalan, hanya tanpa pengaturan mode absen.
 
 ### Kesehatan alat
 

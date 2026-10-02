@@ -28,8 +28,12 @@ use Illuminate\Support\Str;
  * Kesehatan alat (heartbeat_at, uptime_s, reset_reason, rfid_ok, queue, free_heap, min_free_heap, error_code,
  * ota_failed) hanya diisi dari body /heartbeat, lihat recordHeartbeat(). Kejadian penting dicatat di DeviceEvent.
  * `firmware_release_id` = target update firmware jarak jauh (OTA), dikirim lewat config.firmware_update.
+ *
+ * Mode absen (firmware 1.6.0+, lihat tapModeReady()): `tap_mode` = pengaturan dari panel ("auto" | "select"),
+ * dikirim lewat config.tap_mode; null = ikuti pengaturan di alat. `reported_tap_mode` & `tap_select` = mode yang
+ * sedang dipakai alat & pilihan Datang/Pulang saat ini, dari heartbeat (raw.tap_mode, raw.tap_select).
  */
-#[Fillable(['code', 'name', 'location', 'pin', 'restart_at', 'firmware_release_id'])]
+#[Fillable(['code', 'name', 'location', 'pin', 'restart_at', 'firmware_release_id', 'tap_mode'])]
 #[Hidden(['api_key'])]
 class Device extends Model
 {
@@ -89,6 +93,18 @@ class Device extends Model
         'E26' => 'Server tidak menjawab (timeout)',
         'E30' => 'Pembaca RFID tidak terdeteksi',
         'E31' => 'Jam belum sinkron',
+    ];
+
+    /** Mode absen (config.tap_mode, raw.tap_mode) => keterangan. */
+    public const TAP_MODES = [
+        'auto' => 'Otomatis (1 endpoint /tap)',
+        'select' => 'Pilih Datang/Pulang di alat',
+    ];
+
+    /** Pilihan di mode "select" (raw.tap_select) => keterangan. */
+    public const TAP_SELECTS = [
+        'check_in' => 'Datang',
+        'check_out' => 'Pulang',
     ];
 
     /** Crash dengan PC & backtrace sama dalam rentang ini tidak dicatat ulang (firmware mengirim ulang sampai heartbeat berhasil). */
@@ -175,8 +191,19 @@ class Device extends Model
     }
 
     /**
+     * Migrasi mode absen (kolom devices.tap_mode, reported_tap_mode, tap_select) sudah dijalankan? Sebelum itu
+     * API alat & halaman Alat tetap jalan seperti dulu: config.tap_mode tidak dikirim dan raw.tap_mode tidak disimpan.
+     * Hasil pemeriksaan disimpan selama satu request.
+     */
+    public static function tapModeReady(): bool
+    {
+        return once(fn () => Schema::hasColumn('devices', 'tap_mode'));
+    }
+
+    /**
      * Simpan data kesehatan dari body /heartbeat (raw.uptime_s, reset_reason, rfid_ok, queue, free_heap,
-     * min_free_heap, error, ota_failed, crash) dan catat kejadian: boot, crash, ota_failed.
+     * min_free_heap, error, ota_failed, crash), plus mode absen (raw.tap_mode, tap_select) kalau migrasinya sudah
+     * dijalankan, dan catat kejadian: boot, crash, ota_failed.
      * Nilai yang tidak dikirim / tipenya salah dibiarkan, kecuali error & ota_failed: tidak dikirim = tidak ada.
      *
      * @param  array<string, mixed>  $body
@@ -210,6 +237,12 @@ class Device extends Model
 
         $this->error_code = is_string($raw['error'] ?? null) && $raw['error'] !== '' ? Str::limit($raw['error'], 8, '') : null;
         $this->ota_failed = is_string($raw['ota_failed'] ?? null) && $raw['ota_failed'] !== '' ? Str::limit($raw['ota_failed'], 32, '') : null;
+
+        // Mode absen (firmware 1.6.0+). Tidak dikirim / nilai tidak sah = null (firmware lama, atau belum memilih).
+        if (self::tapModeReady()) {
+            $this->reported_tap_mode = self::validTapMode($raw['tap_mode'] ?? null);
+            $this->tap_select = is_string($raw['tap_select'] ?? null) && isset(self::TAP_SELECTS[$raw['tap_select']]) ? $raw['tap_select'] : null;
+        }
 
         // Menyala ulang: uptime lebih kecil dari sebelumnya, atau lebih kecil dari jarak sejak heartbeat
         // sebelumnya (restart di antaranya, mis. dua kali restart cepat), atau dulu tidak dikirim padahal
@@ -273,6 +306,12 @@ class Device extends Model
             .($details['pc'] ? ", PC {$details['pc']}" : '');
 
         DeviceEvent::record($this, 'crash', $message, $details);
+    }
+
+    /** "auto" / "select", selain itu null. */
+    public static function validTapMode(mixed $mode): ?string
+    {
+        return is_string($mode) && isset(self::TAP_MODES[$mode]) ? $mode : null;
     }
 
     public static function resetReasonLabel(string $reason): string

@@ -12,6 +12,9 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('absensi')->middleware(['throttle:absensi-api', AuthenticateAbsensiDevice::class])->group(function () {
     Route::get('ping', [AbsensiController::class, 'ping']);
     Route::post('tap', [AbsensiController::class, 'tap']);
+    // Mode absen "select" (firmware 1.6.0+): petugas memilih DATANG / PULANG di alat.
+    Route::post('check-in', [AbsensiController::class, 'checkIn']);
+    Route::post('check-out', [AbsensiController::class, 'checkOut']);
     Route::post('heartbeat', [AbsensiController::class, 'heartbeat']);
     Route::get('announcements', [AbsensiController::class, 'announcements']);
     Route::get('firmware/{release}', [AbsensiController::class, 'firmware'])->whereNumber('release')->name('absensi.firmware');

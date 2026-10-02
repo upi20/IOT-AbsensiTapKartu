@@ -7,6 +7,7 @@ use App\Models\Device;
 use App\Models\FirmwareRelease;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class DeviceController extends Controller
@@ -27,9 +28,10 @@ class DeviceController extends Controller
     }
 
     /**
-     * Nama, PIN, jam restart harian & target update firmware satu alat. Galat validasi disimpan di bag
+     * Nama, PIN, jam restart harian, mode absen & target update firmware satu alat. Galat validasi disimpan di bag
      * "device-{id}" agar tampil di baris alat itu. Jam restart kosong = alat tidak restart otomatis (disimpan null).
-     * Target firmware kosong = tidak ada update.
+     * Target firmware kosong = tidak ada update. Mode absen kosong = ikuti pengaturan di alat (disimpan null); hanya
+     * disimpan kalau migrasi mode absen sudah dijalankan.
      */
     public function update(Request $request, Device $device): RedirectResponse
     {
@@ -38,15 +40,19 @@ class DeviceController extends Controller
             'pin' => ['nullable', 'string', 'regex:/^[0-9]{4,8}$/'],
             'restart_at' => ['nullable', 'string', 'date_format:H:i'],
             'firmware_release_id' => ['nullable', 'integer', 'exists:firmware_releases,id'],
+            'tap_mode' => ['nullable', 'string', Rule::in(array_keys(Device::TAP_MODES))],
         ], [
             'pin.regex' => 'PIN harus 4 sampai 8 digit angka.',
             'restart_at.date_format' => 'Jam restart harus berformat JJ:MM (00:00–23:59).',
-        ], ['name' => 'nama alat', 'pin' => 'PIN', 'restart_at' => 'jam restart', 'firmware_release_id' => 'firmware']);
+            'tap_mode.in' => 'Mode absen tidak dikenal.',
+        ], ['name' => 'nama alat', 'pin' => 'PIN', 'restart_at' => 'jam restart', 'firmware_release_id' => 'firmware', 'tap_mode' => 'mode absen']);
 
         $attributes = ['name' => trim($data['name']), 'pin' => $data['pin'] ?? null];
 
         // Hanya diubah kalau field-nya dikirim (form halaman Alat selalu mengirimnya, kosong pun).
-        foreach (['restart_at', 'firmware_release_id'] as $key) {
+        $optional = Device::tapModeReady() ? ['restart_at', 'firmware_release_id', 'tap_mode'] : ['restart_at', 'firmware_release_id'];
+
+        foreach ($optional as $key) {
             if (array_key_exists($key, $data)) {
                 $attributes[$key] = $data[$key];
             }
@@ -55,7 +61,7 @@ class DeviceController extends Controller
         $device->update($attributes);
 
         return redirect()->route('admin.devices.index')
-            ->with('success', "Alat {$device->name} disimpan. PIN, jam restart & update firmware diterapkan di alat pada heartbeat berikutnya (maks. 1 menit).");
+            ->with('success', "Alat {$device->name} disimpan. PIN, jam restart, mode absen & update firmware diterapkan di alat pada heartbeat berikutnya (maks. 1 menit).");
     }
 
     /** Nama error bag untuk form alat ini (dipakai juga di view admin.devices). */

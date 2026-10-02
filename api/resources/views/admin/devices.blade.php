@@ -15,6 +15,7 @@
         @php($failed = $errors->hasBag($bag))
         @php($issues = $device->healthIssues())
         @php($update = $device->firmwareUpdateState())
+        @php($tapModeReady = \App\Models\Device::tapModeReady())
         <section class="card device-card" id="alat-{{ $device->id }}">
             <div class="card-head">
                 <div>
@@ -131,6 +132,21 @@
                             @endif
                         </dd>
                     </div>
+                    @if ($tapModeReady && $device->code !== null)
+                        <div>
+                            <dt>Mode absen di alat</dt>
+                            <dd>
+                                @if ($device->reported_tap_mode === 'select')
+                                    Pilih Datang/Pulang
+                                    <span class="sub">Pilihan saat ini: {{ \App\Models\Device::TAP_SELECTS[$device->tap_select] ?? 'belum dipilih' }}</span>
+                                @elseif ($device->reported_tap_mode === 'auto')
+                                    Otomatis<span class="sub mono">/tap</span>
+                                @else
+                                    —<span class="sub">belum dilaporkan (firmware 1.6.0+)</span>
+                                @endif
+                            </dd>
+                        </div>
+                    @endif
                     <div>
                         <dt>Tap hari ini</dt>
                         <dd>{{ $device->taps_today }}</dd>
@@ -166,12 +182,25 @@
                             </select>
                         </div>
                     @endif
+                    @if ($tapModeReady && $device->code !== null)
+                        <div class="field">
+                            <label for="tap-mode-{{ $device->id }}">Mode absen</label>
+                            @php($tapMode = (string) ($failed ? old('tap_mode') : $device->tap_mode))
+                            <select id="tap-mode-{{ $device->id }}" name="tap_mode" class="input input-sm @error('tap_mode', $bag) is-invalid @enderror">
+                                <option value="">Ikuti pengaturan di alat</option>
+                                @foreach (\App\Models\Device::TAP_MODES as $value => $label)
+                                    <option value="{{ $value }}" @selected($tapMode === $value)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    @endif
                     <button type="submit" class="btn btn-sm">Simpan</button>
                 </form>
                 @error('name', $bag)<div class="error">{{ $message }}</div>@enderror
                 @error('pin', $bag)<div class="error">{{ $message }}</div>@enderror
                 @error('restart_at', $bag)<div class="error">{{ $message }}</div>@enderror
                 @error('firmware_release_id', $bag)<div class="error">{{ $message }}</div>@enderror
+                @error('tap_mode', $bag)<div class="error">{{ $message }}</div>@enderror
                 <div class="small muted" style="margin-top:6px">
                     @if ($device->restart_at)
                         Restart harian pukul <span class="mono">{{ $device->restart_at }}</span>
@@ -217,5 +246,12 @@
         Jam restart harian: alat restart sendiri sekali sehari pada jam itu (jam di layar alat) saat sedang tidak dipakai.
         Kosongkan = alat tidak restart otomatis. Bawaan <span class="mono">03:00</span>, sebaiknya jam sepi.
         Update firmware: unggah file di halaman <a href="{{ route('admin.firmware.index') }}">Firmware</a>, pilih versinya di sini; alat mengunduh, memasang & restart sendiri.
-        Butuh firmware 1.5.0 ke atas.</p>
+        Butuh firmware 1.5.0 ke atas.
+        @if (\App\Models\Device::tapModeReady())
+            Mode absen: <em>Otomatis</em> = semua tap ke satu endpoint <span class="mono">/tap</span>, server yang menentukan datang/pulang;
+            <em>Pilih Datang/Pulang</em> = petugas memilih DATANG atau PULANG di layar alat (dipilih ulang tiap hari), tap dikirim ke
+            <span class="mono">/check-in</span> atau <span class="mono">/check-out</span>. <em>Ikuti pengaturan di alat</em> = diatur dari menu alat.
+            Butuh firmware 1.6.0 ke atas.
+        @endif
+    </p>
 @endsection
