@@ -1,5 +1,6 @@
 // Antrean tap saat server tidak bisa dihubungi. Disimpan di LittleFS supaya tetap ada walau alat mati.
-// File teks, satu tap per baris:  tap_id|rfid|uid_hex|tapped_at   (tapped_at kosong = belum ada jam)
+// File teks, satu tap per baris:  tap_id|rfid|uid_hex|tapped_at|mode   (tapped_at kosong = belum ada jam;
+// mode kosong = /tap, "check_in" = /check-in, "check_out" = /check-out). Baris lama tanpa mode tetap terbaca.
 // Paling banyak ANTREAN_MAKS tap. Kalau penuh, tap paling lama dibuang.
 #pragma once
 #include <LittleFS.h>
@@ -7,7 +8,7 @@
 const char FILE_ANTREAN[] = "/antrean.txt";
 const char FILE_SEMENTARA[] = "/antrean.tmp";
 
-struct TapAntrean { String tapId, rfid, uidHex, waktu; };
+struct TapAntrean { String tapId, rfid, uidHex, waktu, mode; };
 
 int jumlahAntrean = 0;
 bool antreanSiap = false;     // LittleFS berhasil dipasang?
@@ -30,17 +31,21 @@ void antreanMulai() {
   Serial.printf("Antrean: %d tap menunggu dikirim\n", jumlahAntrean);
 }
 
-// Pecah satu baris menjadi 4 bagian.
+// Pecah satu baris menjadi 4 atau 5 bagian.
 bool antreanBaca(const String& baris, TapAntrean& t) {
   int a = baris.indexOf('|');
   int b = baris.indexOf('|', a + 1);
   int c = baris.indexOf('|', b + 1);
   if (a < 0 || b < 0 || c < 0) return false;
+  int d = baris.indexOf('|', c + 1);
   t.tapId  = baris.substring(0, a);
   t.rfid   = baris.substring(a + 1, b);
   t.uidHex = baris.substring(b + 1, c);
-  t.waktu  = baris.substring(c + 1);
+  t.waktu  = d < 0 ? baris.substring(c + 1) : baris.substring(c + 1, d);
+  t.mode   = d < 0 ? String("") : baris.substring(d + 1);
   t.waktu.trim();
+  t.mode.trim();
+  if (t.mode != "check_in" && t.mode != "check_out") t.mode = "";
   return t.rfid.length() > 0;
 }
 
@@ -85,7 +90,7 @@ void antreanTambah(const TapAntrean& t) {
   }
   fs::File f = LittleFS.open(FILE_ANTREAN, "a");
   if (!f) return;
-  f.printf("%s|%s|%s|%s\n", t.tapId.c_str(), t.rfid.c_str(), t.uidHex.c_str(), t.waktu.c_str());
+  f.printf("%s|%s|%s|%s|%s\n", t.tapId.c_str(), t.rfid.c_str(), t.uidHex.c_str(), t.waktu.c_str(), t.mode.c_str());
   f.close();
   jumlahAntrean++;
   Serial.printf("Antrean: tap %s disimpan (%d menunggu)\n", t.rfid.c_str(), jumlahAntrean);

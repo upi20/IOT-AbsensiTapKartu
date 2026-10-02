@@ -364,6 +364,8 @@ void uiInfo(bool paksa) {
                                                   " - tap tetap disimpan";                   latar = W_ORANYE; warna = W_TEKS; }
   else if (statusServer == SERVER_GAGAL) { teks = kode.length() > 0 ? galatTeks(kode) : String("Server tidak menjawab");
                                                                                              latar = W_MERAH;  warna = W_TEKS; }
+  else if (modePilih() && pilihanMode.length() == 0)
+                                         { teks = "Pilih DATANG atau PULANG dulu";          latar = W_AMBER;  warna = W_TEKS; }
   else if (jumlahAntrean > 0)            { teks = String(jumlahAntrean) + " tap menunggu dikirim"; latar = W_AMBER; warna = W_TEKS; }
   else if (kode.length() > 0)            { teks = galatTeks(kode);                           latar = W_AMBER;  warna = W_TEKS; }
   else if (!jamValid())                  { teks = "Menunggu jam dari server"; }
@@ -376,6 +378,23 @@ void uiInfo(bool paksa) {
   tulisMuat(teks, 240, 301, 460, F_TEBAL, F_TEBAL9, F_TEBAL9, warna, MC_DATUM);
 }
 
+// Mode pilih (modeabsen.h): dua tombol besar di bawah jam, menggantikan tulisan "Tempelkan kartu".
+const Tombol TOMBOL_DATANG = {16, 212, 216, 62, "DATANG"};
+const Tombol TOMBOL_PULANG = {248, 212, 216, 62, "PULANG"};
+
+void uiTombolMode() {
+  tft.fillRect(0, 207, 480, 74, W_LATAR);
+  for (int i = 0; i < 2; i++) {
+    const Tombol& t = i == 0 ? TOMBOL_DATANG : TOMBOL_PULANG;
+    bool dipilih = pilihanMode == (i == 0 ? "check_in" : "check_out");
+    uint16_t warna = dipilih ? (i == 0 ? W_HIJAU : W_BIRU) : W_PANEL;
+    tft.fillSmoothRoundRect(t.x, t.y, t.w, t.h, 12, warna, W_LATAR);
+    if (!dipilih) tft.drawRoundRect(t.x, t.y, t.w, t.h, 12, W_GARIS);
+    tulis(t.teks, t.x + t.w / 2, t.y + t.h / 2 - (dipilih ? 7 : 0), F_JUDUL, dipilih ? W_TEKS : W_REDUP, MC_DATUM);
+    if (dipilih) tulis("dipilih - tempelkan kartu", t.x + t.w / 2, t.y + t.h - 12, F_KECIL, W_TEKS, MC_DATUM);
+  }
+}
+
 void uiUtama() {
   tft.fillScreen(W_LATAR);
   tft.fillRect(0, 0, 480, TINGGI_BILAH, W_PANEL);
@@ -384,9 +403,13 @@ void uiUtama() {
   uiJudulUtama(true);
   uiJam(true);
   tft.drawFastHLine(40, 206, 400, W_GARIS);
-  gambarKartu(62, 220, W_LATAR);
-  tulis("Tempelkan kartu", 168, 222, F_JUDUL, W_TEKS);
-  tulis("untuk absen masuk atau pulang", 170, 260, F_KECIL, W_REDUP);
+  if (modePilih()) {
+    uiTombolMode();
+  } else {
+    gambarKartu(62, 220, W_LATAR);
+    tulis("Tempelkan kartu", 168, 222, F_JUDUL, W_TEKS);
+    tulis("untuk absen masuk atau pulang", 170, 260, F_KECIL, W_REDUP);
+  }
   uiInfo(true);
 }
 
@@ -476,6 +499,11 @@ void uiHasil(const HasilTap& h) {
       latarHasil = W_AMBER; ikonHasil = IKON_SERU; judul = "TERSIMPAN";
       utama = "Akan dikirim"; pesan = "Server belum bisa dihubungi";
       info0 = "Kartu " + h.rfid; info1 = h.pesan;
+      break;
+    case HASIL_PILIH_MODE:   // mode pilih tapi belum memilih DATANG / PULANG: tap tidak dikirim
+      latarHasil = W_AMBER; ikonHasil = IKON_SERU; judul = "PILIH MODE DULU";
+      utama = "Pilih DATANG atau PULANG"; pesan = "Sentuh tombol di layar utama";
+      info0 = "Tap ini tidak dikirim"; info1 = "Kartu " + h.rfid;
       break;
     default:   // HASIL_GAGAL (HTTP 4xx atau balasan rusak): tidak disimpan
       latarHasil = W_ORANYE; ikonHasil = IKON_SILANG; judul = "GAGAL";

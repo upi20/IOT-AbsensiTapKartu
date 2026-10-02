@@ -77,10 +77,11 @@ void gantiPin() {
 // ---------- Info alat ----------
 
 const char* const LABEL_INFO[] = {"ID alat", "Firmware", "WiFi", "IP", "Sinyal", "Base URL", "Antrean",
-                                  "Heartbeat", "Pengumuman", "RFID", "Jam", "RAM bebas", "Layar", "Restart", "Error"};
-const int JUMLAH_INFO = 15;
+                                  "Heartbeat", "Pengumuman", "RFID", "Jam", "RAM bebas", "Layar", "Restart", "Error",
+                                  "Mode absen"};
+const int JUMLAH_INFO = 16;
 
-int yInfo(int i) { return 53 + i * 18; }
+int yInfo(int i) { return 52 + i * 17; }
 
 void infoNilai() {
   String nilai[JUMLAH_INFO];
@@ -105,6 +106,8 @@ void infoNilai() {
               " (terakhir: " + alasanResetTeks() + ")";
   String galat = galatSekarang();
   nilai[14] = galat.length() > 0 ? galatTeks(galat) : String("Tidak ada");
+  nilai[15] = !modePilih() ? String("Otomatis (/tap)")
+            : "Pilih Datang/Pulang - " + String(pilihanMode == "check_in" ? "DATANG" : pilihanMode == "check_out" ? "PULANG" : "belum dipilih");
 
   tft.setTextFont(2);
   for (int i = 0; i < JUMLAH_INFO; i++) {
@@ -206,10 +209,121 @@ void layarCekRfid() {
 const Tombol MENU_KEMBALI = {372, 2, 104, 40, "Kembali"};
 const char* const LABEL_MENU[] = {"WiFi", "Server", "Tes koneksi", "Info alat", "Ganti PIN",
                                   "Kalibrasi layar", "Tes buzzer & LED", "Tes screensaver", "Cek kabel RFID",
-                                  "Reset pabrik"};
-enum { M_WIFI, M_SERVER, M_TES, M_INFO, M_PIN, M_KALIBRASI, M_BUZZER, M_SCREENSAVER, M_RFID, M_RESET, JUMLAH_MENU };
+                                  "Mode absen", "Update firmware", "Reset pabrik"};
+enum { M_WIFI, M_SERVER, M_TES, M_INFO, M_PIN, M_KALIBRASI, M_BUZZER, M_SCREENSAVER, M_RFID, M_MODE, M_UPDATE,
+       M_RESET, JUMLAH_MENU };
 
-Tombol menuTombol(int i) { return {8 + (i % 2) * 236, 50 + (i / 2) * 54, 228, 48, LABEL_MENU[i]}; }
+// 12 tombol, 2 kolom x 6 baris
+Tombol menuTombol(int i) { return {8 + (i % 2) * 236, 49 + (i / 2) * 45, 228, 41, LABEL_MENU[i]}; }
+
+// ---------- Update firmware manual ----------
+
+// Tanya server sekarang (GET /ping), lalu pasang update yang dijadwalkan untuk alat ini tanpa menunggu alat
+// diam dan tanpa jeda 30 menit setelah gagal. Server hanya menawarkan versi yang dijadwalkan untuk alat ini
+// (website: Alat -> Update firmware ke ..., atau Firmware -> Terapkan ke semua alat).
+void layarUpdateFirmware() {
+  const Tombol KEMBALI = {372, 2, 104, 40, "Kembali"};
+  const Tombol PASANG = {14, 214, 220, 90, "Pasang sekarang"};
+  const Tombol CEK = {246, 214, 220, 90, "Cek lagi"};
+  while (true) {
+    uiJudul("Update firmware");
+    gambarTombol(KEMBALI, W_TOMBOL, true, W_PANEL);
+    tulisTengahMuat("Versi terpasang: v" + String(VERSI_FIRMWARE), 68, F_TEBAL, F_TEBAL9, F_TEBAL9, W_TEKS);
+    tulisTengahMuat("Memeriksa server...", 120, F_BIASA, F_KECIL, F_KECIL, W_REDUP);
+
+    bool ada = false;
+    String baris1, baris2;
+    uint16_t warna = W_TEKS;
+    if (!wifiTerhubung()) {
+      String kode = kodeGalatWifi();
+      baris1 = "WiFi belum tersambung";
+      baris2 = kode.length() > 0 ? galatTeks(kode) : String("Tunggu WiFi tersambung, lalu Cek lagi");
+      warna = W_MERAH;
+    } else {
+      HasilPing p = apiPing(true);                         // ikut membaca config.firmware_update terbaru
+      if (!p.ok) {
+        baris1 = "Server tidak bisa dihubungi";
+        baris2 = p.pesan;
+        warna = W_MERAH;
+      } else if (otaTawaran.versi.length() > 0) {
+        ada = true;
+        baris1 = "Tersedia v" + otaTawaran.versi;
+        baris2 = String(otaTawaran.ukuran / 1024) + " KB, pemasangan +- 15-60 detik";
+        warna = W_HIJAU;
+      } else if (otaGagal.length() > 0) {
+        baris1 = "Tidak ada update";
+        baris2 = "v" + otaGagal + " pernah gagal dipasang; naikkan versi lalu unggah ulang";
+        warna = W_AMBER;
+      } else {
+        baris1 = "Sudah versi terbaru";
+        baris2 = "Tidak ada update yang dijadwalkan untuk " + idAlat + " di website";
+      }
+    }
+    tft.fillRect(0, 100, 480, 100, W_LATAR);
+    tulisTengahMuat(baris1, 124, F_JUDUL, F_TEBAL, F_TEBAL9, warna);
+    tulisTengahMuat(baris2, 170, F_KECIL, F_KECIL, F_KECIL, W_REDUP);
+    if (ada) gambarTombol(PASANG, W_HIJAU);
+    gambarTombol(CEK, W_TOMBOL);
+
+    sentuhTerakhir = millis();
+    bool ulang = false;
+    int x, y;
+    while (!terlaluLamaDiam() && !ulang) {
+      if (!sentuh(x, y)) continue;
+      if (kena(KEMBALI, x, y)) { klik(); return; }
+      if (kena(CEK, x, y)) { klik(); ulang = true; }
+      else if (ada && kena(PASANG, x, y)) {
+        klik();
+        if (layarTanya("Pasang v" + otaTawaran.versi + "?", "Jangan cabut listrik +- 1 menit",
+                       "Alat restart sendiri setelah selesai", "Pasang", W_HIJAU, 0)) {
+          otaJalankan();                                   // berhasil = restart; gagal = alasan tampil 3 detik
+        }
+        ulang = true;                                      // kembali ke layar ini dan cek ulang
+      }
+    }
+    if (!ulang) return;
+  }
+}
+
+// ---------- Mode absen ----------
+
+// Pilih "Otomatis" (semua tap ke /tap) atau "Pilih Datang/Pulang" (tombol di layar utama, /check-in & /check-out).
+// Kalau server mengirim config.tap_mode, pilihan di sini akan ditimpa server pada heartbeat berikutnya.
+void layarModeAbsen() {
+  const Tombol KEMBALI = {372, 2, 104, 40, "Kembali"};
+  const Tombol OTOMATIS = {14, 60, 452, 92, "Otomatis"};
+  const Tombol PILIH = {14, 164, 452, 92, "Pilih Datang / Pulang"};
+  while (true) {
+    uiJudul("Mode absen");
+    gambarTombol(KEMBALI, W_TOMBOL, true, W_PANEL);
+    for (int i = 0; i < 2; i++) {
+      const Tombol& t = i == 0 ? OTOMATIS : PILIH;
+      bool aktif = (atur.modeAbsen == "select") == (i == 1);
+      tft.fillSmoothRoundRect(t.x, t.y, t.w, t.h, 12, aktif ? W_HIJAU : W_PANEL, W_LATAR);
+      tulis(String(aktif ? "> " : "") + t.teks, t.x + 18, t.y + 30, F_TEBAL, W_TEKS, ML_DATUM);
+      tulis(i == 0 ? "Server menentukan datang / pulang (1 endpoint /tap)"
+                   : "Tombol DATANG & PULANG di layar utama (/check-in, /check-out)",
+            t.x + 18, t.y + 64, F_KECIL, aktif ? W_TEKS : W_REDUP, ML_DATUM);
+    }
+    tulisTengahMuat("Bisa juga diatur per alat dari website (config.tap_mode)", 282, F_KECIL, F_KECIL, F_KECIL, W_REDUP);
+    sentuhTerakhir = millis();
+    int x, y;
+    bool ganti = false;
+    while (!terlaluLamaDiam() && !ganti) {
+      if (!sentuh(x, y)) continue;
+      if (kena(KEMBALI, x, y)) { klik(); return; }
+      String m = kena(OTOMATIS, x, y) ? "auto" : kena(PILIH, x, y) ? "select" : "";
+      if (m.length() == 0) continue;
+      klik();
+      if (m != atur.modeAbsen) {
+        aturSimpanModeAbsen(m);
+        heartbeatSegera = true;                            // server segera tahu mode baru
+      }
+      ganti = true;                                        // gambar ulang dengan pilihan baru
+    }
+    if (!ganti) return;
+  }
+}
 
 void menuGambar() {
   uiJudul("Pengaturan");
@@ -262,6 +376,12 @@ void menuPengaturan() {
         break;
       case M_RFID:
         layarCekRfid();
+        break;
+      case M_MODE:
+        layarModeAbsen();
+        break;
+      case M_UPDATE:
+        layarUpdateFirmware();
         break;
       case M_RESET:
         if (layarTanya("Reset pabrik?", "Semua pengaturan akan dihapus",

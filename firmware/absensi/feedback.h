@@ -75,6 +75,14 @@ void buzzerUrus() {
   }
 }
 
+// Matikan buzzer seketika (pola bunyi yang sedang berjalan dibatalkan). Dipakai sebelum pekerjaan panjang yang
+// membuat buzzerUrus() tidak dipanggil, mis. update firmware: tanpa ini bunyi "klik" bisa tertahan menyala.
+void bipMati() {
+  bipSisa = 0;
+  bipNyala = false;
+  digitalWrite(PIN_BUZZER, LOW);
+}
+
 // Tunggu bunyi selesai. Dipakai sebelum menghubungi server (yang membuat program berhenti sebentar).
 void bipTunggu() {
   while (bipSisa > 0) { buzzerUrus(); delay(1); }
@@ -134,6 +142,9 @@ void feedbackUrus() {
 void feedbackMulai() {
   pinMode(PIN_BUZZER, OUTPUT);
   digitalWrite(PIN_BUZZER, LOW);
+  // Buzzer aktif bisa disambung langsung ke pin (tanpa transistor) dan butuh +- 25-30 mA.
+  // Arus pin bawaan +- 20 mA membuat suaranya serak; dinaikkan ke kekuatan maksimum (+- 40 mA).
+  gpio_set_drive_capability((gpio_num_t)PIN_BUZZER, GPIO_DRIVE_CAP_3);
 
   const int pinLed[] = {PIN_LED_R, PIN_LED_G, PIN_LED_B};
   for (int pin : pinLed) {

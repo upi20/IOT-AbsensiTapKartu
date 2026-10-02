@@ -1,4 +1,5 @@
-// Tiga endpoint spesifikasi: GET /ping, POST /tap, POST /heartbeat (lihat doc/spesifikasi-api.md).
+// Endpoint spesifikasi: GET /ping, POST /tap (atau /check-in & /check-out di mode pilih), POST /heartbeat
+// (lihat doc/spesifikasi-api.md).
 // GET /announcements ada di pengumuman.h.
 #pragma once
 #include <ArduinoJson.h>
@@ -6,6 +7,7 @@
 String hbHasil = "Belum dikirim";     // hasil heartbeat terakhir (untuk layar Info alat)
 uint32_t hbTerakhir = 0;              // kapan heartbeat terakhir dikirim
 String revPengumuman = "";            // config.announcements_rev terakhir yang terlihat
+bool modeAbsenBerubah = false;        // config.tap_mode mengganti mode: layar utama perlu digambar ulang
 
 // ---------- Bagian yang sama untuk /ping dan /heartbeat ----------
 
@@ -50,6 +52,12 @@ void terapkanBalasanUmum(JsonDocument& doc) {
     r.trim();
     if (!restartValid(r)) Serial.println("config.restart_at diabaikan (harus \"HH:MM\" atau kosong)");
     else if (r != atur.restartAt) aturSimpanRestart(r);
+  }
+  // Mode absen per alat: "auto" atau "select". Tidak dikirim = alat memakai pengaturannya sendiri.
+  if (cfg["tap_mode"].is<const char*>()) {
+    String m = cfg["tap_mode"].as<const char*>();
+    if (!modeAbsenValid(m)) Serial.println("config.tap_mode diabaikan (harus \"auto\" atau \"select\")");
+    else if (m != atur.modeAbsen) { aturSimpanModeAbsen(m); modeAbsenBerubah = true; }
   }
   // Update firmware jarak jauh (ota.h). Tidak dikirim = tidak ada update.
   otaTerapkanConfig(cfg["firmware_update"]);
@@ -132,6 +140,9 @@ bool apiHeartbeat() {
   raw["reset_reason"] = alasanResetKode();
   raw["rfid_ok"] = rfidAda;
   raw["queue"] = jumlahAntrean;
+  raw["tap_mode"] = atur.modeAbsen;
+  if (modePilih() && pilihanMode.length() > 0) raw["tap_select"] = pilihanMode;
+  else raw["tap_select"] = nullptr;
   String galat = galatSekarang();
   if (galat.length() > 0) raw["error"] = galat;
   if (otaGagal.length() > 0) raw["ota_failed"] = otaGagal;
@@ -182,7 +193,7 @@ bool urusHeartbeat() {
 // ---------- POST /tap ----------
 
 enum JenisHasil { HASIL_MASUK, HASIL_PULANG, HASIL_DUPLIKAT, HASIL_TIDAK_TERDAFTAR, HASIL_DITOLAK,
-                  HASIL_INFO, HASIL_TERSIMPAN, HASIL_GAGAL };
+                  HASIL_INFO, HASIL_TERSIMPAN, HASIL_GAGAL, HASIL_PILIH_MODE };
 
 struct HasilTap {
   JenisHasil jenis;
@@ -205,6 +216,7 @@ HasilTap apiTap(const TapAntrean& t, bool dariAntrean) {
   if (t.waktu.length() > 0) isi["tapped_at"] = t.waktu;
   else isi["tapped_at"] = nullptr;
   isi["queued"] = dariAntrean;
+  if (t.mode.length() > 0) isi["mode"] = t.mode;          // mode pilih: "check_in" / "check_out"
   JsonObject raw = isi["raw"].to<JsonObject>();
   raw["uid_hex"] = t.uidHex;
   isiRawJaringan(raw);
@@ -214,7 +226,8 @@ HasilTap apiTap(const TapAntrean& t, bool dariAntrean) {
   serializeJson(isi, teks);
 
   String balasan;
-  h.kode = apiKirim(true, "/tap", teks, balasan, dariAntrean ? LATAR_TIMEOUT_MS : TAP_TIMEOUT_MS, dariAntrean);
+  const char* jalur = t.mode == "check_in" ? "/check-in" : t.mode == "check_out" ? "/check-out" : "/tap";
+  h.kode = apiKirim(true, jalur, teks, balasan, dariAntrean ? LATAR_TIMEOUT_MS : TAP_TIMEOUT_MS, dariAntrean);
 
   if (gagalJaringan(h.kode)) {                             // timeout, tanpa WiFi, HTTP 5xx / 429
     // Server dianggap gagal: antrean menunggu heartbeat berhasil dulu, tidak langsung mencoba lagi.

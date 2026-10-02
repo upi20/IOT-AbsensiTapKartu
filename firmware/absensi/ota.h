@@ -189,12 +189,12 @@ String otaPasang() {
   return "";
 }
 
-// Dipanggil dari layar utama / screensaver. `diam` = tidak ada kartu atau sentuhan selama OTA_DIAM_MS.
-// True kalau update dicoba dan gagal (layar perlu digambar ulang). Kalau berhasil, alat restart.
-bool urusOta(bool diam) {
-  if (otaTawaran.versi.length() == 0 || !diam || !wifiTerhubung() || statusServer != SERVER_OK) return false;
-  if (otaCobaBerikut != 0 && (int32_t)(millis() - otaCobaBerikut) < 0) return false;
-
+// Unduh + pasang otaTawaran sekarang juga (layar update tampil). Kalau berhasil, alat restart dan fungsi ini
+// tidak kembali. Kalau gagal: mengembalikan alasannya, dan percobaan otomatis berikutnya menunggu OTA_ULANG_MS.
+String otaJalankan() {
+  bipMati();                                               // selama update buzzerUrus() tidak jalan
+  ledNyala(LED_BIRU);
+  feedbackUrus();                                          // LED biru tetap selama update
   Serial.printf("OTA: mengunduh firmware %s dari %s\n", otaTawaran.versi.c_str(), otaTawaran.url.c_str());
   uiOta("Memperbarui firmware", "v" + String(VERSI_FIRMWARE) + "  ->  v" + otaTawaran.versi, OTA_PROSES);
   uint32_t mulai = millis();
@@ -207,10 +207,21 @@ bool urusOta(bool diam) {
     delay(1500);
     ESP.restart();
   }
-  Serial.printf("OTA: gagal, %s. Dicoba lagi %lu menit lagi\n", galat.c_str(), (unsigned long)(OTA_ULANG_MS / 60000));
+  Serial.printf("OTA: gagal, %s (RAM bebas %u, blok terbesar %u). Otomatis dicoba lagi %lu menit lagi\n",
+                galat.c_str(), ESP.getFreeHeap(), ESP.getMaxAllocHeap(), (unsigned long)(OTA_ULANG_MS / 60000));
   otaStatus = "v" + otaTawaran.versi + " gagal: " + galat;
   otaCobaBerikut = (millis() + OTA_ULANG_MS) | 1;
   uiOta("Update firmware gagal", galat, OTA_GAGAL);
   delay(3000);
+  return galat;
+}
+
+// Dipanggil dari layar utama / screensaver. `diam` = tidak ada kartu atau sentuhan selama OTA_DIAM_MS.
+// True kalau update dicoba dan gagal (layar perlu digambar ulang). Kalau berhasil, alat restart.
+// Pemasangan manual tanpa menunggu: menu Pengaturan -> Update firmware (menu.h).
+bool urusOta(bool diam) {
+  if (otaTawaran.versi.length() == 0 || !diam || !wifiTerhubung() || statusServer != SERVER_OK) return false;
+  if (otaCobaBerikut != 0 && (int32_t)(millis() - otaCobaBerikut) < 0) return false;
+  otaJalankan();
   return true;
 }

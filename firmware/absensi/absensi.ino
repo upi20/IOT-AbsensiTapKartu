@@ -10,6 +10,7 @@
 //   feedback.h    buzzer dan LED RGB
 //   lampu.h       lampu latar layar (D2): meredup saat alat diam
 //   perawatan.h   watchdog, restart harian terjadwal, alasan restart terakhir, ringkasan crash
+//   modeabsen.h   mode absen: otomatis (/tap) atau pilih DATANG/PULANG (/check-in, /check-out)
 //   rfid.h        pembaca kartu RC522 (dan cek kabel MOSI/MISO)
 //   waktu.h       jam (server_time / NTP) dan zona waktu
 //   antrean.h     antrean tap saat server tidak bisa dihubungi (LittleFS)
@@ -54,6 +55,7 @@ TFT_eSPI tft = TFT_eSPI();   // layar, dipakai oleh file-file di bawah
 #include "rfid.h"
 #include "waktu.h"
 #include "perawatan.h"
+#include "modeabsen.h"
 #include "antrean.h"
 #include "jaringan.h"
 #include "galat.h"
@@ -109,9 +111,26 @@ void prosesKartu(const String& rfid, const String& uidHex) {
   bip(1, 60);                                             // langsung: tanda kartu sudah terbaca
   ledNyala(LED_BIRU);
   uiMengirim(rfid);
-  // tap_id dan waktu dibuat sekarang, dan ikut tersimpan kalau tap masuk antrean
-  TapAntrean t = {tapIdBaru(), rfid, uidHex, waktuIso()};
-  Serial.printf("Kartu terbaca: %s (UID %s), tap_id %s\n", rfid.c_str(), uidHex.c_str(), t.tapId.c_str());
+  // Mode pilih tapi DATANG/PULANG belum dipilih: tap tidak dikirim, minta petugas memilih dulu.
+  if (modePilih() && pilihanMode.length() == 0) {
+    Serial.printf("Kartu terbaca: %s, tapi mode DATANG/PULANG belum dipilih (tidak dikirim)\n", rfid.c_str());
+    HasilTap h;
+    h.jenis = HASIL_PILIH_MODE;
+    h.kode = 0;
+    h.rfid = rfid;
+    rfidMulaiJeda();
+    uiHasil(h);
+    bip(2, 200);
+    ledNyala(LED_KUNING);
+    layar = LAYAR_HASIL;
+    waktuLayar = millis();
+    aktifTerakhir = millis();
+    return;
+  }
+  // tap_id, waktu, dan mode dibuat sekarang, dan ikut tersimpan kalau tap masuk antrean
+  TapAntrean t = {tapIdBaru(), rfid, uidHex, waktuIso(), modeTap()};
+  Serial.printf("Kartu terbaca: %s (UID %s), tap_id %s%s\n", rfid.c_str(), uidHex.c_str(), t.tapId.c_str(),
+                t.mode == "check_in" ? ", mode DATANG" : t.mode == "check_out" ? ", mode PULANG" : "");
 
   // Program menunggu di sini paling lama TAP_TIMEOUT_MS. Gagal / terlalu lama = tap disimpan di antrean
   // dan dikirim nanti dengan tap_id yang sama (server tidak mencatat dua kali).
@@ -261,6 +280,7 @@ void setup() {
   watchdogMulai();
   crashBaca();                                            // ringkasan crash sebelumnya (kalau ada)
   aturMulai();                                            // pengaturan tersimpan + ID alat
+  pilihanMuat();                                          // pilihan DATANG/PULANG terakhir (mode pilih)
   otaMulai();                                             // firmware baru dari OTA? / dulu gagal?
   bool tanyaReset = bootHitungNaik();                     // EN ditekan 3 kali?
   pinMode(PIN_TOMBOL_BOOT, INPUT_PULLUP);
@@ -320,6 +340,24 @@ void loop() {
 
   if (layar == LAYAR_UTAMA) {
     if (disentuh) waktuLayar = millis();                  // layar dipakai: hitung diam mulai lagi
+    // Mode diganti server (config.tap_mode), atau pilihan dikosongkan karena tanggal berganti
+    if (modeAbsenBerubah || pilihanCekTanggal()) {
+      modeAbsenBerubah = false;
+      bukaUtama();
+      return;
+    }
+    // Mode pilih: tombol DATANG / PULANG (sekali pilih, berlaku untuk tap berikutnya)
+    if (disentuh && modePilih() && (kena(TOMBOL_DATANG, x, y) || kena(TOMBOL_PULANG, x, y))) {
+      String pilih = kena(TOMBOL_DATANG, x, y) ? "check_in" : "check_out";
+      klik();
+      if (pilih != pilihanMode) {
+        pilihanSimpan(pilih);
+        heartbeatSegera = true;                           // server segera tahu pilihan baru
+      }
+      uiTombolMode();
+      uiInfo(true);
+      return;
+    }
     uiUtamaUrus();
     if (disentuh && kena(TOMBOL_GIR, x, y)) {
       klik();

@@ -18,6 +18,7 @@ struct Pengaturan {
   int redupDetik;      // layar meredup setelah diam sekian detik (0 = tidak pernah)
   int redupPersen;     // kecerahan layar saat redup (0-100 %)
   String restartAt;    // jam restart harian "HH:MM" (jam alat), "" = tidak restart otomatis
+  String modeAbsen;    // "auto" = semua tap ke /tap; "select" = tombol DATANG/PULANG (lihat modeabsen.h)
 };
 Pengaturan atur;
 
@@ -54,6 +55,8 @@ bool restartValid(const String& r) {
 }
 bool redupPersenValid(long p) { return p >= 0 && p <= 100; }
 
+bool modeAbsenValid(const String& m) { return m == "auto" || m == "select"; }
+
 // Rapikan Base URL: buang spasi dan "/" di akhir.
 String urlRapikan(String u) {
   u.trim();
@@ -76,11 +79,13 @@ void aturMuat() {
   atur.redupDetik  = prefs.getInt("redup", REDUP_DETIK_BAWAAN);
   atur.redupPersen = prefs.getInt("redupP", REDUP_PERSEN_BAWAAN);
   atur.restartAt   = prefs.getString("restartAt", RESTART_BAWAAN);
+  atur.modeAbsen   = prefs.getString("modeAbsen", "auto");
   if (!pinValid(atur.pin)) atur.pin = PIN_BAWAAN;
   if (!judulValid(atur.judul)) atur.judul = JUDUL_BAWAAN;
   if (!redupDetikValid(atur.redupDetik)) atur.redupDetik = REDUP_DETIK_BAWAAN;
   if (!redupPersenValid(atur.redupPersen)) atur.redupPersen = REDUP_PERSEN_BAWAAN;
   if (!restartValid(atur.restartAt)) atur.restartAt = RESTART_BAWAAN;
+  if (!modeAbsenValid(atur.modeAbsen)) atur.modeAbsen = "auto";
 }
 
 // Simpan WiFi dan server (dipanggil setelah penyetelan).
@@ -122,6 +127,12 @@ void aturSimpanRestart(const String& r) {
   atur.restartAt = r;
   prefs.putString("restartAt", r);
   Serial.printf("Restart harian: %s\n", r.length() ? r.c_str() : "mati");
+}
+
+void aturSimpanModeAbsen(const String& m) {
+  atur.modeAbsen = m;
+  prefs.putString("modeAbsen", m);
+  Serial.printf("Mode absen: %s\n", m == "select" ? "pilih Datang/Pulang" : "otomatis");
 }
 
 // ID alat: diambil dari ID_ALAT di config.h (diatur manual sebelum upload lewat USB).

@@ -16,7 +16,7 @@ const char ID_ALAT[] = "ABS-001";
 // #define OTA_BUILD
 
 // ---------- Versi & nilai bawaan pabrik ----------
-const char VERSI_FIRMWARE[] = "1.5.0";          // naikkan setiap membuat firmware baru (wajib untuk OTA)
+const char VERSI_FIRMWARE[] = "1.9.1";          // naikkan setiap membuat firmware baru (wajib untuk OTA)
 const char VERSI_SPEK[]     = "1";              // versi spesifikasi API (header X-Spec-Version)
 const char PIN_BAWAAN[]     = "2026";           // PIN menu Pengaturan sebelum diganti
 const char JUDUL_BAWAAN[]   = "Absensi RFID";   // judul layar utama sebelum diganti
