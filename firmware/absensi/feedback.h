@@ -17,12 +17,14 @@ const Warna LED_SIAGA  = {0, 18, 18};   // napas pelan saat menunggu kartu
 
 enum ModeLed { LED_TETAP, LED_NAPAS, LED_KEDIP, LED_TES };
 ModeLed modeLed = LED_TETAP;
+bool ledAda = true;                     // false kalau kabel header LED dipakai RTC (rtc.h)
 Warna warnaLed = LED_MATI;
 uint32_t ledMulai = 0;
 
 // ---------- LED ----------
 
 void ledTulis(Warna w) {
+  if (!ledAda) return;
   ledcWrite(PIN_LED_R, w.r);
   ledcWrite(PIN_LED_G, w.g);
   ledcWrite(PIN_LED_B, w.b);
@@ -89,13 +91,14 @@ void bipTunggu() {
 }
 
 // ---------- Tes buzzer & LED (dari menu) ----------
+// Alat dengan modul jam RTC (tanpa LED): urutan yang sama, hanya bunyinya (4 bip, lalu 2 bip pendek).
 
 const Warna URUTAN_TES[] = {LED_MERAH, LED_HIJAU, LED_BIRU, LED_PUTIH};
 const int JUMLAH_TES = 4;
 const uint32_t LAMA_TES = 700;   // tiap warna (ms)
 
 void feedbackTes() {
-  Serial.println("Tes buzzer & LED: merah, hijau, biru, putih");
+  Serial.println(ledAda ? "Tes buzzer & LED: merah, hijau, biru, putih" : "Tes buzzer: 4 bip, lalu 2 bip pendek");
   modeLed = LED_TES;
   ledMulai = millis();
   warnaLed = LED_MATI;
@@ -134,7 +137,7 @@ void feedbackUrus() {
       modeLed = LED_TETAP;
       warnaLed = LED_MATI;
       bip(2, 60);
-      Serial.println("Tes buzzer & LED selesai");
+      Serial.println(ledAda ? "Tes buzzer & LED selesai" : "Tes buzzer selesai");
     }
   }
 }
@@ -146,6 +149,7 @@ void feedbackMulai() {
   // Arus pin bawaan +- 20 mA membuat suaranya serak; dinaikkan ke kekuatan maksimum (+- 40 mA).
   gpio_set_drive_capability((gpio_num_t)PIN_BUZZER, GPIO_DRIVE_CAP_3);
 
+  if (!ledAda) return;
   const int pinLed[] = {PIN_LED_R, PIN_LED_G, PIN_LED_B};
   for (int pin : pinLed) {
     ledcAttach(pin, 5000, 8);                                          // PWM 5 kHz, 0..255

@@ -172,11 +172,13 @@ Ikuti [doc/skema-lengkap.md](doc/skema-lengkap.md) (versi interaktif: [doc/rakit
 | RC522 | SDA → 33, SCK → 14, MOSI → 13, MISO → 35, RST → 32, 3.3V → 3V3, GND → GND, IRQ tidak disambung |
 | Buzzer aktif | + → 17, − → GND |
 | LED RGB | R → 25, G → 26, B → 27, kaki terpanjang (K) → GND |
+| *atau* RTC DS3231 (pengganti LED) | SDA → 25, SCL → 26, VCC → 3V3, GND → GND |
 
 Catatan:
 - **DC jangan di GPIO2.** Pin LED LCD (lampu latar) memang di GPIO2; firmware memakainya untuk meredupkan layar. Kalau LED LCD disambung ke 3V3, layar menyala terus tanpa fitur redup.
 - Pin **GPIO12 jangan dipakai** (pin boot yang membuat ESP32 gagal menyala).
 - Resistor 220–330 Ω di tiap kaki warna LED RGB disarankan. Untuk prototipe boleh tanpa resistor karena firmware membatasi arus pin.
+- **RTC DS3231 (opsional, firmware 1.10.0+)** menyimpan jam selama listrik mati, sehingga tap saat alat menyala tanpa internet tetap tercatat dengan jam aslinya. RTC memakai pin LED RGB (25, 26), jadi pilih salah satu: LED **atau** RTC. Firmware mendeteksinya sendiri saat menyala. Pakai modul **DS3231** (mis. ZS-042, 3,3 V), bukan DS1307 (butuh 5 V). Di papan dot matrix: kabel header LED dipakai ulang (R = SDA, G = SCL, K = GND), dan kaki R3 yang tersambung ke D27 dipindah ke 3V3 sehingga B = VCC. Jam internet tetap diutamakan; RTC disetel ulang darinya.
 
 ### 1.4 Tes per bagian
 
@@ -276,7 +278,7 @@ Monitor serial (115200 baud) menampilkan catatan seperti `RFID: RC522 terdeteksi
 | Fitur | Cara |
 |---|---|
 | Menu Pengaturan | Ikon gir di layar utama, PIN bawaan **2026** (5 kali salah = terkunci 60 detik). Menu tertutup sendiri setelah 60 detik tanpa sentuhan |
-| Isi menu | WiFi, Server, Tes koneksi, Info alat, Ganti PIN, Kalibrasi layar, Tes buzzer & LED, Tes screensaver, Cek kabel RFID, Mode absen, Update firmware, Reset pabrik |
+| Isi menu | WiFi, Server, Tes koneksi, Info alat, Ganti PIN, Kalibrasi layar, Tes buzzer & LED (alat dengan RTC: Tes buzzer), Tes screensaver, Cek kabel RFID, Mode absen, Update firmware, Reset pabrik |
 | Mode absen | Menu **Mode absen**: **Otomatis** (semua tap ke `/tap`, server menentukan datang/pulang) atau **Pilih Datang / Pulang**: layar utama menampilkan tombol **DATANG** dan **PULANG**. Petugas memilih sekali, lalu semua tap dikirim ke `/check-in` atau `/check-out` sampai diganti. Pilihan dikosongkan otomatis saat tanggal berganti; tap sebelum memilih tidak dikirim. Bisa juga diatur per alat dari website (`config.tap_mode`) |
 | Kalibrasi ulang layar | Menu **Kalibrasi layar**, atau tekan **EN** lalu tekan **BOOT** saat muncul "Tekan BOOT sekarang" (jeda 1 detik) |
 | Reset pabrik | Tekan **EN 3 kali berturut-turut** (masing-masing sebelum alat menyala 5 detik), lalu pilih "Ya, reset"; atau lewat menu. Menghapus WiFi, URL, API key, PIN, judul, kalibrasi, antrean, pengumuman. **ID alat tidak terhapus** |
@@ -377,7 +379,7 @@ Konsumen cukup menyebutkan kode yang tampil di baris bawah layar (atau di **Info
 | E25 | Balasan server tidak valid | Base URL mengarah ke halaman biasa, bukan API |
 | E26 | Server terlalu lama menjawab | Internet lambat atau server berat |
 | E30 | Pembaca RFID tidak terdeteksi | Kabel RC522 longgar. Menu → Cek kabel RFID |
-| E31 | Jam belum sinkron | Server tidak mengirim `server_time` dan NTP diblokir jaringan |
+| E31 | Jam belum sinkron | Server tidak mengirim `server_time` dan NTP diblokir jaringan, atau alat menyala tanpa internet dan tidak punya RTC (atau baterai RTC habis) |
 
 **Membaca laporan crash.** Kalau alat pernah crash, halaman Alat di website menampilkan alamat seperti `0x400d4634 0x400880ed` beserta id build. Terjemahkan alamat itu dengan file `.elf` dari versi yang sama:
 
@@ -443,7 +445,7 @@ Setelah prototipe berjalan, pindahkan rangkaian ke papan supaya rapi dan muat di
 | Biaya | Paling murah | Biaya cetak + ongkir |
 | Cara | Rakit dan sambung kabel sendiri | Pesan ke pabrik, solder komponen |
 | Status | Tata letak & panduan selesai, belum dirakit fisik | Desain lolos DRC, belum dipesan |
-| Panduan | [doc/rakit-dotmatrix.html](doc/rakit-dotmatrix.html) | [doc/pcb-papan-induk.md](doc/pcb-papan-induk.md) |
+| Panduan | [doc/rakit-dotmatrix.html](doc/rakit-dotmatrix.html) (LED RGB), [doc/rakit-dotmatrix-rtc.html](doc/rakit-dotmatrix-rtc.html) (modul jam RTC + baterai cadangan, tanpa LED), [doc/rakit-dotmatrix-ups.html](doc/rakit-dotmatrix-ups.html) (versi RTC + pantau baterai di layar) | [doc/pcb-papan-induk.md](doc/pcb-papan-induk.md) |
 
 Pada kedua pilihan, ESP32, LCD, dan RC522 **dicolokkan ke header female** (tidak disolder), sehingga mudah diganti. Pin yang dipakai sama dengan prototipe, jadi **firmware tidak berubah**.
 
@@ -455,7 +457,7 @@ Pada kedua pilihan, ESP32, LCD, dan RC522 **dicolokkan ke header female** (tidak
 
 > Tata letak ini memakai papan 30 × 50. LCD lebih lebar dari papan dan menjorok ke kiri dan atas, jadi **casing (Tahap 5) belum cocok** untuk versi dot matrix ini dan akan dirancang ulang.
 
-Semua posisi berasal dari satu file, [hardware/dotmatrix/tata_letak.py](hardware/dotmatrix/tata_letak.py). Kalau diubah, jalankan `python3 hardware/dotmatrix/tata_letak.py` untuk memperbarui panduan HTML, data JSON, dan templat (PDF dibuat kalau PyMuPDF terpasang; kalau tidak, cetak file SVG-nya dari browser dengan skala 100 %).
+Semua posisi berasal dari satu file, [hardware/dotmatrix/tata_letak.py](hardware/dotmatrix/tata_letak.py). Kalau diubah, jalankan `python3 hardware/dotmatrix/tata_letak.py` untuk memperbarui panduan HTML, data JSON, dan templat ketiga versi (led, rtc, ups) (PDF dibuat kalau PyMuPDF terpasang; kalau tidak, cetak file SVG-nya dari browser dengan skala 100 %).
 
 ### 4.B PCB cetak
 
@@ -524,7 +526,9 @@ doc/
   spesifikasi-api.md      ← kontrak API alat ↔ website
   skema-lengkap.md        ← kabel prototipe (acuan pin)
   rakit-lengkap.html      ← panduan interaktif kabel prototipe
-  rakit-dotmatrix.html    ← panduan interaktif PCB dot matrix (papan 1 sisi 30 × 50)
+  rakit-dotmatrix.html    ← panduan interaktif PCB dot matrix (papan 1 sisi 30 × 50), versi LED RGB
+  rakit-dotmatrix-rtc.html ← sama, versi modul jam RTC DS3231 (tanpa LED)
+  rakit-dotmatrix-ups.html ← sama, versi RTC + pantau baterai UPS (D34, VP)
   panduan-pengguna.md     ← panduan pengguna/klien: absen, mode, menu, kode error, update, perawatan
   pcb-papan-induk.md      ← PCB cetak: pesan, cek, rakit
   casing.md               ← casing: cetak, baut, rakit

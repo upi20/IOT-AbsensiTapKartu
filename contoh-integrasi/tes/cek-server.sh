@@ -6,6 +6,7 @@
 # kode HTTP, batas waktu, dan field JSON yang wajib.
 # - config (title, dim_after, dim_level, restart_at, announcements_rev) diperiksa
 #   tipenya; yang tidak dikirim diberi tanda ⚠️ (dibutuhkan fitur wajib aplikasi).
+# - config.tap_mode & config.tap_schedule (opsional) diperiksa nilainya kalau dikirim.
 # - GET /announcements: 404 hanya ⚠️, balasan 200 harus sesuai format.
 # - Kalau server mengirim config.firmware_update, file firmware ikut diunduh dan
 #   Content-Length, ukuran, serta MD5-nya dicocokkan.
@@ -135,6 +136,12 @@ if jenis in ("ping", "heartbeat"):
                 '"config.restart_at" teks "" atau "HH:MM" 00:00–23:59 (%r)' % (v,))
         if isinstance(c, dict) and "tap_mode" in c:
             cek(c["tap_mode"] in ("auto", "select"), '"config.tap_mode" "auto" atau "select" (%r)' % (c["tap_mode"],))
+        if isinstance(c, dict) and "tap_schedule" in c:
+            j, jam = c["tap_schedule"], r"([01]\d|2[0-3]):[0-5]\d"
+            cek(j is None or (isinstance(j, dict) and all(isinstance(j.get(k), str) and re.fullmatch(jam, j[k])
+                                                          for k in ("check_in", "check_out"))
+                              and j["check_in"] < j["check_out"]),
+                '"config.tap_schedule" null atau {"check_in":"HH:MM","check_out":"HH:MM"}, check_in lebih awal (%r)' % (j,))
         if isinstance(c, dict) and "firmware_update" in c:
             f = c["firmware_update"]
             cek(isinstance(f, dict), '"config.firmware_update" berupa objek')

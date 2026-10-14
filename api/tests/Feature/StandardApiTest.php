@@ -161,7 +161,7 @@ class StandardApiTest extends TestCase
                 'ok' => true,
                 'message' => 'Terhubung ke PT Contoh Sejahtera',
                 'server_time' => '2026-09-30T07:45:12+07:00',
-                'config' => ['pin' => '4321', 'title' => 'PT Contoh Sejahtera', 'dim_after' => 60, 'dim_level' => 20, 'announcements_rev' => '0-0-3-30', 'restart_at' => '03:00'],
+                'config' => ['pin' => '4321', 'title' => 'PT Contoh Sejahtera', 'dim_after' => 60, 'dim_level' => 20, 'announcements_rev' => '0-0-3-30', 'restart_at' => '03:00', 'tap_schedule' => null],
             ]);
 
         $device = Device::where('code', self::DEVICE)->sole();
@@ -173,7 +173,7 @@ class StandardApiTest extends TestCase
     {
         $this->getJson('/api/absensi/ping', $this->headers())
             ->assertOk()
-            ->assertJsonPath('config', ['title' => 'PT Contoh Sejahtera', 'dim_after' => 60, 'dim_level' => 20, 'announcements_rev' => '0-0-3-30', 'restart_at' => '03:00'])
+            ->assertJsonPath('config', ['title' => 'PT Contoh Sejahtera', 'dim_after' => 60, 'dim_level' => 20, 'announcements_rev' => '0-0-3-30', 'restart_at' => '03:00', 'tap_schedule' => null])
             ->assertJsonMissingPath('config.pin');
     }
 
@@ -201,7 +201,7 @@ class StandardApiTest extends TestCase
             ->assertExactJson([
                 'ok' => true,
                 'server_time' => '2026-09-30T07:45:12+07:00',
-                'config' => ['title' => 'PT Contoh Sejahtera', 'dim_after' => 60, 'dim_level' => 20, 'announcements_rev' => '0-0-3-30', 'restart_at' => '03:00'],
+                'config' => ['title' => 'PT Contoh Sejahtera', 'dim_after' => 60, 'dim_level' => 20, 'announcements_rev' => '0-0-3-30', 'restart_at' => '03:00', 'tap_schedule' => null],
             ]);
 
         $device = Device::where('code', self::DEVICE)->sole();

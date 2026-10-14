@@ -8,7 +8,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Kejadian pada alat, dicatat dari heartbeat (lihat Device::recordHeartbeat()):
- * boot (menyala ulang), crash, firmware (versi berganti), ota_failed (update firmware gagal).
+ * boot (menyala ulang), crash, firmware (versi berganti), ota_failed (update firmware gagal), dan daya dari modul UPS
+ * (firmware 1.11.2+): power_lost (listrik padam), power_restored (listrik kembali), battery_low (baterai lemah).
  * Hanya KEEP kejadian terbaru per alat yang disimpan.
  */
 #[Fillable(['type', 'message', 'details'])]
@@ -24,6 +25,9 @@ class DeviceEvent extends Model
         'crash' => ['Crash', 'danger'],
         'firmware' => ['Firmware', 'success'],
         'ota_failed' => ['Update gagal', 'warning'],
+        'power_lost' => ['Listrik padam', 'warning'],
+        'power_restored' => ['Listrik kembali', 'success'],
+        'battery_low' => ['Baterai lemah', 'danger'],
     ];
 
     protected function casts(): array

@@ -16,6 +16,7 @@
 //   antrean.h     antrean tap saat server tidak bisa dihubungi (LittleFS)
 //   jaringan.h    WiFi dan HTTP/HTTPS (sambungan keep-alive, satu batas waktu per request)
 //   galat.h       kode error singkat di layar (E10 WiFi tidak ditemukan, E21 API key salah, dst.)
+//   baterai.h     baterai UPS (opsional): tegangan baterai (D34) dan listrik ada / padam (VP)
 //   ota.h         update firmware jarak jauh dari server, kembali ke versi lama kalau gagal
 //   api.h         /ping, /tap, /heartbeat, pengaturan jarak jauh
 //   ui.h          warna, alat bantu gambar, layar utama, layar hasil
@@ -54,11 +55,13 @@ TFT_eSPI tft = TFT_eSPI();   // layar, dipakai oleh file-file di bawah
 #include "lampu.h"
 #include "rfid.h"
 #include "waktu.h"
+#include "rtc.h"
 #include "perawatan.h"
 #include "modeabsen.h"
 #include "antrean.h"
 #include "jaringan.h"
 #include "galat.h"
+#include "baterai.h"
 #include "ota.h"
 #include "api.h"
 #include "ui.h"
@@ -230,7 +233,8 @@ void urusBoot() {
         String kode = kodeGalatWifi();
         uiLangkah(3, LANGKAH_GAGAL, kode.length() > 0 ? galatTeks(kode) : String("Belum tersambung"));
         uiLangkah(4, LANGKAH_LEWAT, "Dilewati");
-        uiLangkah(5, LANGKAH_LEWAT, "Dilewati");
+        if (jamValid()) uiLangkah(5, LANGKAH_OK, jamMenit() + " " + offsetTeks() + " (" + jamSumber() + ")");
+        else uiLangkah(5, LANGKAH_LEWAT, "Dilewati");
         bootSelesai();
       } else {
         static uint32_t animasi = 0;                      // "Menyambung." ".." "..."
@@ -255,7 +259,7 @@ void urusBoot() {
     case BOOT_JAM:
       // Jam dari server_time (langsung) atau NTP (tunggu maks. 8 detik)
       if (jamValid()) {
-        uiLangkah(5, LANGKAH_OK, jamMenit() + " " + offsetTeks() + (jamDariServer ? " (server)" : " (NTP)"));
+        uiLangkah(5, LANGKAH_OK, jamMenit() + " " + offsetTeks() + " (" + jamSumber() + ")");
         bootSelesai();
       } else if (millis() - waktuLangkah > 8000) {
         Serial.println("Jam: belum sinkron, dicoba terus di belakang");
@@ -284,9 +288,11 @@ void setup() {
   otaMulai();                                             // firmware baru dari OTA? / dulu gagal?
   bool tanyaReset = bootHitungNaik();                     // EN ditekan 3 kali?
   pinMode(PIN_TOMBOL_BOOT, INPUT_PULLUP);
+  zonaTerapkan();
+  rtcMulai();                                             // jam dari RTC (kalau terpasang) sambil menunggu internet
   feedbackMulai();
   lampuMulai();                                           // lampu layar terang (D2)
-  zonaTerapkan();
+  bateraiMulai();                                         // UPS terpasang? listrik ada?
 
   tft.init();
   tft.setRotation(1);                                     // landscape 480 x 320
@@ -340,8 +346,9 @@ void loop() {
 
   if (layar == LAYAR_UTAMA) {
     if (disentuh) waktuLayar = millis();                  // layar dipakai: hitung diam mulai lagi
-    // Mode diganti server (config.tap_mode), atau pilihan dikosongkan karena tanggal berganti
-    if (modeAbsenBerubah || pilihanCekTanggal()) {
+    // Mode / jadwal diganti server (config.tap_mode, tap_schedule), pilihan dikosongkan karena tanggal berganti,
+    // atau jadwal baru saja memilih DATANG / PULANG
+    if (modeAbsenBerubah || pilihanCekTanggal() || jadwalUrus()) {
       modeAbsenBerubah = false;
       bukaUtama();
       return;
@@ -350,10 +357,8 @@ void loop() {
     if (disentuh && modePilih() && (kena(TOMBOL_DATANG, x, y) || kena(TOMBOL_PULANG, x, y))) {
       String pilih = kena(TOMBOL_DATANG, x, y) ? "check_in" : "check_out";
       klik();
-      if (pilih != pilihanMode) {
-        pilihanSimpan(pilih);
-        heartbeatSegera = true;                           // server segera tahu pilihan baru
-      }
+      if (pilih != pilihanMode) heartbeatSegera = true;   // server segera tahu pilihan baru
+      pilihanManual(pilih);                               // ada jadwal: kembali ke jadwal setelah 3 menit
       uiTombolMode();
       uiInfo(true);
       return;

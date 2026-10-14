@@ -144,6 +144,8 @@ Kontrak lengkapnya ada di [spesifikasi-api.md](spesifikasi-api.md). Ringkasannya
 
 **Diatur dari aplikasi:** kirim `config.tap_mode` (`"auto"` atau `"select"`) di `/ping` dan `/heartbeat` untuk alat tertentu. Tidak dikirim (atau `null`) = alat memakai pengaturan di menunya sendiri. Heartbeat firmware 1.6.0 melaporkan `raw.tap_mode` (mode yang sedang dipakai) dan `raw.tap_select` (`"check_in"`, `"check_out"`, atau `null` = belum memilih); tampilkan di halaman Alat (6.3).
 
+**Jadwal otomatis (opsional, firmware 1.11.0 ke atas):** kirim `config.tap_schedule` = `{"check_in": "06:00", "check_out": "17:00"}` (24 jam, keduanya wajib, `check_in` lebih awal dari `check_out`). Di mode `select`, alat memilih DATANG sendiri pada jam `check_in` dan PULANG pada jam `check_out`; petugas tetap boleh mengganti pilihan manual. `null` = jadwal dimatikan; tidak dikirim = alat memakai jadwal terakhir yang diterima. Jadi kalau admin menghapus jadwal, kirim `null` (bukan sekadar tidak mengirim kuncinya). Heartbeat melaporkan jadwal yang dipakai alat di `raw.tap_schedule` (objek, atau `null`). Contoh API admin & validasinya: [contoh-integrasi/README.md](../contoh-integrasi/README.md#jadwal-mode-pilih-tap_schedule).
+
 Server contoh PHP/Node dan server acuan sudah menyediakan kedua endpoint ini; contoh request & respons ada di [contoh-integrasi/README.md](../contoh-integrasi/README.md#mode-absen-pilih-datangpulang-check-in--check-out).
 
 ---
@@ -189,6 +191,8 @@ Aturan seperti terlambat, lembur, shift malam, atau hari libur sepenuhnya ditent
 | RFID, antrean, RAM | `raw.rfid_ok`, `raw.queue`, `raw.free_heap`, `raw.min_free_heap` | |
 | **Kode error di layar** | `raw.error` | Tabel E10–E31 di [spesifikasi bagian 5](spesifikasi-api.md#5-post-baseheartbeat) |
 | Mode absen & pilihan saat ini | `raw.tap_mode`, `raw.tap_select` | Firmware 1.6.0 ke atas. Mis. "Pilih Datang/Pulang: DATANG" atau "belum memilih" (bagian 5) |
+| Jadwal mode pilih | `raw.tap_schedule` | Firmware 1.11.0 ke atas. Mis. "Datang 06:00, pulang 17:00" atau "tanpa jadwal" (`null`). Beda dengan jadwal yang diatur = alat belum menerimanya (bagian 5) |
+| Daya (UPS) | `raw.power` | Opsional, firmware 1.11.2 ke atas. Mis. "Listrik PLN · baterai 92%", "Baterai 18% (3,62 V), listrik padam", "Tanpa UPS" (`null`). Kunci tidak dikirim = firmware lama, biarkan nilai terakhir (bagian 5) |
 
 **Peringatan otomatis** (tampilkan mencolok, misalnya di dasbor "N alat perlu diperiksa"):
 
@@ -202,12 +206,15 @@ Aturan seperti terlambat, lembur, shift malam, atau hari libur sepenuhnya ditent
 | ≥ 3 restart `watchdog`/`panic`/`brownout` dalam 24 jam | Sering restart tidak normal | Adaptor/kabel daya bermasalah (brownout) atau bug firmware |
 | `min_free_heap` < 20000 | RAM hampir habis | Laporkan ke pengembang firmware |
 | `ota_failed` terisi | Update firmware 1.6.0 gagal | Lihat 6.4 |
+| `power.source` = `"battery"` | Listrik padam, alat memakai baterai (18%) | Listrik lokasi padam; router ikut memakai UPS |
+| `power.battery_low` = true | Baterai lemah (3,38 V) | Alat segera mati kalau listrik tidak kembali |
 
 **Riwayat kejadian** (dicatat dari heartbeat):
 - **boot:** `uptime_s` lebih kecil dari heartbeat sebelumnya, atau lebih kecil dari jarak waktu sejak heartbeat sebelumnya. Simpan `reset_reason`.
 - **crash:** `raw.crash` dikirim (task, alamat PC, backtrace, id build). Alat mengirimnya berulang sampai heartbeat berhasil, jadi **abaikan duplikat** dengan PC & backtrace yang sama dalam 10 menit. Alamatnya bisa diterjemahkan pengembang firmware dengan file `.elf` (lihat README utama, bagian 2.8).
 - **firmware:** versi firmware berubah.
 - **ota_failed:** update firmware gagal.
+- **Daya (opsional, firmware 1.11.2 ke atas):** listrik padam (`power.source` berubah menjadi `"battery"`), listrik kembali (`"battery"` → `"mains"`), baterai lemah (`battery_low` berubah menjadi `true`). Catat hanya saat berubah, bukan tiap heartbeat.
 
 **Pengaturan per alat:**
 
@@ -217,6 +224,7 @@ Aturan seperti terlambat, lembur, shift malam, atau hari libur sepenuhnya ditent
 | Jam restart harian | `config.restart_at` | `"HH:MM"`, atau `""` = tidak restart otomatis. Bawaan `"03:00"` |
 | Firmware tujuan | `config.firmware_update` | Lihat 6.4 |
 | Mode absen | `config.tap_mode` | `"auto"` / `"select"`. Jangan kirim (atau `null`) = ikuti pengaturan di alat. `select` hanya kalau aplikasi menyediakan `/check-in` & `/check-out` (bagian 5) |
+| Jadwal mode pilih | `config.tap_schedule` | `{"check_in":"HH:MM","check_out":"HH:MM"}`, `check_in` lebih awal; tolak nilai lain saat disimpan. `null` = jadwal mati. Tidak dikirim = alat memakai jadwal terakhir, jadi kirim `null` untuk alat tanpa jadwal. Hanya berlaku di mode `select`, firmware 1.11.0 ke atas (bagian 5) |
 
 ### 6.4 Firmware
 

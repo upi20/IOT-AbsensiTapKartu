@@ -16,6 +16,8 @@ void urusLatar() {
   rfidUrus();
   bootHitungUrus();
   lampuUrus();
+  rtcUrus();                                              // setel RTC dari jam internet
+  bateraiUrus();                                          // baterai UPS & listrik, tiap detik
   otaUrusSehat();                                         // firmware baru dari OTA: sahkan kalau sudah stabil
   // Paling sering sekali per menit (layar berhenti sebentar). Tidak saat WiFi sedang dipindai / disetel.
   if (heartbeatDiMenu && !wifiJeda) urusHeartbeat();

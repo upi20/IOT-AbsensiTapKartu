@@ -55,6 +55,7 @@ Ada dua cara alat mencatat datang dan pulang. Mode diatur oleh admin, dari menu 
 Di mode Pilih:
 - **Pilihan dikosongkan otomatis setiap ganti hari.** Pagi berikutnya, sentuh lagi DATANG.
 - Kalau belum memilih, kartu yang ditempel tidak dicatat, dan layar menampilkan **PILIH MODE DULU**.
+- **Jadwal otomatis (kalau diatur admin):** alat memilih **DATANG** sendiri pada jam masuk (misalnya 06:00) dan **PULANG** pada jam pulang (misalnya 17:00). Jamnya tertulis di tombol, misalnya "otomatis 17:00". Petugas tetap boleh menyentuh tombol lain kalau perlu, misalnya DATANG untuk karyawan yang terlambat, tapi setelah 3 menit alat kembali sendiri ke pilihan jadwal.
 
 ---
 
@@ -70,7 +71,7 @@ Sentuh **ikon gir (⚙)** di pojok kanan atas, lalu masukkan **PIN**. PIN bawaan
 | **Info alat** | ID alat, versi firmware, sinyal, antrean, kode error, mode absen, dan lainnya. **Foto layar ini saat melapor ke teknisi** |
 | **Ganti PIN** | Mengganti PIN menu (4–8 angka) |
 | **Kalibrasi layar** | Kalau sentuhan meleset dari posisi jari |
-| **Tes buzzer & LED** | Bunyi bip, lalu lampu merah → hijau → biru → putih |
+| **Tes buzzer & LED** | Bunyi bip, lalu lampu merah → hijau → biru → putih. Alat dengan modul jam (RTC) tidak punya LED: menunya bernama **Tes buzzer** dan hanya berbunyi 4 bip, lalu 2 bip pendek |
 | **Tes screensaver** | Menampilkan pengumuman sekarang |
 | **Cek kabel RFID** | Memeriksa pembaca kartu (untuk teknisi) |
 | **Mode absen** | Otomatis, atau Pilih Datang / Pulang (bagian 3) |
@@ -131,7 +132,7 @@ Kalau muncul **"Update firmware gagal"**, alasannya tampil di layar. Alat akan m
 | **Memantau alat** | **Alat**: status Online/Offline, sinyal, kode error, riwayat restart. Peringatan muncul di dasbor |
 | **Pengumuman di layar alat** | **Pengumuman**: tambah atau ubah. Tampil di alat dalam ± 1 menit |
 | **Judul layar, layar redup** | **Pengaturan** |
-| **PIN menu, jam restart, mode absen per alat** | **Alat** → pilih alat |
+| **PIN menu, jam restart, mode absen, jadwal DATANG/PULANG otomatis per alat** | **Alat** → pilih alat |
 | **Update firmware** | **Firmware**: unggah versi baru, lalu **Alat** → pilih versi untuk alat itu |
 
 ---

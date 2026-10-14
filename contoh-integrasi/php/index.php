@@ -115,7 +115,9 @@ $db->exec("
         firmware_target    TEXT,     -- versi firmware yang dijadwalkan; NULL = tidak update
         tap_mode           TEXT,     -- mode absen dari server: NULL = ikuti pengaturan di alat, 'auto', 'select'
         tap_mode_alat      TEXT,     -- mode absen yang sedang dipakai alat (raw.tap_mode di heartbeat)
-        tap_select         TEXT      -- pilihan DATANG/PULANG di alat: 'check_in' / 'check_out' / NULL
+        tap_select         TEXT,     -- pilihan DATANG/PULANG di alat: 'check_in' / 'check_out' / NULL
+        tap_schedule       TEXT,     -- jadwal mode pilih dari server, JSON {check_in, check_out}; NULL = tanpa jadwal
+        tap_schedule_alat  TEXT      -- jadwal yang sedang dipakai alat (raw.tap_schedule di heartbeat), JSON / NULL
     );
     CREATE TABLE IF NOT EXISTS event_alat (    -- riwayat kejadian per alat (maks. 200 per alat)
         id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -154,7 +156,7 @@ foreach ([
     'rfid_ok' => 'INTEGER', 'queue' => 'INTEGER', 'free_heap' => 'INTEGER', 'min_free_heap' => 'INTEGER',
     'error' => 'TEXT', 'ota_failed' => 'TEXT', 'heartbeat_terakhir' => 'INTEGER', 'pin' => 'TEXT',
     'restart_at' => 'TEXT', 'firmware_target' => 'TEXT', 'tap_mode' => 'TEXT', 'tap_mode_alat' => 'TEXT',
-    'tap_select' => 'TEXT',
+    'tap_select' => 'TEXT', 'tap_schedule' => 'TEXT', 'tap_schedule_alat' => 'TEXT',
 ] as $kolom => $tipe) {
     if (!in_array($kolom, $kolomAlat, true)) {
         $db->exec("ALTER TABLE alat ADD COLUMN $kolom $tipe");
@@ -331,6 +333,23 @@ function panjang(string $s): int
 function jamValid(mixed $v): bool
 {
     return is_string($v) && preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $v) === 1;
+}
+
+// Jadwal mode pilih yang sah: {"check_in":"HH:MM","check_out":"HH:MM"} dengan check_in lebih awal.
+// Mengembalikan ['check_in' => ..., 'check_out' => ...] (kunci lain dibuang), atau null kalau tidak sah.
+function jadwalSah(mixed $v): ?array
+{
+    if (!is_array($v) || !jamValid($v['check_in'] ?? null) || !jamValid($v['check_out'] ?? null)
+        || strcmp($v['check_in'], $v['check_out']) >= 0) {
+        return null;
+    }
+    return ['check_in' => $v['check_in'], 'check_out' => $v['check_out']];
+}
+
+// Kolom JSON jadwal di database → array / null.
+function jadwalDariKolom(?string $json): ?array
+{
+    return $json === null ? null : jadwalSah(json_decode($json, true));
 }
 
 // Tanggal "YYYY-MM-DD" yang benar-benar ada.
@@ -535,6 +554,8 @@ function dataAlat(PDO $db, array $a): array
         'tap_mode'          => $a['tap_mode'],       // pengaturan dari server: null = ikuti alat, "auto", "select"
         'reported_tap_mode' => $a['tap_mode_alat'],  // mode yang sedang dipakai alat (dari heartbeat)
         'tap_select'        => $a['tap_select'],     // pilihan DATANG/PULANG di alat saat ini (null = belum memilih)
+        'tap_schedule'      => jadwalDariKolom($a['tap_schedule']),      // jadwal dari server: null = tanpa jadwal
+        'reported_tap_schedule' => jadwalDariKolom($a['tap_schedule_alat']), // jadwal yang sedang dipakai alat (dari heartbeat)
         'issues'            => $issues,
     ];
 }
@@ -557,6 +578,9 @@ function config(PDO $db, array $alat, string $baseUrl): array
     if ($alat['tap_mode'] !== null) {
         $c['tap_mode'] = $alat['tap_mode'];  // mode absen "auto"/"select" (hanya dikirim kalau diatur dari server)
     }
+    // Jadwal mode pilih: selalu dikirim. null = jadwal dimatikan, jadi menghapus jadwal di server juga
+    // mematikan jadwal di alat (alat hanya bisa mendapat jadwal dari server).
+    $c['tap_schedule'] = jadwalDariKolom($alat['tap_schedule']);
     // Update firmware: hanya kalau dijadwalkan, belum terpasang, dan belum pernah gagal di alat ini.
     $target = $alat['firmware_target'];
     if ($target !== null && $target !== $alat['firmware'] && $target !== $alat['ota_failed']) {
@@ -844,6 +868,8 @@ if ($metode === 'POST' && $aksi === 'heartbeat') {
         // Mode absen (firmware 1.6.0 ke atas; versi lama tidak mengirim → NULL).
         'tap_mode_alat'      => in_array($raw['tap_mode'] ?? null, ['auto', 'select'], true) ? $raw['tap_mode'] : null,
         'tap_select'         => in_array($raw['tap_select'] ?? null, ['check_in', 'check_out'], true) ? $raw['tap_select'] : null,
+        // Jadwal mode pilih yang dipakai alat (firmware 1.11.0 ke atas; null / tidak dikirim / tidak sah → NULL).
+        'tap_schedule_alat'  => ($j = jadwalSah($raw['tap_schedule'] ?? null)) ? json_encode($j) : null,
         'raw_json'           => json_encode($body, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
     ], 'device_id', $deviceId);
 
@@ -1192,6 +1218,19 @@ function apiAdmin(PDO $db, string $metode, array $seg, string $mentah): never
                         $d['tap_mode'] = $v;  // null = alat memakai pengaturannya sendiri (config.tap_mode tidak dikirim)
                     } else {
                         $e['tap_mode'] = 'tap_mode harus null (ikuti pengaturan alat), "auto", atau "select"';
+                    }
+                }
+                if (array_key_exists('tap_schedule', $b)) {
+                    // Jadwal mode pilih: {"check_in":"06:00","check_out":"17:00"}, atau null = jadwal dimatikan.
+                    $v = $b['tap_schedule'];
+                    if ($v === null) {
+                        $d['tap_schedule'] = null;
+                    } elseif (!is_array($v) || !jamValid($v['check_in'] ?? null) || !jamValid($v['check_out'] ?? null)) {
+                        $e['tap_schedule'] = 'tap_schedule harus null (jadwal mati) atau {"check_in":"HH:MM","check_out":"HH:MM"} (00:00-23:59)';
+                    } elseif (!jadwalSah($v)) {
+                        $e['tap_schedule'] = 'Jam datang (check_in) harus lebih awal dari jam pulang (check_out)';
+                    } else {
+                        $d['tap_schedule'] = json_encode(jadwalSah($v));
                     }
                 }
                 if ($e) {

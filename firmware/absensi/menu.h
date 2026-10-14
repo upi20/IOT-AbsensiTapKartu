@@ -76,63 +76,127 @@ void gantiPin() {
 
 // ---------- Info alat ----------
 
-const char* const LABEL_INFO[] = {"ID alat", "Firmware", "WiFi", "IP", "Sinyal", "Base URL", "Antrean",
-                                  "Heartbeat", "Pengumuman", "RFID", "Jam", "RAM bebas", "Layar", "Restart", "Error",
-                                  "Mode absen"};
-const int JUMLAH_INFO = 16;
+// Dibagi 3 halaman, dibalik ke atas / bawah seperti buku (tombol panah di kanan). Tiap baris: nama di atas,
+// nilai di bawah selebar layar. Titik di antara panah = halaman; titik merah = ada masalah di halaman itu.
+enum { I_ID, I_FIRMWARE, I_ERROR, I_MODE, I_JAM, I_DAYA,
+       I_WIFI, I_SINYAL, I_IP, I_URL, I_HEARTBEAT, I_PENGUMUMAN,
+       I_RFID, I_ANTREAN, I_LAYAR, I_RESTART, I_RAM, I_BATERAI, JUMLAH_INFO };
+const char* const LABEL_INFO[JUMLAH_INFO] = {
+  "ID alat", "Firmware", "Error", "Mode absen", "Jam", "Daya",
+  "WiFi", "Sinyal", "IP", "Base URL", "Heartbeat", "Pengumuman",
+  "RFID", "Antrean", "Layar", "Restart", "RAM bebas", "Tegangan baterai (bacaan langsung)"};
+const int HAL_INFO = 3, BARIS_INFO = 6;
+const char* const JUDUL_HAL_INFO[HAL_INFO] = {"Ringkasan", "Jaringan", "Perangkat"};
+const int8_t ISI_HAL_INFO[HAL_INFO][BARIS_INFO] = {
+  {I_ID, I_FIRMWARE, I_ERROR, I_MODE, I_JAM, I_DAYA},
+  {I_WIFI, I_SINYAL, I_IP, I_URL, I_HEARTBEAT, I_PENGUMUMAN},
+  {I_RFID, I_BATERAI, I_ANTREAN, I_LAYAR, I_RESTART, I_RAM}};
 
-int yInfo(int i) { return 52 + i * 17; }
+const int INFO_LEBAR = 396;                                // kolom isi x 14-410, panah di kanan
+const Tombol INFO_ATAS  = {422, 52, 52, 96, ""};
+const Tombol INFO_BAWAH = {422, 216, 52, 96, ""};
 
-void infoNilai() {
-  String nilai[JUMLAH_INFO];
-  nilai[0] = idAlat;
-  nilai[1] = String(VERSI_FIRMWARE) + (otaStatus.length() > 0 ? " (update " + otaStatus + ")" : "");
-  nilai[2] = atur.ssid.length() > 0 ? atur.ssid : "Belum diatur";
-  nilai[3] = wifiTerhubung() ? WiFi.localIP().toString() : "-";
-  nilai[4] = wifiTerhubung() ? String(WiFi.RSSI()) + " dBm (" + String(wifiBar()) + "/4)" : "Tidak tersambung";
-  nilai[5] = atur.url;
-  nilai[6] = String(jumlahAntrean) + " tap" + (antreanSiap ? "" : " (penyimpanan rusak)");
-  nilai[7] = hbHasil;
-  nilai[8] = String(jumlahPengumuman) + " item - " + pengumumanHasil;
+int yInfo(int baris) { return 62 + baris * 42; }           // baris nama; nilainya 18 piksel di bawahnya
+
+void infoHitung(String nilai[], bool buruk[]) {
+  nilai[I_ID] = idAlat;
+  nilai[I_FIRMWARE] = String(VERSI_FIRMWARE) + (otaStatus.length() > 0 ? " (update " + otaStatus + ")" : "");
+  buruk[I_FIRMWARE] = otaStatus.indexOf("gagal") >= 0;
+  String galat = galatSekarang();
+  nilai[I_ERROR] = galat.length() > 0 ? galatTeks(galat) : String("Tidak ada");
+  buruk[I_ERROR] = galat.length() > 0;
+  nilai[I_MODE] = !modePilih() ? String("Otomatis (/tap)")
+                : "Pilih - " + String(pilihanMode == "check_in" ? "DATANG" : pilihanMode == "check_out" ? "PULANG" : "belum dipilih") +
+                  (jadwalAktif() ? " (jadwal " + atur.jadwalMasuk + " / " + atur.jadwalPulang + ")" : String(""));
+  String sumber = jamSumber();
+  if (rtcAda && sumber != "RTC") sumber += " + RTC";
+  nilai[I_JAM] = jamValid() ? waktuIso().substring(11, 19) + " " + offsetTeks() + " (" + sumber + ")" : "Belum sinkron";
+  nilai[I_DAYA] = bateraiTeks();
+  buruk[I_DAYA] = upsAda && !listrikAda;
+
+  nilai[I_WIFI] = atur.ssid.length() > 0 ? atur.ssid : "Belum diatur";
+  nilai[I_SINYAL] = wifiTerhubung() ? String(WiFi.RSSI()) + " dBm (" + String(wifiBar()) + "/4)" : "Tidak tersambung";
+  nilai[I_IP] = wifiTerhubung() ? WiFi.localIP().toString() : "-";
+  nilai[I_URL] = atur.url;
+  nilai[I_HEARTBEAT] = hbHasil;
+  buruk[I_HEARTBEAT] = hbHasil.startsWith("Gagal");
+  nilai[I_PENGUMUMAN] = String(jumlahPengumuman) + " item - " + pengumumanHasil;
+  buruk[I_PENGUMUMAN] = pengumumanHasil.startsWith("Gagal");
+
   char versi[8];
   snprintf(versi, sizeof(versi), "0x%02X", rfidVersi);
-  nilai[9] = rfidAda ? String("OK (versi ") + versi + ")" : "Tidak terdeteksi";
-  String sumber = jamDariServer ? "server" : jamDariNtp ? "NTP" : "belum sinkron";
-  nilai[10] = jamValid() ? waktuIso().substring(11, 19) + " " + offsetTeks() + " (" + sumber + ")" : "Belum sinkron";
-  nilai[11] = String(ESP.getFreeHeap() / 1024) + " KB (paling sedikit " + String(ESP.getMinFreeHeap() / 1024) + " KB)";
-  nilai[12] = atur.redupDetik == 0 ? String("Tidak pernah redup")
-            : "Redup " + String(atur.redupPersen) + "% setelah " + String(atur.redupDetik) + " detik";
-  nilai[13] = (atur.restartAt.length() ? "Tiap hari " + atur.restartAt : String("Tidak otomatis")) +
-              " (terakhir: " + alasanResetTeks() + ")";
-  String galat = galatSekarang();
-  nilai[14] = galat.length() > 0 ? galatTeks(galat) : String("Tidak ada");
-  nilai[15] = !modePilih() ? String("Otomatis (/tap)")
-            : "Pilih Datang/Pulang - " + String(pilihanMode == "check_in" ? "DATANG" : pilihanMode == "check_out" ? "PULANG" : "belum dipilih");
+  nilai[I_RFID] = rfidAda ? String("OK (versi ") + versi + ")" : "Tidak terdeteksi";
+  buruk[I_RFID] = !rfidAda;
+  nilai[I_ANTREAN] = String(jumlahAntrean) + " tap" + (antreanSiap ? "" : " (penyimpanan rusak)");
+  buruk[I_ANTREAN] = !antreanSiap;
+  nilai[I_LAYAR] = atur.redupDetik == 0 ? String("Tidak pernah redup")
+                 : "Redup " + String(atur.redupPersen) + "% setelah " + String(atur.redupDetik) + " detik";
+  nilai[I_RESTART] = (atur.restartAt.length() ? "Tiap hari " + atur.restartAt : String("Tidak otomatis")) +
+                     " (terakhir: " + alasanResetTeks() + ")";
+  nilai[I_RAM] = String(ESP.getFreeHeap() / 1024) + " KB (paling sedikit " + String(ESP.getMinFreeHeap() / 1024) + " KB)";
+  nilai[I_BATERAI] = bateraiTeksReal();
+}
 
+// Nilai halaman `hal` dan titik halaman. Dipanggil tiap detik (font bawaan menimpa latar, tidak berkedip).
+void infoNilai(int hal) {
+  String nilai[JUMLAH_INFO];
+  bool buruk[JUMLAH_INFO] = {};
+  infoHitung(nilai, buruk);
   tft.setTextFont(2);
-  for (int i = 0; i < JUMLAH_INFO; i++) {
-    bool buruk = (i == 9 && !rfidAda) || (i == 7 && hbHasil.startsWith("Gagal")) ||
-                 (i == 8 && pengumumanHasil.startsWith("Gagal")) || (i == 14 && galat.length() > 0) ||
-                 (i == 1 && otaStatus.indexOf("gagal") >= 0);
-    tulisTimpa(potong(nilai[i], 340, 2), 120, yInfo(i), 2, buruk ? W_MERAH : W_TEKS, W_LATAR, ML_DATUM, 350);
+  for (int b = 0; b < BARIS_INFO; b++) {
+    int i = ISI_HAL_INFO[hal][b];
+    if (i < 0) continue;
+    tulisTimpa(potong(nilai[i], INFO_LEBAR, 2), 14, yInfo(b) + 18, 2, buruk[i] ? W_MERAH : W_TEKS, W_LATAR,
+               ML_DATUM, INFO_LEBAR);
   }
+  for (int h = 0; h < HAL_INFO; h++) {
+    bool masalah = false;
+    for (int b = 0; b < BARIS_INFO; b++) masalah |= ISI_HAL_INFO[h][b] >= 0 && buruk[ISI_HAL_INFO[h][b]];
+    uint16_t w = masalah ? W_MERAH : h == hal ? W_AKSEN : W_GARIS;
+    tft.fillSmoothCircle(448, 164 + h * 18, 5, w, W_LATAR);
+  }
+}
+
+// Tombol panah: segitiga ke atas / bawah, abu-abu kalau sudah di halaman pertama / terakhir.
+void gambarPanahHal(const Tombol& t, bool keAtas, bool aktif) {
+  tft.fillSmoothRoundRect(t.x, t.y, t.w, t.h, 10, aktif ? W_TOMBOL : W_PANEL, W_LATAR);
+  int cx = t.x + t.w / 2, cy = t.y + t.h / 2, d = keAtas ? -1 : 1;
+  tft.fillTriangle(cx - 13, cy - 7 * d, cx + 13, cy - 7 * d, cx, cy + 9 * d, aktif ? W_TEKS : W_GARIS);
+}
+
+void infoHalaman(int hal) {
+  const Tombol KEMBALI = {372, 2, 104, 40, "Kembali"};
+  uiJudul("Info alat - " + String(JUDUL_HAL_INFO[hal]));
+  gambarTombol(KEMBALI, W_TOMBOL, true, W_PANEL);
+  for (int b = 0; b < BARIS_INFO; b++) {
+    int i = ISI_HAL_INFO[hal][b];
+    if (i >= 0) tulisTimpa(LABEL_INFO[i], 14, yInfo(b), 2, W_REDUP, W_LATAR, ML_DATUM, 0);
+  }
+  gambarPanahHal(INFO_ATAS, true, hal > 0);
+  gambarPanahHal(INFO_BAWAH, false, hal < HAL_INFO - 1);
+  infoNilai(hal);
 }
 
 void layarInfo() {
   const Tombol KEMBALI = {372, 2, 104, 40, "Kembali"};
-  uiJudul("Info alat");
-  gambarTombol(KEMBALI, W_TOMBOL, true, W_PANEL);
-  for (int i = 0; i < JUMLAH_INFO; i++) tulisTimpa(LABEL_INFO[i], 14, yInfo(i), 2, W_REDUP, W_LATAR, ML_DATUM, 0);
-  infoNilai();
+  int hal = 0;
+  infoHalaman(hal);
   uint32_t perbarui = millis();
   sentuhTerakhir = millis();
   while (!terlaluLamaDiam()) {
     if (millis() - perbarui > 1000) {                      // nilai diperbarui tiap detik
       perbarui = millis();
-      infoNilai();
+      infoNilai(hal);
     }
     int x, y;
-    if (sentuh(x, y) && kena(KEMBALI, x, y)) { klik(); return; }
+    if (!sentuh(x, y)) continue;
+    if (kena(KEMBALI, x, y)) { klik(); return; }
+    int pindah = kena(INFO_ATAS, x, y) && hal > 0 ? -1 : kena(INFO_BAWAH, x, y) && hal < HAL_INFO - 1 ? 1 : 0;
+    if (pindah == 0) continue;
+    klik();
+    hal += pindah;
+    infoHalaman(hal);
+    perbarui = millis();
   }
 }
 
@@ -213,8 +277,12 @@ const char* const LABEL_MENU[] = {"WiFi", "Server", "Tes koneksi", "Info alat", 
 enum { M_WIFI, M_SERVER, M_TES, M_INFO, M_PIN, M_KALIBRASI, M_BUZZER, M_SCREENSAVER, M_RFID, M_MODE, M_UPDATE,
        M_RESET, JUMLAH_MENU };
 
-// 12 tombol, 2 kolom x 6 baris
-Tombol menuTombol(int i) { return {8 + (i % 2) * 236, 49 + (i / 2) * 45, 228, 41, LABEL_MENU[i]}; }
+// 12 tombol, 2 kolom x 6 baris. Alat dengan modul jam RTC tidak punya LED RGB (kabelnya dipakai RTC),
+// jadi tombol tesnya cukup "Tes buzzer".
+Tombol menuTombol(int i) {
+  const char* teks = i == M_BUZZER && !ledAda ? "Tes buzzer" : LABEL_MENU[i];
+  return {8 + (i % 2) * 236, 49 + (i / 2) * 45, 228, 41, teks};
+}
 
 // ---------- Update firmware manual ----------
 

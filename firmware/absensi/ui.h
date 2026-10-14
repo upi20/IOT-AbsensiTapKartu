@@ -262,6 +262,34 @@ void uiBoot() {
 
 const Tombol TOMBOL_GIR = {404, 0, 76, 60, ""};   // daerah sentuh tombol pengaturan (pojok kanan atas)
 
+// Ikon baterai UPS di bilah status (x 258-324). Tanpa UPS: kosong. Listrik ada: petir (sedang dicas).
+// Listrik padam: isi baterai + persen, kuning di bawah 30 %, merah di bawah 15 % atau saat lemah.
+void uiBaterai(bool paksa) {
+  static bool adaTadi = false, listrikTadi = false, lemahTadi = false;
+  static int persenTadi = -1;
+  if (!paksa && upsAda == adaTadi && listrikAda == listrikTadi && bateraiLemah == lemahTadi &&
+      (listrikAda || bateraiPersen == persenTadi)) return;
+  adaTadi = upsAda;
+  listrikTadi = listrikAda;
+  lemahTadi = bateraiLemah;
+  persenTadi = bateraiPersen;
+
+  const int x = 260, y = 15;                                 // badan baterai 26 x 14
+  tft.fillRect(258, 6, 66, 32, W_PANEL);
+  if (!upsAda) return;
+  uint16_t w = listrikAda ? W_HIJAU : bateraiLemah || bateraiPersen < 15 ? W_MERAH
+             : bateraiPersen < 30 ? W_KUNING : W_TEKS;
+  tft.drawRoundRect(x, y, 26, 14, 2, w);
+  tft.fillRect(x + 26, y + 4, 3, 6, w);
+  if (listrikAda) {
+    tft.fillTriangle(x + 15, y + 1, x + 8, y + 8, x + 13, y + 8, W_EMAS);
+    tft.fillTriangle(x + 11, y + 6, x + 18, y + 6, x + 10, y + 13, W_EMAS);
+    return;
+  }
+  tft.fillRect(x + 2, y + 2, max(1, 22 * bateraiPersen / 100), 10, w);
+  tulisTimpa(bateraiPersenTeks(), x + 32, 22, 2, w, W_PANEL, ML_DATUM, 0);
+}
+
 // Bilah status atas: sinyal WiFi, titik server, jumlah antrean, ID alat, tombol gir.
 // Hanya bagian yang berubah yang digambar ulang.
 void uiBilahStatus(bool paksa) {
@@ -292,6 +320,7 @@ void uiBilahStatus(bool paksa) {
     tulisTimpa(s, 166, 22, 2, W_EMAS, W_PANEL, ML_DATUM, 90);
   }
   if (paksa) tulisTimpa(idAlat, 396, 22, 2, W_REDUP, W_PANEL, MR_DATUM, 0);
+  uiBaterai(paksa);
 }
 
 // Judul dari pengaturan (bisa diganti server lewat config.title).
@@ -360,6 +389,12 @@ void uiInfo(bool paksa) {
   // Masalah ditampilkan dengan kode error (galat.h), supaya pengguna cukup menyebut kodenya.
   String kode = galatSekarang();
   if (!rfidAda)                          { teks = "E30 RFID tidak terdeteksi, cek kabel";    latar = W_MERAH;  warna = W_TEKS; }
+  else if (upsAda && bateraiLemah)       { teks = "Baterai lemah " + bateraiPersenTeks() + " - nyalakan listrik";
+                                                                                             latar = W_MERAH;  warna = W_TEKS; }
+  // Listrik padam biasanya ikut mematikan router: pesan ini lebih berguna daripada kode error WiFi
+  else if (upsAda && !listrikAda)        { teks = "Listrik padam - baterai " + bateraiPersenTeks() +
+                                                  (wifiTerhubung() && statusServer != SERVER_GAGAL ? "" : " - tap tetap disimpan");
+                                                                                             latar = W_AMBER;  warna = W_TEKS; }
   else if (!wifiTerhubung())             { teks = (kode.length() > 0 ? galatTeks(kode) : String("WiFi terputus")) +
                                                   " - tap tetap disimpan";                   latar = W_ORANYE; warna = W_TEKS; }
   else if (statusServer == SERVER_GAGAL) { teks = kode.length() > 0 ? galatTeks(kode) : String("Server tidak menjawab");
@@ -390,8 +425,11 @@ void uiTombolMode() {
     uint16_t warna = dipilih ? (i == 0 ? W_HIJAU : W_BIRU) : W_PANEL;
     tft.fillSmoothRoundRect(t.x, t.y, t.w, t.h, 12, warna, W_LATAR);
     if (!dipilih) tft.drawRoundRect(t.x, t.y, t.w, t.h, 12, W_GARIS);
-    tulis(t.teks, t.x + t.w / 2, t.y + t.h / 2 - (dipilih ? 7 : 0), F_JUDUL, dipilih ? W_TEKS : W_REDUP, MC_DATUM);
-    if (dipilih) tulis("dipilih - tempelkan kartu", t.x + t.w / 2, t.y + t.h - 12, F_KECIL, W_TEKS, MC_DATUM);
+    // Baris kedua: "dipilih - tempelkan kartu", atau jam pilihan otomatis kalau ada jadwal (config.tap_schedule)
+    String ket = dipilih ? String("dipilih - tempelkan kartu")
+               : jadwalAktif() ? "otomatis " + (i == 0 ? atur.jadwalMasuk : atur.jadwalPulang) : String("");
+    tulis(t.teks, t.x + t.w / 2, t.y + t.h / 2 - (ket.length() ? 7 : 0), F_JUDUL, dipilih ? W_TEKS : W_REDUP, MC_DATUM);
+    if (ket.length()) tulis(ket, t.x + t.w / 2, t.y + t.h - 12, F_KECIL, dipilih ? W_TEKS : W_REDUP, MC_DATUM);
   }
 }
 

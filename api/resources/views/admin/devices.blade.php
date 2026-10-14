@@ -16,6 +16,8 @@
         @php($issues = $device->healthIssues())
         @php($update = $device->firmwareUpdateState())
         @php($tapModeReady = \App\Models\Device::tapModeReady())
+        @php($scheduleReady = \App\Models\Device::scheduleReady())
+        @php($powerReady = \App\Models\Device::powerReady())
         <section class="card device-card" id="alat-{{ $device->id }}">
             <div class="card-head">
                 <div>
@@ -139,10 +141,32 @@
                                 @if ($device->reported_tap_mode === 'select')
                                     Pilih Datang/Pulang
                                     <span class="sub">Pilihan saat ini: {{ \App\Models\Device::TAP_SELECTS[$device->tap_select] ?? 'belum dipilih' }}</span>
+                                    @if ($scheduleReady && $device->reported_tap_schedule)
+                                        <span class="sub">Jadwal di alat: <span class="mono">{{ str_replace('-', '–', $device->reported_tap_schedule) }}</span></span>
+                                    @endif
                                 @elseif ($device->reported_tap_mode === 'auto')
                                     Otomatis<span class="sub mono">/tap</span>
                                 @else
                                     —<span class="sub">belum dilaporkan (firmware 1.6.0+)</span>
+                                @endif
+                            </dd>
+                        </div>
+                    @endif
+                    @if ($powerReady && $device->code !== null)
+                        <div>
+                            <dt>Daya</dt>
+                            <dd>
+                                @if ($power = $device->powerState())
+                                    @if ($power[1])
+                                        <span class="badge {{ $power[1] }}">{{ $power[0] }}</span>
+                                    @else
+                                        {{ $power[0] }}
+                                    @endif
+                                    @if ($power[2])
+                                        <span class="sub">{{ $power[2] }}</span>
+                                    @endif
+                                @else
+                                    —<span class="sub">belum dilaporkan (firmware 1.11.2+)</span>
                                 @endif
                             </dd>
                         </div>
@@ -194,6 +218,18 @@
                             </select>
                         </div>
                     @endif
+                    @if ($scheduleReady && $device->code !== null)
+                        <div class="field">
+                            <label for="schedule-in-{{ $device->id }}">Jadwal DATANG otomatis</label>
+                            <input id="schedule-in-{{ $device->id }}" name="schedule_check_in" type="time" class="input input-sm mono @error('schedule_check_in', $bag) is-invalid @enderror"
+                                   value="{{ $failed ? old('schedule_check_in') : $device->schedule_check_in }}" title="Jam DATANG dipilih otomatis di Mode Pilih (kosong = tanpa jadwal)" style="max-width:8rem;min-width:0">
+                        </div>
+                        <div class="field">
+                            <label for="schedule-out-{{ $device->id }}">Jadwal PULANG otomatis</label>
+                            <input id="schedule-out-{{ $device->id }}" name="schedule_check_out" type="time" class="input input-sm mono @error('schedule_check_out', $bag) is-invalid @enderror"
+                                   value="{{ $failed ? old('schedule_check_out') : $device->schedule_check_out }}" title="Jam PULANG dipilih otomatis di Mode Pilih (kosong = tanpa jadwal)" style="max-width:8rem;min-width:0">
+                        </div>
+                    @endif
                     <button type="submit" class="btn btn-sm">Simpan</button>
                 </form>
                 @error('name', $bag)<div class="error">{{ $message }}</div>@enderror
@@ -201,18 +237,28 @@
                 @error('restart_at', $bag)<div class="error">{{ $message }}</div>@enderror
                 @error('firmware_release_id', $bag)<div class="error">{{ $message }}</div>@enderror
                 @error('tap_mode', $bag)<div class="error">{{ $message }}</div>@enderror
+                @error('schedule_check_in', $bag)<div class="error">{{ $message }}</div>@enderror
+                @error('schedule_check_out', $bag)<div class="error">{{ $message }}</div>@enderror
                 <div class="small muted" style="margin-top:6px">
                     @if ($device->restart_at)
                         Restart harian pukul <span class="mono">{{ $device->restart_at }}</span>
                     @else
                         Tidak restart otomatis
                     @endif
+                    @if ($scheduleReady && $device->code !== null)
+                        ·
+                        @if ($schedule = $device->tapSchedule())
+                            Mode Pilih: DATANG otomatis pukul <span class="mono">{{ $schedule['check_in'] }}</span>, PULANG pukul <span class="mono">{{ $schedule['check_out'] }}</span>
+                        @else
+                            Mode Pilih tanpa jadwal (petugas memilih DATANG/PULANG sendiri)
+                        @endif
+                    @endif
                 </div>
 
                 <details class="events">
                     <summary>Riwayat kejadian <span class="muted">({{ $device->events->count() }} terakhir)</span></summary>
                     @if ($device->events->isEmpty())
-                        <p class="small muted">Belum ada kejadian. Restart, crash, ganti firmware & update gagal dicatat di sini.</p>
+                        <p class="small muted">Belum ada kejadian. Restart, crash, ganti firmware, update gagal, listrik padam/kembali & baterai lemah dicatat di sini.</p>
                     @else
                         <ul class="event-list">
                             @foreach ($device->events as $event)
@@ -252,6 +298,16 @@
             <em>Pilih Datang/Pulang</em> = petugas memilih DATANG atau PULANG di layar alat (dipilih ulang tiap hari), tap dikirim ke
             <span class="mono">/check-in</span> atau <span class="mono">/check-out</span>. <em>Ikuti pengaturan di alat</em> = diatur dari menu alat.
             Butuh firmware 1.6.0 ke atas.
+        @endif
+        @if (\App\Models\Device::scheduleReady())
+            Jadwal DATANG/PULANG otomatis: hanya berlaku di Mode Pilih. Pada jam DATANG alat memilih DATANG sendiri, pada jam PULANG
+            memilih PULANG; petugas tetap boleh mengganti pilihan. Isi keduanya (DATANG lebih awal dari PULANG) atau kosongkan keduanya
+            untuk mematikan jadwal. Butuh firmware 1.11.0 ke atas.
+        @endif
+        @if (\App\Models\Device::powerReady())
+            Daya: hanya untuk alat dengan modul UPS (baterai 18650) dan pemantau baterai, firmware 1.11.2 ke atas.
+            Saat listrik padam, router WiFi biasanya ikut mati, jadi alat tampil Offline; laporan "listrik padam" hanya sampai
+            kalau router juga memakai UPS.
         @endif
     </p>
 @endsection

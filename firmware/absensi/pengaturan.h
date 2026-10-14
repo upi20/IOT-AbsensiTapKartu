@@ -19,6 +19,8 @@ struct Pengaturan {
   int redupPersen;     // kecerahan layar saat redup (0-100 %)
   String restartAt;    // jam restart harian "HH:MM" (jam alat), "" = tidak restart otomatis
   String modeAbsen;    // "auto" = semua tap ke /tap; "select" = tombol DATANG/PULANG (lihat modeabsen.h)
+  String jadwalMasuk;  // mode pilih: jam DATANG dipilih otomatis "HH:MM" ("" = tanpa jadwal), config.tap_schedule
+  String jadwalPulang; // mode pilih: jam PULANG dipilih otomatis "HH:MM"
 };
 Pengaturan atur;
 
@@ -55,6 +57,15 @@ bool restartValid(const String& r) {
 }
 bool redupPersenValid(long p) { return p >= 0 && p <= 100; }
 
+int menitDariJam(const String& hhmm) { return hhmm.substring(0, 2).toInt() * 60 + hhmm.substring(3, 5).toInt(); }
+
+// Jadwal mode pilih: keduanya "HH:MM" dan jam masuk lebih awal dari jam pulang, atau keduanya "" (tanpa jadwal).
+bool jadwalValid(const String& masuk, const String& pulang) {
+  if (masuk.length() == 0 && pulang.length() == 0) return true;
+  if (masuk.length() != 5 || pulang.length() != 5 || !restartValid(masuk) || !restartValid(pulang)) return false;
+  return menitDariJam(masuk) < menitDariJam(pulang);
+}
+
 bool modeAbsenValid(const String& m) { return m == "auto" || m == "select"; }
 
 // Rapikan Base URL: buang spasi dan "/" di akhir.
@@ -80,12 +91,15 @@ void aturMuat() {
   atur.redupPersen = prefs.getInt("redupP", REDUP_PERSEN_BAWAAN);
   atur.restartAt   = prefs.getString("restartAt", RESTART_BAWAAN);
   atur.modeAbsen   = prefs.getString("modeAbsen", "auto");
+  atur.jadwalMasuk = prefs.getString("jdwMasuk", "");
+  atur.jadwalPulang = prefs.getString("jdwPulang", "");
   if (!pinValid(atur.pin)) atur.pin = PIN_BAWAAN;
   if (!judulValid(atur.judul)) atur.judul = JUDUL_BAWAAN;
   if (!redupDetikValid(atur.redupDetik)) atur.redupDetik = REDUP_DETIK_BAWAAN;
   if (!redupPersenValid(atur.redupPersen)) atur.redupPersen = REDUP_PERSEN_BAWAAN;
   if (!restartValid(atur.restartAt)) atur.restartAt = RESTART_BAWAAN;
   if (!modeAbsenValid(atur.modeAbsen)) atur.modeAbsen = "auto";
+  if (!jadwalValid(atur.jadwalMasuk, atur.jadwalPulang)) atur.jadwalMasuk = atur.jadwalPulang = "";
 }
 
 // Simpan WiFi dan server (dipanggil setelah penyetelan).
@@ -133,6 +147,15 @@ void aturSimpanModeAbsen(const String& m) {
   atur.modeAbsen = m;
   prefs.putString("modeAbsen", m);
   Serial.printf("Mode absen: %s\n", m == "select" ? "pilih Datang/Pulang" : "otomatis");
+}
+
+void aturSimpanJadwal(const String& masuk, const String& pulang) {
+  atur.jadwalMasuk = masuk;
+  atur.jadwalPulang = pulang;
+  prefs.putString("jdwMasuk", masuk);
+  prefs.putString("jdwPulang", pulang);
+  if (masuk.length()) Serial.printf("Jadwal mode pilih: DATANG %s, PULANG %s\n", masuk.c_str(), pulang.c_str());
+  else Serial.println("Jadwal mode pilih: mati");
 }
 
 // ID alat: diambil dari ID_ALAT di config.h (diatur manual sebelum upload lewat USB).

@@ -16,7 +16,7 @@ const char ID_ALAT[] = "ABS-001";
 // #define OTA_BUILD
 
 // ---------- Versi & nilai bawaan pabrik ----------
-const char VERSI_FIRMWARE[] = "1.9.1";          // naikkan setiap membuat firmware baru (wajib untuk OTA)
+const char VERSI_FIRMWARE[] = "1.11.4";          // naikkan setiap membuat firmware baru (wajib untuk OTA)
 const char VERSI_SPEK[]     = "1";              // versi spesifikasi API (header X-Spec-Version)
 const char PIN_BAWAAN[]     = "2026";           // PIN menu Pengaturan sebelum diganti
 const char JUDUL_BAWAAN[]   = "Absensi RFID";   // judul layar utama sebelum diganti
@@ -89,6 +89,12 @@ const uint32_t OTA_SEHAT_S          = 300;      // firmware baru dianggap sehat 
 // ---------- Kode error (galat.h) ----------
 const uint32_t WIFI_DHCP_MS         = 10000;    // WiFi tersambung tapi belum dapat alamat IP selama ini -> E13
 const uint32_t JAM_TUNGGU_S         = 120;      // jam belum sinkron setelah menyala selama ini -> E31
+const uint32_t JADWAL_KEMBALI_MS    = 180000;   // mode pilih + jadwal: pilihan manual yang beda dari jadwal kembali setelah 3 menit
+
+// ---------- Baterai UPS (baterai.h) ----------
+const int   BATERAI_LEMAH_MV  = 3400;           // listrik padam dan baterai di bawah ini = peringatan merah
+const float BATERAI_KALIBRASI = 1.00;           // tegangan di Info alat beda dengan multimeter? isi multimeter
+                                                // dibagi angka di layar, contoh 4,05 / 3,98 = 1.018
 
 // ---------- Lain-lain ----------
 const bool BUZZER_AKTIF = true;                 // false = alat tidak berbunyi
@@ -106,5 +112,13 @@ const int RFID_SCK = 14, RFID_MOSI = 13, RFID_MISO = 35, RFID_SS = 33, RFID_RST 
 const int PIN_BUZZER = 17;
 const int PIN_LED_R = 25, PIN_LED_G = 26, PIN_LED_B = 27;
 
+// RTC DS3231 (pengganti LED RGB, di kabel header yang sama): R = SDA, G = SCL, B = VCC 3,3 V. Lihat rtc.h.
+// Terdeteksi otomatis: kalau RTC terpasang LED tidak dipakai, kalau tidak ada RTC LED bekerja seperti biasa.
+const int RTC_SDA = PIN_LED_R, RTC_SCL = PIN_LED_G;
+
 // Lampu latar LCD (pin LED di LCD), PWM untuk meredup. Pin lain layar ada di tft_setup.h.
 const int PIN_LAMPU_LCD = 2;
+
+// Baterai UPS (opsional, baterai.h): titik tengah pembagi 10k + 10k. Kedua pin hanya-input (ADC1).
+const int PIN_BATERAI = 34;   // D34: dari + baterai
+const int PIN_LISTRIK = 36;   // VP:  dari 5V+ charger (listrik ada / padam)

@@ -35,8 +35,8 @@ class AbsensiController extends Controller
 
     /**
      * POST /heartbeat — tanda alat aktif (bagian 5). Kontak alat sudah dicatat oleh middleware; di sini data
-     * kesehatan (raw.uptime_s, reset_reason, rfid_ok, queue, RAM, error, ota_failed, crash) dan mode absen (raw.tap_mode,
-     * tap_select) disimpan, kalau migrasinya sudah dijalankan.
+     * kesehatan (raw.uptime_s, reset_reason, rfid_ok, queue, RAM, error, ota_failed, crash), mode absen (raw.tap_mode,
+     * tap_select, tap_schedule) dan daya (raw.power) disimpan, kalau migrasinya sudah dijalankan.
      */
     public function heartbeat(Request $request): JsonResponse
     {
@@ -216,8 +216,10 @@ class AbsensiController extends Controller
      * setiap pengumuman / pengaturan screensaver berubah, sehingga alat mengambil ulang GET /announcements.
      * firmware_update hanya dikirim kalau alat dijadwalkan update dan versinya belum terpasang / belum pernah gagal.
      * tap_mode hanya dikirim kalau diatur di panel (null = alat memakai pengaturannya sendiri).
+     * tap_schedule dikirim setelah migrasi jadwal dijalankan: {check_in, check_out} kalau diatur, null kalau tidak (alat
+     * mematikan jadwalnya; kunci yang tidak dikirim berarti alat memakai jadwal terakhir).
      *
-     * @return object{pin?: string, title?: string, dim_after?: int, dim_level?: int, announcements_rev: string, restart_at: string, tap_mode?: string, firmware_update?: array{version: string, url: string, size: int, md5: string}}
+     * @return object{pin?: string, title?: string, dim_after?: int, dim_level?: int, announcements_rev: string, restart_at: string, tap_mode?: string, tap_schedule?: array{check_in: string, check_out: string}|null, firmware_update?: array{version: string, url: string, size: int, md5: string}}
      */
     private function deviceConfig(Device $device): object
     {
@@ -235,6 +237,11 @@ class AbsensiController extends Controller
         // Sebelum migrasi mode absen kolomnya belum ada (atribut null), jadi tap_mode tidak dikirim.
         if ($tapMode = Device::validTapMode($device->tap_mode)) {
             $config['tap_mode'] = $tapMode;
+        }
+
+        // Sebelum migrasi jadwal kolomnya belum ada, jadi tap_schedule tidak dikirim (alat tetap memakai jadwal terakhir).
+        if (Device::scheduleReady()) {
+            $config['tap_schedule'] = $device->tapSchedule();
         }
 
         // URL dibangun dari request alat (skema & host sama dengan Base URL alat), seperti photo_url.

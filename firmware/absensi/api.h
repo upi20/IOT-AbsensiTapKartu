@@ -59,6 +59,19 @@ void terapkanBalasanUmum(JsonDocument& doc) {
     if (!modeAbsenValid(m)) Serial.println("config.tap_mode diabaikan (harus \"auto\" atau \"select\")");
     else if (m != atur.modeAbsen) { aturSimpanModeAbsen(m); modeAbsenBerubah = true; }
   }
+  // Jadwal mode pilih: {"check_in":"06:00","check_out":"17:00"}. null = jadwal mati, tidak dikirim = jadwal terakhir.
+  JsonVariant jdw = cfg["tap_schedule"];
+  if (jdw.is<JsonObject>()) {
+    String masuk = jdw["check_in"] | "", pulang = jdw["check_out"] | "";
+    masuk.trim();
+    pulang.trim();
+    if (masuk.length() == 0 || !jadwalValid(masuk, pulang))
+      Serial.println("config.tap_schedule diabaikan (check_in & check_out harus \"HH:MM\", check_in lebih awal)");
+    else if (masuk != atur.jadwalMasuk || pulang != atur.jadwalPulang) { aturSimpanJadwal(masuk, pulang); modeAbsenBerubah = true; }
+  } else if (!jdw.isUnbound() && jdw.isNull() && atur.jadwalMasuk.length()) {
+    aturSimpanJadwal("", "");
+    modeAbsenBerubah = true;
+  }
   // Update firmware jarak jauh (ota.h). Tidak dikirim = tidak ada update.
   otaTerapkanConfig(cfg["firmware_update"]);
   // Penanda versi pengumuman (teks bebas). Kalau berubah, daftar pengumuman diambil ulang.
@@ -141,6 +154,15 @@ bool apiHeartbeat() {
   raw["rfid_ok"] = rfidAda;
   raw["queue"] = jumlahAntrean;
   raw["tap_mode"] = atur.modeAbsen;
+  if (atur.jadwalMasuk.length()) {
+    JsonObject jdw = raw["tap_schedule"].to<JsonObject>();
+    jdw["check_in"] = atur.jadwalMasuk;
+    jdw["check_out"] = atur.jadwalPulang;
+  } else {
+    raw["tap_schedule"] = nullptr;
+  }
+  raw["rtc"] = rtcStatusKode();
+  bateraiIsiRaw(raw);                                      // raw.power: listrik & baterai UPS (null = tanpa UPS)
   if (modePilih() && pilihanMode.length() > 0) raw["tap_select"] = pilihanMode;
   else raw["tap_select"] = nullptr;
   String galat = galatSekarang();

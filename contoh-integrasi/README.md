@@ -140,7 +140,7 @@ Server contoh tidak punya halaman web. Keenam fitur wajib (lihat [panduan integr
 |---|---|---|
 | **Kartu belum terdaftar** | `GET /admin/unknown-cards` → daftarkan dengan `POST /admin/members` | Kartu tak dikenal: KARTU TIDAK TERDAFTAR; setelah didaftarkan: MASUK |
 | **Rekap** | `GET /admin/report` (JSON atau `format=csv`), `GET /admin/attendances` | – |
-| **Alat** | `GET /admin/devices`, `GET /admin/devices/{id}`, `PUT /admin/devices/{id}` | `config.pin`, `config.restart_at` |
+| **Alat** | `GET /admin/devices`, `GET /admin/devices/{id}`, `PUT /admin/devices/{id}` | `config.pin`, `config.restart_at`, `config.tap_mode`, `config.tap_schedule` |
 | **Firmware** | `GET/POST /admin/firmware`, `DELETE /admin/firmware/{versi}`, `POST /admin/firmware/{versi}/apply-all`, target per alat lewat `PUT /admin/devices/{id}` | `config.firmware_update` + unduhan `GET /firmware/{versi}` |
 | **Pengumuman** | `GET/POST /admin/announcements`, `PUT/DELETE /admin/announcements/{id}` | `config.announcements_rev`, isi `GET /announcements` |
 | **Pengaturan** | `GET/PUT /admin/settings` | `config.title`, `config.dim_after`, `config.dim_level`, `interval`/`idle` di `/announcements`, API key |
@@ -291,7 +291,8 @@ Perubahan sampai ke alat di balasan `/ping` atau `/heartbeat` berikutnya:
     "dim_after": 120,
     "dim_level": 35,
     "announcements_rev": "2-1790904822",
-    "restart_at": "04:15"
+    "restart_at": "04:15",
+    "tap_schedule": null
   }
 }
 ```
@@ -633,6 +634,8 @@ curl http://localhost:8080/admin/devices -H "X-Admin-Key: ganti-kunci-admin"
 | `firmware_target`, `firmware_state` | versi tujuan update; `null` / `pending` / `installed` / `failed` |
 | `tap_mode` | mode absen yang dikirim server ke alat (`config.tap_mode`): `null` (ikuti pengaturan di alat), `"auto"`, atau `"select"` |
 | `reported_tap_mode`, `tap_select` | dilaporkan alat lewat heartbeat (firmware ≥ 1.6.0): mode yang sedang dipakai dan pilihan saat ini (`check_in`/`check_out`/`null`) |
+| `tap_schedule` | jadwal mode pilih yang dikirim server ke alat (`config.tap_schedule`): `{"check_in":"06:00","check_out":"17:00"}` atau `null` (tanpa jadwal) |
+| `reported_tap_schedule` | jadwal yang sedang dipakai alat, dari `raw.tap_schedule` di heartbeat (firmware ≥ 1.11.0); `null` = tanpa jadwal / tidak dikirim |
 | `issues` | peringatan siap tampil (tabel di bawah) |
 
 `issues` yang mungkin muncul:
@@ -784,6 +787,7 @@ curl http://localhost:8080/admin/devices/PM-MUQAJ0VZ -H "X-Admin-Key: ganti-kunc
 | `restart_at` | `"HH:MM"`, `""` = tidak restart otomatis, `null` = ikut `default_restart_at` | `config.restart_at` |
 | `firmware_target` | versi yang ada di `GET /admin/firmware`, atau `null` = tidak update | `config.firmware_update` |
 | `tap_mode` | `null` (ikuti alat), `"auto"`, atau `"select"`; nilai lain → 422 | `config.tap_mode` |
+| `tap_schedule` | `{"check_in":"HH:MM","check_out":"HH:MM"}` (keduanya wajib, `check_in` lebih awal), atau `null` = jadwal mati; selain itu → 422. Lihat [Jadwal mode pilih](#jadwal-mode-pilih-tap_schedule) | `config.tap_schedule` (selalu dikirim, `null` kalau tanpa jadwal) |
 
 ```bash
 curl -X PUT http://localhost:8080/admin/devices/PM-MUQAJ0VZ -H "X-Admin-Key: ganti-kunci-admin" \
@@ -847,9 +851,117 @@ Balasan `/ping` alat itu sesudahnya:
     "dim_level": 35,
     "announcements_rev": "2-1790904822",
     "restart_at": "05:30",
-    "pin": "4321"
+    "pin": "4321",
+    "tap_schedule": null
   }
 }
+```
+
+#### Jadwal mode pilih (`tap_schedule`)
+
+Firmware ≥ 1.11.0, hanya berlaku di mode `select` ([spesifikasi bagian 4.1](../doc/spesifikasi-api.md)): pada jam `check_in` alat memilih **DATANG** sendiri, pada jam `check_out` memilih **PULANG**, jadi petugas tidak perlu menekan tombol tiap hari. Jadwal diatur per alat lewat `PUT /admin/devices/{device_id}` yang sama:
+
+```bash
+curl -X PUT http://localhost:8080/admin/devices/ABS-TES001 -H "X-Admin-Key: ganti-kunci-admin" \
+  -H "Content-Type: application/json" \
+  -d '{"tap_mode": "select", "tap_schedule": {"check_in": "06:00", "check_out": "17:00"}}'
+```
+```json
+{
+  "ok": true,
+  "device": {
+    "device_id": "ABS-TES001",
+    "name": null,
+    "online": true,
+    "last_seen_at": "2026-10-14T12:58:03+07:00",
+    "firmware": "cek-server",
+    "ip": "192.168.1.23",
+    "rssi": -52,
+    "wifi_ssid": "Tes",
+    "uptime_s": 60,
+    "reset_reason": "poweron",
+    "rfid_ok": true,
+    "queue": 0,
+    "free_heap": 180000,
+    "min_free_heap": 150000,
+    "error": null,
+    "ota_failed": null,
+    "pin": null,
+    "restart_at": "03:00",
+    "firmware_target": null,
+    "firmware_state": null,
+    "tap_mode": "select",
+    "reported_tap_mode": null,
+    "tap_select": null,
+    "tap_schedule": {
+      "check_in": "06:00",
+      "check_out": "17:00"
+    },
+    "reported_tap_schedule": null,
+    "issues": []
+  }
+}
+```
+
+Balasan `/ping` (dan `/heartbeat`) alat itu sesudahnya:
+
+```json
+{
+  "ok": true,
+  "message": "Terhubung ke Aplikasi Contoh",
+  "server_time": "2026-10-14T12:58:14+07:00",
+  "config": {
+    "title": "Aplikasi Contoh",
+    "dim_after": 60,
+    "dim_level": 20,
+    "announcements_rev": "2-1791957473",
+    "restart_at": "03:00",
+    "tap_mode": "select",
+    "tap_schedule": {
+      "check_in": "06:00",
+      "check_out": "17:00"
+    }
+  }
+}
+```
+
+Galat (422). Bukan objek, `check_in`/`check_out` tidak ada, atau jam bukan `HH:MM` 00:00-23:59 (mis. `{"check_in": "6:00", "check_out": "17:00"}`):
+
+```json
+{
+  "ok": false,
+  "message": "tap_schedule harus null (jadwal mati) atau {\"check_in\":\"HH:MM\",\"check_out\":\"HH:MM\"} (00:00-23:59)",
+  "errors": {
+    "tap_schedule": "tap_schedule harus null (jadwal mati) atau {\"check_in\":\"HH:MM\",\"check_out\":\"HH:MM\"} (00:00-23:59)"
+  }
+}
+```
+
+`check_in` sama dengan atau lebih lambat dari `check_out` (mis. `{"check_in": "17:00", "check_out": "07:00"}`):
+
+```json
+{
+  "ok": false,
+  "message": "Jam datang (check_in) harus lebih awal dari jam pulang (check_out)",
+  "errors": {
+    "tap_schedule": "Jam datang (check_in) harus lebih awal dari jam pulang (check_out)"
+  }
+}
+```
+
+Kiriman yang ditolak tidak mengubah jadwal yang tersimpan. Kunci lain di dalam objek dibuang.
+
+Alat melaporkan jadwal yang sedang dipakainya di heartbeat (`raw.tap_schedule`); server menyimpannya sebagai `reported_tap_schedule`. Kalau `reported_tap_schedule` belum sama dengan `tap_schedule`, alat belum menerima jadwal baru (offline, atau firmware di bawah 1.11.0). Contoh body heartbeat:
+
+```json
+{"device_id": "ABS-TES001", "firmware": "1.11.0", "time": "2026-10-14T13:00:00+07:00",
+ "raw": {"tap_mode": "select", "tap_select": "check_in", "tap_schedule": {"check_in": "06:00", "check_out": "17:00"}}}
+```
+
+**Mematikan jadwal:** body `{"tap_schedule": null}`. Server contoh **selalu** mengirim `config.tap_schedule`, jadi alat tanpa jadwal menerima `null` dan jadwal di alat dimatikan (petugas kembali memilih DATANG/PULANG manual). Ini aman karena alat hanya bisa mendapat jadwal dari server:
+
+```json
+{"ok":true,"message":"Terhubung ke Aplikasi Contoh","server_time":"2026-10-14T12:58:14+07:00","config":{"title":"Aplikasi Contoh","dim_after":60,"dim_level":20,"announcements_rev":"2-1791957473","restart_at":"03:00","tap_mode":"select","tap_schedule":null}}
 ```
 
 ### 5.6 Firmware
@@ -961,6 +1073,7 @@ Balasan `/ping` alat itu kemudian membawa `firmware_update`. `url` = Base URL al
     "dim_level": 35,
     "announcements_rev": "2-1790904822",
     "restart_at": "04:15",
+    "tap_schedule": null,
     "firmware_update": {
       "version": "9.9.9",
       "url": "http://localhost:8080/firmware/9.9.9",
@@ -1191,7 +1304,7 @@ cd contoh-integrasi/tes
 ```
 
 Yang diperiksa:
-1. `/ping`: `ok`, `server_time` ISO 8601, dan `config` (`title` teks 1-30, `dim_after` 0 atau 10-3600, `dim_level` 0-100, `restart_at` `"HH:MM"`/`""`, `announcements_rev` teks, `pin` 4-8 digit, `firmware_update` lengkap). Kunci `config` yang tidak dikirim diberi ⚠️.
+1. `/ping`: `ok`, `server_time` ISO 8601, dan `config` (`title` teks 1-30, `dim_after` 0 atau 10-3600, `dim_level` 0-100, `restart_at` `"HH:MM"`/`""`, `announcements_rev` teks, `pin` 4-8 digit, `tap_mode` `auto`/`select`, `tap_schedule` `null` atau jadwal sah, `firmware_update` lengkap). Kunci `config` yang tidak dikirim diberi ⚠️.
 2. API key salah → **401** (untuk `/ping` dan `/tap`).
 3. `/heartbeat` dengan kesehatan lengkap (`min_free_heap`, `error`, `ota_failed`, `crash`) dan heartbeat biasa → 200.
 4. `/tap`: kartu terdaftar, kirim ulang `tap_id` yang sama (balasan sama atau `duplicate`), antrean dengan `tapped_at` kemarin, antrean dengan `tapped_at: null` & `raw: null`, kartu tak terdaftar (`unknown`), `ok` sesuai `status`.
@@ -1270,7 +1383,7 @@ Struktur koleksi:
 | Folder | Isi | Untuk siapa |
 |---|---|---|
 | **1. API alat** | `/ping` (berhasil, 401, 400), `/tap` (masuk, kirim ulang `tap_id`, `duplicate`, pulang setelah 61 detik, antrean, `unknown`, `rejected`, `raw` null, 400), `/heartbeat` (biasa, kesehatan lengkap dengan `error`/`ota_failed`/`crash`, `raw` null), `/announcements`, unduh firmware (hanya kalau ada `config.firmware_update`; selain itu **dilewati**) | **Semua** aplikasi. Wajib hijau |
-| **2. Admin contoh** | Skenario 6 fitur wajib terhadap API admin server contoh: 401/404/400/413 → Pengaturan → Anggota → Kartu belum terdaftar → Rekap & kehadiran → Alat → Firmware → Pengumuman → kembalikan pengaturan | Server contoh PHP/Node. Untuk aplikasi Anda: gambaran apa yang harus bisa dilakukan admin |
+| **2. Admin contoh** | Skenario 6 fitur wajib terhadap API admin server contoh: 401/404/400/413 → Pengaturan → Anggota → Kartu belum terdaftar → Rekap & kehadiran → Alat → Firmware → Pengumuman → Mode absen & jadwal (`tap_mode`, `tap_schedule`, `/check-in`, `/check-out`) → kembalikan pengaturan | Server contoh PHP/Node. Untuk aplikasi Anda: gambaran apa yang harus bisa dilakukan admin |
 
 Variabel environment:
 
@@ -1314,19 +1427,19 @@ Ringkasan hasilnya:
 ├─────────────────────────┼─────────────────┼─────────────────┤
 │              iterations │               1 │               0 │
 ├─────────────────────────┼─────────────────┼─────────────────┤
-│                requests │             108 │               0 │
+│                requests │             146 │               0 │
 ├─────────────────────────┼─────────────────┼─────────────────┤
-│            test-scripts │             126 │               0 │
+│            test-scripts │             176 │               0 │
 ├─────────────────────────┼─────────────────┼─────────────────┤
-│      prerequest-scripts │             114 │               0 │
+│      prerequest-scripts │             152 │               0 │
 ├─────────────────────────┼─────────────────┼─────────────────┤
-│              assertions │             514 │               0 │
+│              assertions │             756 │               0 │
 ├─────────────────────────┴─────────────────┴─────────────────┤
-│ total run duration: 1m 9.4s                                 │
+│ total run duration: 1m 12s                                  │
 ├─────────────────────────────────────────────────────────────┤
-│ total data received: 25.71kB (approx)                       │
+│ total data received: 50.96kB (approx)                       │
 ├─────────────────────────────────────────────────────────────┤
-│ average response time: 2ms [min: 1ms, max: 24ms, s.d.: 2ms] │
+│ average response time: 2ms [min: 1ms, max: 18ms, s.d.: 1ms] │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -1361,14 +1474,14 @@ Catatan:
 - [ ] Aturan masuk/pulang di satu fungsi seperti `tentukanStatus()`; balas `status` + `message` (±32 karakter) + `name`.
 - [ ] `tap_id` disimpan (unik); `tap_id` yang sama → balas respons yang dulu, jangan catat lagi.
 - [ ] Tap `queued: true` memakai `tapped_at` (kalau `null`, waktu diterima).
-- [ ] `server_time` ISO 8601 + zona waktu di `/ping` & `/heartbeat`; `config` berisi `title`, `dim_after`, `dim_level`, `restart_at`, `announcements_rev` (+ `pin`, `firmware_update` kalau ada).
+- [ ] `server_time` ISO 8601 + zona waktu di `/ping` & `/heartbeat`; `config` berisi `title`, `dim_after`, `dim_level`, `restart_at`, `announcements_rev` (+ `pin`, `tap_mode`, `tap_schedule`, `firmware_update` kalau ada).
 - [ ] Balas `/tap` di bawah 1 detik (alat menunggu 3 detik; `/ping` 8 detik).
 - [ ] `tes/cek-server.sh` lulus semua dan Postman folder **1. API alat** hijau.
 
 **Enam fitur wajib** (rincian: [panduan bagian 6](../doc/integrasi-aplikasi.md#6-fitur-wajib-satu-per-satu))
 - [ ] **Kartu belum terdaftar:** kartu baru muncul, bisa didaftarkan, lalu hilang dari daftar.
 - [ ] **Rekap:** masuk/pulang per hari benar, unduhan CSV bisa dibuka di Excel.
-- [ ] **Alat:** online/offline, kesehatan, `issues`, riwayat boot/crash; PIN & jam restart per alat sampai ke `config`.
+- [ ] **Alat:** online/offline, kesehatan, `issues`, riwayat boot/crash; PIN, jam restart, mode absen & jadwal per alat sampai ke `config`.
 - [ ] **Firmware:** unggah (validasi 0xE9, ukuran, versi di dalam file), jadwalkan ke 1 alat, `firmware_update` di `config`, unduhan dengan `Content-Length` benar, status `installed`/`failed`.
 - [ ] **Pengumuman:** CRUD, `announcements_rev` berubah setiap perubahan, alat menampilkan yang baru dalam ±1 menit.
 - [ ] **Pengaturan:** judul, layar redup, screensaver, jeda tap ganda, jam restart bawaan, API key.
@@ -1432,7 +1545,8 @@ Content-Type: application/json; charset=utf-8
     "dim_after": 60,
     "dim_level": 20,
     "announcements_rev": "2-1790904822",
-    "restart_at": "03:00"
+    "restart_at": "03:00",
+    "tap_schedule": null
   }
 }
 ```
@@ -2031,6 +2145,8 @@ Check-out ulang dalam jeda tap ganda (bawaan 60 detik) → `duplicate`. Tanpa ch
 
 **Mengatur mode dari server:** `PUT /admin/devices/ABS-TES001` body `{"tap_mode":"select"}` → `/ping` & `/heartbeat` mengirim `config.tap_mode: "select"`, dan dalam ± 1 menit alat menampilkan tombol DATANG/PULANG. `{"tap_mode": null}` → kunci tidak dikirim, alat memakai pengaturannya sendiri. Nilai lain → 422 `"tap_mode harus null (ikuti pengaturan alat), \"auto\", atau \"select\""`.
 
+**Jadwal otomatis (firmware ≥ 1.11.0):** body `{"tap_schedule":{"check_in":"06:00","check_out":"17:00"}}` → `config.tap_schedule` berisi jadwal itu, dan alat memilih DATANG pada 06:00 dan PULANG pada 17:00 sendiri. `{"tap_schedule": null}` → `config.tap_schedule: null`, jadwal di alat dimatikan. Rincian & galat: [Jadwal mode pilih](#jadwal-mode-pilih-tap_schedule).
+
 ### `POST /heartbeat`
 
 #### 15. Heartbeat – berhasil
@@ -2079,7 +2195,8 @@ Content-Type: application/json; charset=utf-8
     "dim_after": 60,
     "dim_level": 20,
     "announcements_rev": "2-1790904822",
-    "restart_at": "03:00"
+    "restart_at": "03:00",
+    "tap_schedule": null
   }
 }
 ```
@@ -2150,7 +2267,8 @@ Content-Type: application/json; charset=utf-8
     "dim_after": 60,
     "dim_level": 20,
     "announcements_rev": "2-1790904822",
-    "restart_at": "03:00"
+    "restart_at": "03:00",
+    "tap_schedule": null
   }
 }
 ```
@@ -2191,7 +2309,8 @@ Content-Type: application/json; charset=utf-8
     "dim_after": 60,
     "dim_level": 20,
     "announcements_rev": "2-1790904822",
-    "restart_at": "03:00"
+    "restart_at": "03:00",
+    "tap_schedule": null
   }
 }
 ```

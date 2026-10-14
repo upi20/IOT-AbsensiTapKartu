@@ -40,6 +40,7 @@
                       "  if ('dim_after' in c) { pm.expect(Number.isInteger(c.dim_after), 'dim_after bilangan bulat').to.be.true; pm.expect(c.dim_after === 0 || (c.dim_after >= 10 && c.dim_after <= 3600), 'dim_after 0 atau 10-3600').to.be.true; }",
                       "  if ('dim_level' in c) { pm.expect(Number.isInteger(c.dim_level), 'dim_level bilangan bulat').to.be.true; pm.expect(c.dim_level).to.be.within(0, 100); }",
                       "  if ('restart_at' in c) { pm.expect(c.restart_at, 'restart_at').to.be.a('string'); if (c.restart_at !== '') pm.expect(c.restart_at).to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); }",
+                      "  if ('tap_schedule' in c && c.tap_schedule !== null) { const j = c.tap_schedule; pm.expect(j, 'tap_schedule objek atau null').to.be.an('object'); pm.expect(j.check_in, 'tap_schedule.check_in').to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); pm.expect(j.check_out, 'tap_schedule.check_out').to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); pm.expect(j.check_in < j.check_out, 'tap_schedule.check_in lebih awal dari check_out').to.be.true; }",
                       "});",
                       "pm.test('\"config\" berisi title, dim_after, dim_level, restart_at, announcements_rev dengan tipe yang benar (fitur wajib Pengaturan, Alat, Pengumuman)', () => {",
                       "  const c = d.config || {};",
@@ -2828,6 +2829,7 @@
                       "  if ('dim_after' in c) { pm.expect(Number.isInteger(c.dim_after), 'dim_after bilangan bulat').to.be.true; pm.expect(c.dim_after === 0 || (c.dim_after >= 10 && c.dim_after <= 3600), 'dim_after 0 atau 10-3600').to.be.true; }",
                       "  if ('dim_level' in c) { pm.expect(Number.isInteger(c.dim_level), 'dim_level bilangan bulat').to.be.true; pm.expect(c.dim_level).to.be.within(0, 100); }",
                       "  if ('restart_at' in c) { pm.expect(c.restart_at, 'restart_at').to.be.a('string'); if (c.restart_at !== '') pm.expect(c.restart_at).to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); }",
+                      "  if ('tap_schedule' in c && c.tap_schedule !== null) { const j = c.tap_schedule; pm.expect(j, 'tap_schedule objek atau null').to.be.an('object'); pm.expect(j.check_in, 'tap_schedule.check_in').to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); pm.expect(j.check_out, 'tap_schedule.check_out').to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); pm.expect(j.check_in < j.check_out, 'tap_schedule.check_in lebih awal dari check_out').to.be.true; }",
                       "});",
                       "pm.test('\"config\" berisi title, dim_after, dim_level, restart_at, announcements_rev dengan tipe yang benar (fitur wajib Pengaturan, Alat, Pengumuman)', () => {",
                       "  const c = d.config || {};",
@@ -3045,6 +3047,7 @@
                       "  if ('dim_after' in c) { pm.expect(Number.isInteger(c.dim_after), 'dim_after bilangan bulat').to.be.true; pm.expect(c.dim_after === 0 || (c.dim_after >= 10 && c.dim_after <= 3600), 'dim_after 0 atau 10-3600').to.be.true; }",
                       "  if ('dim_level' in c) { pm.expect(Number.isInteger(c.dim_level), 'dim_level bilangan bulat').to.be.true; pm.expect(c.dim_level).to.be.within(0, 100); }",
                       "  if ('restart_at' in c) { pm.expect(c.restart_at, 'restart_at').to.be.a('string'); if (c.restart_at !== '') pm.expect(c.restart_at).to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); }",
+                      "  if ('tap_schedule' in c && c.tap_schedule !== null) { const j = c.tap_schedule; pm.expect(j, 'tap_schedule objek atau null').to.be.an('object'); pm.expect(j.check_in, 'tap_schedule.check_in').to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); pm.expect(j.check_out, 'tap_schedule.check_out').to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); pm.expect(j.check_in < j.check_out, 'tap_schedule.check_in lebih awal dari check_out').to.be.true; }",
                       "});",
                       "pm.test('\"config\" berisi title, dim_after, dim_level, restart_at, announcements_rev dengan tipe yang benar (fitur wajib Pengaturan, Alat, Pengumuman)', () => {",
                       "  const c = d.config || {};",
@@ -3141,6 +3144,7 @@
                       "  if ('dim_after' in c) { pm.expect(Number.isInteger(c.dim_after), 'dim_after bilangan bulat').to.be.true; pm.expect(c.dim_after === 0 || (c.dim_after >= 10 && c.dim_after <= 3600), 'dim_after 0 atau 10-3600').to.be.true; }",
                       "  if ('dim_level' in c) { pm.expect(Number.isInteger(c.dim_level), 'dim_level bilangan bulat').to.be.true; pm.expect(c.dim_level).to.be.within(0, 100); }",
                       "  if ('restart_at' in c) { pm.expect(c.restart_at, 'restart_at').to.be.a('string'); if (c.restart_at !== '') pm.expect(c.restart_at).to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); }",
+                      "  if ('tap_schedule' in c && c.tap_schedule !== null) { const j = c.tap_schedule; pm.expect(j, 'tap_schedule objek atau null').to.be.an('object'); pm.expect(j.check_in, 'tap_schedule.check_in').to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); pm.expect(j.check_out, 'tap_schedule.check_out').to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); pm.expect(j.check_in < j.check_out, 'tap_schedule.check_in lebih awal dari check_out').to.be.true; }",
                       "});",
                       "pm.test('\"config\" berisi title, dim_after, dim_level, restart_at, announcements_rev dengan tipe yang benar (fitur wajib Pengaturan, Alat, Pengumuman)', () => {",
                       "  const c = d.config || {};",
@@ -3816,6 +3820,7 @@
                       "  if ('dim_after' in c) { pm.expect(Number.isInteger(c.dim_after), 'dim_after bilangan bulat').to.be.true; pm.expect(c.dim_after === 0 || (c.dim_after >= 10 && c.dim_after <= 3600), 'dim_after 0 atau 10-3600').to.be.true; }",
                       "  if ('dim_level' in c) { pm.expect(Number.isInteger(c.dim_level), 'dim_level bilangan bulat').to.be.true; pm.expect(c.dim_level).to.be.within(0, 100); }",
                       "  if ('restart_at' in c) { pm.expect(c.restart_at, 'restart_at').to.be.a('string'); if (c.restart_at !== '') pm.expect(c.restart_at).to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); }",
+                      "  if ('tap_schedule' in c && c.tap_schedule !== null) { const j = c.tap_schedule; pm.expect(j, 'tap_schedule objek atau null').to.be.an('object'); pm.expect(j.check_in, 'tap_schedule.check_in').to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); pm.expect(j.check_out, 'tap_schedule.check_out').to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); pm.expect(j.check_in < j.check_out, 'tap_schedule.check_in lebih awal dari check_out').to.be.true; }",
                       "});",
                       "pm.test('\"config\" berisi title, dim_after, dim_level, restart_at, announcements_rev dengan tipe yang benar (fitur wajib Pengaturan, Alat, Pengumuman)', () => {",
                       "  const c = d.config || {};",
@@ -4126,6 +4131,7 @@
                       "  if ('dim_after' in c) { pm.expect(Number.isInteger(c.dim_after), 'dim_after bilangan bulat').to.be.true; pm.expect(c.dim_after === 0 || (c.dim_after >= 10 && c.dim_after <= 3600), 'dim_after 0 atau 10-3600').to.be.true; }",
                       "  if ('dim_level' in c) { pm.expect(Number.isInteger(c.dim_level), 'dim_level bilangan bulat').to.be.true; pm.expect(c.dim_level).to.be.within(0, 100); }",
                       "  if ('restart_at' in c) { pm.expect(c.restart_at, 'restart_at').to.be.a('string'); if (c.restart_at !== '') pm.expect(c.restart_at).to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); }",
+                      "  if ('tap_schedule' in c && c.tap_schedule !== null) { const j = c.tap_schedule; pm.expect(j, 'tap_schedule objek atau null').to.be.an('object'); pm.expect(j.check_in, 'tap_schedule.check_in').to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); pm.expect(j.check_out, 'tap_schedule.check_out').to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); pm.expect(j.check_in < j.check_out, 'tap_schedule.check_in lebih awal dari check_out').to.be.true; }",
                       "});",
                       "pm.test('\"config\" berisi title, dim_after, dim_level, restart_at, announcements_rev dengan tipe yang benar (fitur wajib Pengaturan, Alat, Pengumuman)', () => {",
                       "  const c = d.config || {};",
@@ -5712,6 +5718,7 @@
                       "  if ('dim_after' in c) { pm.expect(Number.isInteger(c.dim_after), 'dim_after bilangan bulat').to.be.true; pm.expect(c.dim_after === 0 || (c.dim_after >= 10 && c.dim_after <= 3600), 'dim_after 0 atau 10-3600').to.be.true; }",
                       "  if ('dim_level' in c) { pm.expect(Number.isInteger(c.dim_level), 'dim_level bilangan bulat').to.be.true; pm.expect(c.dim_level).to.be.within(0, 100); }",
                       "  if ('restart_at' in c) { pm.expect(c.restart_at, 'restart_at').to.be.a('string'); if (c.restart_at !== '') pm.expect(c.restart_at).to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); }",
+                      "  if ('tap_schedule' in c && c.tap_schedule !== null) { const j = c.tap_schedule; pm.expect(j, 'tap_schedule objek atau null').to.be.an('object'); pm.expect(j.check_in, 'tap_schedule.check_in').to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); pm.expect(j.check_out, 'tap_schedule.check_out').to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); pm.expect(j.check_in < j.check_out, 'tap_schedule.check_in lebih awal dari check_out').to.be.true; }",
                       "});",
                       "pm.test('\"config\" berisi title, dim_after, dim_level, restart_at, announcements_rev dengan tipe yang benar (fitur wajib Pengaturan, Alat, Pengumuman)', () => {",
                       "  const c = d.config || {};",
@@ -5861,7 +5868,7 @@
                       "pm.test('\"ok\" = true', () => pm.expect(d.ok).to.eql(true));",
                       "",
                       "const a = d.device;",
-                      "pm.test('\"device\" berisi semua field', () => [\"device_id\", \"name\", \"online\", \"last_seen_at\", \"firmware\", \"ip\", \"rssi\", \"wifi_ssid\", \"uptime_s\", \"reset_reason\", \"rfid_ok\", \"queue\", \"free_heap\", \"min_free_heap\", \"error\", \"ota_failed\", \"pin\", \"restart_at\", \"firmware_target\", \"firmware_state\", \"tap_mode\", \"reported_tap_mode\", \"tap_select\", \"issues\"].forEach((k) => pm.expect(a, k).to.have.property(k)));",
+                      "pm.test('\"device\" berisi semua field', () => [\"device_id\", \"name\", \"online\", \"last_seen_at\", \"firmware\", \"ip\", \"rssi\", \"wifi_ssid\", \"uptime_s\", \"reset_reason\", \"rfid_ok\", \"queue\", \"free_heap\", \"min_free_heap\", \"error\", \"ota_failed\", \"pin\", \"restart_at\", \"firmware_target\", \"firmware_state\", \"tap_mode\", \"reported_tap_mode\", \"tap_select\", \"tap_schedule\", \"reported_tap_schedule\", \"issues\"].forEach((k) => pm.expect(a, k).to.have.property(k)));",
                       "pm.test('device_id = alat uji', () => pm.expect(a.device_id).to.eql(pm.collectionVariables.get('alat_uji')));",
                       "",
                       "pm.test('\"events\" berupa daftar (maks. 20)', () => { pm.expect(d.events).to.be.an('array'); pm.expect(d.events.length).to.be.at.most(20); });"
@@ -5953,7 +5960,7 @@
                       "pm.test('\"ok\" = true', () => pm.expect(d.ok).to.eql(true));",
                       "",
                       "const a = d.device;",
-                      "pm.test('\"device\" berisi semua field', () => [\"device_id\", \"name\", \"online\", \"last_seen_at\", \"firmware\", \"ip\", \"rssi\", \"wifi_ssid\", \"uptime_s\", \"reset_reason\", \"rfid_ok\", \"queue\", \"free_heap\", \"min_free_heap\", \"error\", \"ota_failed\", \"pin\", \"restart_at\", \"firmware_target\", \"firmware_state\", \"tap_mode\", \"reported_tap_mode\", \"tap_select\", \"issues\"].forEach((k) => pm.expect(a, k).to.have.property(k)));",
+                      "pm.test('\"device\" berisi semua field', () => [\"device_id\", \"name\", \"online\", \"last_seen_at\", \"firmware\", \"ip\", \"rssi\", \"wifi_ssid\", \"uptime_s\", \"reset_reason\", \"rfid_ok\", \"queue\", \"free_heap\", \"min_free_heap\", \"error\", \"ota_failed\", \"pin\", \"restart_at\", \"firmware_target\", \"firmware_state\", \"tap_mode\", \"reported_tap_mode\", \"tap_select\", \"tap_schedule\", \"reported_tap_schedule\", \"issues\"].forEach((k) => pm.expect(a, k).to.have.property(k)));",
                       "pm.test('device_id = alat uji', () => pm.expect(a.device_id).to.eql(pm.collectionVariables.get('alat_uji')));",
                       "",
                       "pm.test('tersimpan', () => { pm.expect(a.name).to.eql('Lobi depan (Postman)'); pm.expect(a.pin).to.eql('4321'); pm.expect(a.restart_at).to.eql('05:30'); });"
@@ -6126,7 +6133,7 @@
                       "pm.test('\"ok\" = true', () => pm.expect(d.ok).to.eql(true));",
                       "",
                       "const a = d.device;",
-                      "pm.test('\"device\" berisi semua field', () => [\"device_id\", \"name\", \"online\", \"last_seen_at\", \"firmware\", \"ip\", \"rssi\", \"wifi_ssid\", \"uptime_s\", \"reset_reason\", \"rfid_ok\", \"queue\", \"free_heap\", \"min_free_heap\", \"error\", \"ota_failed\", \"pin\", \"restart_at\", \"firmware_target\", \"firmware_state\", \"tap_mode\", \"reported_tap_mode\", \"tap_select\", \"issues\"].forEach((k) => pm.expect(a, k).to.have.property(k)));",
+                      "pm.test('\"device\" berisi semua field', () => [\"device_id\", \"name\", \"online\", \"last_seen_at\", \"firmware\", \"ip\", \"rssi\", \"wifi_ssid\", \"uptime_s\", \"reset_reason\", \"rfid_ok\", \"queue\", \"free_heap\", \"min_free_heap\", \"error\", \"ota_failed\", \"pin\", \"restart_at\", \"firmware_target\", \"firmware_state\", \"tap_mode\", \"reported_tap_mode\", \"tap_select\", \"tap_schedule\", \"reported_tap_schedule\", \"issues\"].forEach((k) => pm.expect(a, k).to.have.property(k)));",
                       "pm.test('device_id = alat uji', () => pm.expect(a.device_id).to.eql(pm.collectionVariables.get('alat_uji')));",
                       "",
                       "pm.test('restart_at = \"\" (mati)', () => pm.expect(a.restart_at).to.eql(''));"
@@ -6251,7 +6258,7 @@
                       "pm.test('\"ok\" = true', () => pm.expect(d.ok).to.eql(true));",
                       "",
                       "const a = d.device;",
-                      "pm.test('\"device\" berisi semua field', () => [\"device_id\", \"name\", \"online\", \"last_seen_at\", \"firmware\", \"ip\", \"rssi\", \"wifi_ssid\", \"uptime_s\", \"reset_reason\", \"rfid_ok\", \"queue\", \"free_heap\", \"min_free_heap\", \"error\", \"ota_failed\", \"pin\", \"restart_at\", \"firmware_target\", \"firmware_state\", \"tap_mode\", \"reported_tap_mode\", \"tap_select\", \"issues\"].forEach((k) => pm.expect(a, k).to.have.property(k)));",
+                      "pm.test('\"device\" berisi semua field', () => [\"device_id\", \"name\", \"online\", \"last_seen_at\", \"firmware\", \"ip\", \"rssi\", \"wifi_ssid\", \"uptime_s\", \"reset_reason\", \"rfid_ok\", \"queue\", \"free_heap\", \"min_free_heap\", \"error\", \"ota_failed\", \"pin\", \"restart_at\", \"firmware_target\", \"firmware_state\", \"tap_mode\", \"reported_tap_mode\", \"tap_select\", \"tap_schedule\", \"reported_tap_schedule\", \"issues\"].forEach((k) => pm.expect(a, k).to.have.property(k)));",
                       "pm.test('device_id = alat uji', () => pm.expect(a.device_id).to.eql(pm.collectionVariables.get('alat_uji')));",
                       "",
                       "pm.test('pin null, restart_at = default_restart_at', () => { pm.expect(a.pin).to.eql(null); pm.expect(a.restart_at).to.eql('04:15'); });"
@@ -6425,7 +6432,7 @@
                       "pm.test('\"ok\" = true', () => pm.expect(d.ok).to.eql(true));",
                       "",
                       "const a = d.device;",
-                      "pm.test('\"device\" berisi semua field', () => [\"device_id\", \"name\", \"online\", \"last_seen_at\", \"firmware\", \"ip\", \"rssi\", \"wifi_ssid\", \"uptime_s\", \"reset_reason\", \"rfid_ok\", \"queue\", \"free_heap\", \"min_free_heap\", \"error\", \"ota_failed\", \"pin\", \"restart_at\", \"firmware_target\", \"firmware_state\", \"tap_mode\", \"reported_tap_mode\", \"tap_select\", \"issues\"].forEach((k) => pm.expect(a, k).to.have.property(k)));",
+                      "pm.test('\"device\" berisi semua field', () => [\"device_id\", \"name\", \"online\", \"last_seen_at\", \"firmware\", \"ip\", \"rssi\", \"wifi_ssid\", \"uptime_s\", \"reset_reason\", \"rfid_ok\", \"queue\", \"free_heap\", \"min_free_heap\", \"error\", \"ota_failed\", \"pin\", \"restart_at\", \"firmware_target\", \"firmware_state\", \"tap_mode\", \"reported_tap_mode\", \"tap_select\", \"tap_schedule\", \"reported_tap_schedule\", \"issues\"].forEach((k) => pm.expect(a, k).to.have.property(k)));",
                       "pm.test('device_id = alat uji', () => pm.expect(a.device_id).to.eql(pm.collectionVariables.get('alat_uji')));",
                       "",
                       "const harus = ['Pembaca RFID tidak terdeteksi (E30)', 'Sinyal WiFi lemah (-85 dBm)', '25 tap menunggu di antrean alat',",
@@ -6602,7 +6609,7 @@
                       "pm.test('\"ok\" = true', () => pm.expect(d.ok).to.eql(true));",
                       "",
                       "const a = d.device;",
-                      "pm.test('\"device\" berisi semua field', () => [\"device_id\", \"name\", \"online\", \"last_seen_at\", \"firmware\", \"ip\", \"rssi\", \"wifi_ssid\", \"uptime_s\", \"reset_reason\", \"rfid_ok\", \"queue\", \"free_heap\", \"min_free_heap\", \"error\", \"ota_failed\", \"pin\", \"restart_at\", \"firmware_target\", \"firmware_state\", \"tap_mode\", \"reported_tap_mode\", \"tap_select\", \"issues\"].forEach((k) => pm.expect(a, k).to.have.property(k)));",
+                      "pm.test('\"device\" berisi semua field', () => [\"device_id\", \"name\", \"online\", \"last_seen_at\", \"firmware\", \"ip\", \"rssi\", \"wifi_ssid\", \"uptime_s\", \"reset_reason\", \"rfid_ok\", \"queue\", \"free_heap\", \"min_free_heap\", \"error\", \"ota_failed\", \"pin\", \"restart_at\", \"firmware_target\", \"firmware_state\", \"tap_mode\", \"reported_tap_mode\", \"tap_select\", \"tap_schedule\", \"reported_tap_schedule\", \"issues\"].forEach((k) => pm.expect(a, k).to.have.property(k)));",
                       "pm.test('device_id = alat uji', () => pm.expect(a.device_id).to.eql(pm.collectionVariables.get('alat_uji')));",
                       "",
                       "const boot = d.events.filter((e) => e.type === 'boot');",
@@ -7078,7 +7085,7 @@
                       "pm.test('\"ok\" = true', () => pm.expect(d.ok).to.eql(true));",
                       "",
                       "const a = d.device;",
-                      "pm.test('\"device\" berisi semua field', () => [\"device_id\", \"name\", \"online\", \"last_seen_at\", \"firmware\", \"ip\", \"rssi\", \"wifi_ssid\", \"uptime_s\", \"reset_reason\", \"rfid_ok\", \"queue\", \"free_heap\", \"min_free_heap\", \"error\", \"ota_failed\", \"pin\", \"restart_at\", \"firmware_target\", \"firmware_state\", \"tap_mode\", \"reported_tap_mode\", \"tap_select\", \"issues\"].forEach((k) => pm.expect(a, k).to.have.property(k)));",
+                      "pm.test('\"device\" berisi semua field', () => [\"device_id\", \"name\", \"online\", \"last_seen_at\", \"firmware\", \"ip\", \"rssi\", \"wifi_ssid\", \"uptime_s\", \"reset_reason\", \"rfid_ok\", \"queue\", \"free_heap\", \"min_free_heap\", \"error\", \"ota_failed\", \"pin\", \"restart_at\", \"firmware_target\", \"firmware_state\", \"tap_mode\", \"reported_tap_mode\", \"tap_select\", \"tap_schedule\", \"reported_tap_schedule\", \"issues\"].forEach((k) => pm.expect(a, k).to.have.property(k)));",
                       "pm.test('device_id = alat uji', () => pm.expect(a.device_id).to.eql(pm.collectionVariables.get('alat_uji')));",
                       "",
                       "pm.test('firmware_target diset, status pending', () => { pm.expect(a.firmware_target).to.eql(pm.collectionVariables.get('firmware_versi')); pm.expect(a.firmware_state).to.eql('pending'); });"
@@ -7193,6 +7200,7 @@
                       "  if ('dim_after' in c) { pm.expect(Number.isInteger(c.dim_after), 'dim_after bilangan bulat').to.be.true; pm.expect(c.dim_after === 0 || (c.dim_after >= 10 && c.dim_after <= 3600), 'dim_after 0 atau 10-3600').to.be.true; }",
                       "  if ('dim_level' in c) { pm.expect(Number.isInteger(c.dim_level), 'dim_level bilangan bulat').to.be.true; pm.expect(c.dim_level).to.be.within(0, 100); }",
                       "  if ('restart_at' in c) { pm.expect(c.restart_at, 'restart_at').to.be.a('string'); if (c.restart_at !== '') pm.expect(c.restart_at).to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); }",
+                      "  if ('tap_schedule' in c && c.tap_schedule !== null) { const j = c.tap_schedule; pm.expect(j, 'tap_schedule objek atau null').to.be.an('object'); pm.expect(j.check_in, 'tap_schedule.check_in').to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); pm.expect(j.check_out, 'tap_schedule.check_out').to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); pm.expect(j.check_in < j.check_out, 'tap_schedule.check_in lebih awal dari check_out').to.be.true; }",
                       "});",
                       "pm.test('\"config\" berisi title, dim_after, dim_level, restart_at, announcements_rev dengan tipe yang benar (fitur wajib Pengaturan, Alat, Pengumuman)', () => {",
                       "  const c = d.config || {};",
@@ -7495,7 +7503,7 @@
                       "pm.test('\"ok\" = true', () => pm.expect(d.ok).to.eql(true));",
                       "",
                       "const a = d.device;",
-                      "pm.test('\"device\" berisi semua field', () => [\"device_id\", \"name\", \"online\", \"last_seen_at\", \"firmware\", \"ip\", \"rssi\", \"wifi_ssid\", \"uptime_s\", \"reset_reason\", \"rfid_ok\", \"queue\", \"free_heap\", \"min_free_heap\", \"error\", \"ota_failed\", \"pin\", \"restart_at\", \"firmware_target\", \"firmware_state\", \"tap_mode\", \"reported_tap_mode\", \"tap_select\", \"issues\"].forEach((k) => pm.expect(a, k).to.have.property(k)));",
+                      "pm.test('\"device\" berisi semua field', () => [\"device_id\", \"name\", \"online\", \"last_seen_at\", \"firmware\", \"ip\", \"rssi\", \"wifi_ssid\", \"uptime_s\", \"reset_reason\", \"rfid_ok\", \"queue\", \"free_heap\", \"min_free_heap\", \"error\", \"ota_failed\", \"pin\", \"restart_at\", \"firmware_target\", \"firmware_state\", \"tap_mode\", \"reported_tap_mode\", \"tap_select\", \"tap_schedule\", \"reported_tap_schedule\", \"issues\"].forEach((k) => pm.expect(a, k).to.have.property(k)));",
                       "pm.test('device_id = alat uji', () => pm.expect(a.device_id).to.eql(pm.collectionVariables.get('alat_uji')));",
                       "",
                       "pm.test('firmware = target, firmware_state = installed', () => {",
@@ -7734,7 +7742,7 @@
                       "pm.test('\"ok\" = true', () => pm.expect(d.ok).to.eql(true));",
                       "",
                       "const a = d.device;",
-                      "pm.test('\"device\" berisi semua field', () => [\"device_id\", \"name\", \"online\", \"last_seen_at\", \"firmware\", \"ip\", \"rssi\", \"wifi_ssid\", \"uptime_s\", \"reset_reason\", \"rfid_ok\", \"queue\", \"free_heap\", \"min_free_heap\", \"error\", \"ota_failed\", \"pin\", \"restart_at\", \"firmware_target\", \"firmware_state\", \"tap_mode\", \"reported_tap_mode\", \"tap_select\", \"issues\"].forEach((k) => pm.expect(a, k).to.have.property(k)));",
+                      "pm.test('\"device\" berisi semua field', () => [\"device_id\", \"name\", \"online\", \"last_seen_at\", \"firmware\", \"ip\", \"rssi\", \"wifi_ssid\", \"uptime_s\", \"reset_reason\", \"rfid_ok\", \"queue\", \"free_heap\", \"min_free_heap\", \"error\", \"ota_failed\", \"pin\", \"restart_at\", \"firmware_target\", \"firmware_state\", \"tap_mode\", \"reported_tap_mode\", \"tap_select\", \"tap_schedule\", \"reported_tap_schedule\", \"issues\"].forEach((k) => pm.expect(a, k).to.have.property(k)));",
                       "pm.test('device_id = alat uji', () => pm.expect(a.device_id).to.eql(pm.collectionVariables.get('alat_uji')));",
                       "",
                       "pm.test('firmware_target null, firmware_state null', () => { pm.expect(a.firmware_target).to.eql(null); pm.expect(a.firmware_state).to.eql(null); });"
@@ -8609,6 +8617,7 @@
                       "  if ('dim_after' in c) { pm.expect(Number.isInteger(c.dim_after), 'dim_after bilangan bulat').to.be.true; pm.expect(c.dim_after === 0 || (c.dim_after >= 10 && c.dim_after <= 3600), 'dim_after 0 atau 10-3600').to.be.true; }",
                       "  if ('dim_level' in c) { pm.expect(Number.isInteger(c.dim_level), 'dim_level bilangan bulat').to.be.true; pm.expect(c.dim_level).to.be.within(0, 100); }",
                       "  if ('restart_at' in c) { pm.expect(c.restart_at, 'restart_at').to.be.a('string'); if (c.restart_at !== '') pm.expect(c.restart_at).to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); }",
+                      "  if ('tap_schedule' in c && c.tap_schedule !== null) { const j = c.tap_schedule; pm.expect(j, 'tap_schedule objek atau null').to.be.an('object'); pm.expect(j.check_in, 'tap_schedule.check_in').to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); pm.expect(j.check_out, 'tap_schedule.check_out').to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); pm.expect(j.check_in < j.check_out, 'tap_schedule.check_in lebih awal dari check_out').to.be.true; }",
                       "});",
                       "pm.test('\"config\" berisi title, dim_after, dim_level, restart_at, announcements_rev dengan tipe yang benar (fitur wajib Pengaturan, Alat, Pengumuman)', () => {",
                       "  const c = d.config || {};",
@@ -8693,7 +8702,7 @@
                       "pm.test('\"ok\" = true', () => pm.expect(d.ok).to.eql(true));",
                       "",
                       "const a = d.device;",
-                      "pm.test('\"device\" berisi semua field', () => [\"device_id\", \"name\", \"online\", \"last_seen_at\", \"firmware\", \"ip\", \"rssi\", \"wifi_ssid\", \"uptime_s\", \"reset_reason\", \"rfid_ok\", \"queue\", \"free_heap\", \"min_free_heap\", \"error\", \"ota_failed\", \"pin\", \"restart_at\", \"firmware_target\", \"firmware_state\", \"tap_mode\", \"reported_tap_mode\", \"tap_select\", \"issues\"].forEach((k) => pm.expect(a, k).to.have.property(k)));",
+                      "pm.test('\"device\" berisi semua field', () => [\"device_id\", \"name\", \"online\", \"last_seen_at\", \"firmware\", \"ip\", \"rssi\", \"wifi_ssid\", \"uptime_s\", \"reset_reason\", \"rfid_ok\", \"queue\", \"free_heap\", \"min_free_heap\", \"error\", \"ota_failed\", \"pin\", \"restart_at\", \"firmware_target\", \"firmware_state\", \"tap_mode\", \"reported_tap_mode\", \"tap_select\", \"tap_schedule\", \"reported_tap_schedule\", \"issues\"].forEach((k) => pm.expect(a, k).to.have.property(k)));",
                       "pm.test('device_id = alat uji', () => pm.expect(a.device_id).to.eql(pm.collectionVariables.get('alat_uji')));",
                       "",
                       "pm.test('reported_tap_mode = select, tap_select = check_in (dari heartbeat)', () => { pm.expect(a.reported_tap_mode).to.eql('select'); pm.expect(a.tap_select).to.eql('check_in'); });",
@@ -8743,7 +8752,7 @@
                       "pm.test('\"ok\" = true', () => pm.expect(d.ok).to.eql(true));",
                       "",
                       "const a = d.device;",
-                      "pm.test('\"device\" berisi semua field', () => [\"device_id\", \"name\", \"online\", \"last_seen_at\", \"firmware\", \"ip\", \"rssi\", \"wifi_ssid\", \"uptime_s\", \"reset_reason\", \"rfid_ok\", \"queue\", \"free_heap\", \"min_free_heap\", \"error\", \"ota_failed\", \"pin\", \"restart_at\", \"firmware_target\", \"firmware_state\", \"tap_mode\", \"reported_tap_mode\", \"tap_select\", \"issues\"].forEach((k) => pm.expect(a, k).to.have.property(k)));",
+                      "pm.test('\"device\" berisi semua field', () => [\"device_id\", \"name\", \"online\", \"last_seen_at\", \"firmware\", \"ip\", \"rssi\", \"wifi_ssid\", \"uptime_s\", \"reset_reason\", \"rfid_ok\", \"queue\", \"free_heap\", \"min_free_heap\", \"error\", \"ota_failed\", \"pin\", \"restart_at\", \"firmware_target\", \"firmware_state\", \"tap_mode\", \"reported_tap_mode\", \"tap_select\", \"tap_schedule\", \"reported_tap_schedule\", \"issues\"].forEach((k) => pm.expect(a, k).to.have.property(k)));",
                       "pm.test('device_id = alat uji', () => pm.expect(a.device_id).to.eql(pm.collectionVariables.get('alat_uji')));",
                       "",
                       "pm.test('tap_mode = select', () => pm.expect(a.tap_mode).to.eql('select'));"
@@ -8814,6 +8823,7 @@
                       "  if ('dim_after' in c) { pm.expect(Number.isInteger(c.dim_after), 'dim_after bilangan bulat').to.be.true; pm.expect(c.dim_after === 0 || (c.dim_after >= 10 && c.dim_after <= 3600), 'dim_after 0 atau 10-3600').to.be.true; }",
                       "  if ('dim_level' in c) { pm.expect(Number.isInteger(c.dim_level), 'dim_level bilangan bulat').to.be.true; pm.expect(c.dim_level).to.be.within(0, 100); }",
                       "  if ('restart_at' in c) { pm.expect(c.restart_at, 'restart_at').to.be.a('string'); if (c.restart_at !== '') pm.expect(c.restart_at).to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); }",
+                      "  if ('tap_schedule' in c && c.tap_schedule !== null) { const j = c.tap_schedule; pm.expect(j, 'tap_schedule objek atau null').to.be.an('object'); pm.expect(j.check_in, 'tap_schedule.check_in').to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); pm.expect(j.check_out, 'tap_schedule.check_out').to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); pm.expect(j.check_in < j.check_out, 'tap_schedule.check_in lebih awal dari check_out').to.be.true; }",
                       "});",
                       "pm.test('\"config\" berisi title, dim_after, dim_level, restart_at, announcements_rev dengan tipe yang benar (fitur wajib Pengaturan, Alat, Pengumuman)', () => {",
                       "  const c = d.config || {};",
@@ -8928,6 +8938,833 @@
                     }
                   }
                 }
+              },
+              "response": []
+            },
+            {
+              "id": "61b007e7-6c20-50f4-868c-b83377b5278f",
+              "name": "Jadwal – ping awal (config.tap_schedule null)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                      "const d = pm.response.json();",
+                      "pm.test('\"ok\" = true', () => pm.expect(d.ok).to.eql(true));",
+                      "",
+                      "pm.test('\"config\" sesuai aturan spesifikasi bagian 6 (kalau ada)', () => {",
+                      "  if (d.config === undefined) return;",
+                      "  pm.expect(d.config).to.be.an('object');",
+                      "  const c = d.config;",
+                      "  if ('pin' in c) pm.expect(c.pin, 'pin').to.match(/^\\d{4,8}$/);",
+                      "  if ('title' in c) { pm.expect(c.title, 'title').to.be.a('string'); pm.expect([...c.title].length, 'panjang title').to.be.at.most(30); }",
+                      "  if ('announcements_rev' in c) pm.expect(c.announcements_rev, 'announcements_rev').to.be.a('string');",
+                      "  if ('dim_after' in c) { pm.expect(Number.isInteger(c.dim_after), 'dim_after bilangan bulat').to.be.true; pm.expect(c.dim_after === 0 || (c.dim_after >= 10 && c.dim_after <= 3600), 'dim_after 0 atau 10-3600').to.be.true; }",
+                      "  if ('dim_level' in c) { pm.expect(Number.isInteger(c.dim_level), 'dim_level bilangan bulat').to.be.true; pm.expect(c.dim_level).to.be.within(0, 100); }",
+                      "  if ('restart_at' in c) { pm.expect(c.restart_at, 'restart_at').to.be.a('string'); if (c.restart_at !== '') pm.expect(c.restart_at).to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); }",
+                      "  if ('tap_schedule' in c && c.tap_schedule !== null) { const j = c.tap_schedule; pm.expect(j, 'tap_schedule objek atau null').to.be.an('object'); pm.expect(j.check_in, 'tap_schedule.check_in').to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); pm.expect(j.check_out, 'tap_schedule.check_out').to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); pm.expect(j.check_in < j.check_out, 'tap_schedule.check_in lebih awal dari check_out').to.be.true; }",
+                      "});",
+                      "pm.test('\"config\" berisi title, dim_after, dim_level, restart_at, announcements_rev dengan tipe yang benar (fitur wajib Pengaturan, Alat, Pengumuman)', () => {",
+                      "  const c = d.config || {};",
+                      "  pm.expect(c.title, 'config.title (teks)').to.be.a('string');",
+                      "  pm.expect(Number.isInteger(c.dim_after), 'config.dim_after (bilangan bulat)').to.be.true;",
+                      "  pm.expect(Number.isInteger(c.dim_level), 'config.dim_level (bilangan bulat)').to.be.true;",
+                      "  pm.expect(c.restart_at, 'config.restart_at (teks \"HH:MM\" atau \"\")').to.be.a('string');",
+                      "  pm.expect(c.announcements_rev, 'config.announcements_rev (teks)').to.be.a('string');",
+                      "});",
+                      "pm.test('\"config.firmware_update\" lengkap (kalau ada)', () => {",
+                      "  const f = d.config && d.config.firmware_update;",
+                      "  if (f === undefined) return;",
+                      "  pm.expect(f.version, 'version').to.be.a('string');",
+                      "  pm.expect(f.url, 'url absolut').to.match(/^https?:\\/\\//);",
+                      "  pm.expect(Number.isInteger(f.size), 'size bilangan bulat').to.be.true;",
+                      "  pm.expect(f.size, 'size').to.be.within(1, 1966080);",
+                      "  pm.expect(f.md5, 'md5 32 huruf hex kecil').to.match(/^[0-9a-f]{32}$/);",
+                      "});",
+                      "",
+                      "pm.test('config.tap_schedule = null (belum ada jadwal, jadwal di alat dimatikan)', () => { pm.expect(d.config).to.have.property('tap_schedule'); pm.expect(d.config.tap_schedule).to.eql(null); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "X-API-Key",
+                    "value": "{{api_key}}"
+                  },
+                  {
+                    "key": "X-Device-ID",
+                    "value": "{{alat_uji}}"
+                  },
+                  {
+                    "key": "X-Spec-Version",
+                    "value": "1"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/ping",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "ping"
+                  ]
+                },
+                "description": "Server contoh **selalu** mengirim `config.tap_schedule`: `null` selama alat belum diberi jadwal (alat memilih DATANG/PULANG manual). Jadwal hanya berlaku di mode `select` (firmware 1.11.0 ke atas)."
+              },
+              "response": []
+            },
+            {
+              "id": "268a8ff1-90fd-527d-bdc8-a25e307a04f8",
+              "name": "Jadwal – atur jam datang & pulang (06:00 / 17:00)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                      "const d = pm.response.json();",
+                      "pm.test('\"ok\" = true', () => pm.expect(d.ok).to.eql(true));",
+                      "",
+                      "const a = d.device;",
+                      "pm.test('\"device\" berisi semua field', () => [\"device_id\", \"name\", \"online\", \"last_seen_at\", \"firmware\", \"ip\", \"rssi\", \"wifi_ssid\", \"uptime_s\", \"reset_reason\", \"rfid_ok\", \"queue\", \"free_heap\", \"min_free_heap\", \"error\", \"ota_failed\", \"pin\", \"restart_at\", \"firmware_target\", \"firmware_state\", \"tap_mode\", \"reported_tap_mode\", \"tap_select\", \"tap_schedule\", \"reported_tap_schedule\", \"issues\"].forEach((k) => pm.expect(a, k).to.have.property(k)));",
+                      "pm.test('device_id = alat uji', () => pm.expect(a.device_id).to.eql(pm.collectionVariables.get('alat_uji')));",
+                      "",
+                      "pm.test('tap_schedule = 06:00 / 17:00', () => pm.expect(a.tap_schedule).to.eql({ check_in: '06:00', check_out: '17:00' }));",
+                      "pm.test('tap_mode tetap select', () => pm.expect(a.tap_mode).to.eql('select'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "X-Admin-Key",
+                    "value": "{{admin_key}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{admin_url}}/admin/devices/{{alat_uji}}",
+                  "host": [
+                    "{{admin_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "devices",
+                    "{{alat_uji}}"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tap_schedule\": {\n    \"check_in\": \"06:00\",\n    \"check_out\": \"17:00\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "description": "`tap_schedule`: `{\"check_in\":\"HH:MM\",\"check_out\":\"HH:MM\"}` (24 jam, keduanya wajib, `check_in` lebih awal dari `check_out`), atau `null` = jadwal dimatikan. Format salah / urutan jam salah → 422. Pada jam `check_in` alat memilih DATANG sendiri, pada jam `check_out` memilih PULANG."
+              },
+              "response": []
+            },
+            {
+              "id": "df74bd20-7227-5f20-b4c7-ff19b9c9f636",
+              "name": "Jadwal – ping menerima config.tap_schedule",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                      "const d = pm.response.json();",
+                      "pm.test('\"ok\" = true', () => pm.expect(d.ok).to.eql(true));",
+                      "",
+                      "pm.test('\"config\" sesuai aturan spesifikasi bagian 6 (kalau ada)', () => {",
+                      "  if (d.config === undefined) return;",
+                      "  pm.expect(d.config).to.be.an('object');",
+                      "  const c = d.config;",
+                      "  if ('pin' in c) pm.expect(c.pin, 'pin').to.match(/^\\d{4,8}$/);",
+                      "  if ('title' in c) { pm.expect(c.title, 'title').to.be.a('string'); pm.expect([...c.title].length, 'panjang title').to.be.at.most(30); }",
+                      "  if ('announcements_rev' in c) pm.expect(c.announcements_rev, 'announcements_rev').to.be.a('string');",
+                      "  if ('dim_after' in c) { pm.expect(Number.isInteger(c.dim_after), 'dim_after bilangan bulat').to.be.true; pm.expect(c.dim_after === 0 || (c.dim_after >= 10 && c.dim_after <= 3600), 'dim_after 0 atau 10-3600').to.be.true; }",
+                      "  if ('dim_level' in c) { pm.expect(Number.isInteger(c.dim_level), 'dim_level bilangan bulat').to.be.true; pm.expect(c.dim_level).to.be.within(0, 100); }",
+                      "  if ('restart_at' in c) { pm.expect(c.restart_at, 'restart_at').to.be.a('string'); if (c.restart_at !== '') pm.expect(c.restart_at).to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); }",
+                      "  if ('tap_schedule' in c && c.tap_schedule !== null) { const j = c.tap_schedule; pm.expect(j, 'tap_schedule objek atau null').to.be.an('object'); pm.expect(j.check_in, 'tap_schedule.check_in').to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); pm.expect(j.check_out, 'tap_schedule.check_out').to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); pm.expect(j.check_in < j.check_out, 'tap_schedule.check_in lebih awal dari check_out').to.be.true; }",
+                      "});",
+                      "pm.test('\"config\" berisi title, dim_after, dim_level, restart_at, announcements_rev dengan tipe yang benar (fitur wajib Pengaturan, Alat, Pengumuman)', () => {",
+                      "  const c = d.config || {};",
+                      "  pm.expect(c.title, 'config.title (teks)').to.be.a('string');",
+                      "  pm.expect(Number.isInteger(c.dim_after), 'config.dim_after (bilangan bulat)').to.be.true;",
+                      "  pm.expect(Number.isInteger(c.dim_level), 'config.dim_level (bilangan bulat)').to.be.true;",
+                      "  pm.expect(c.restart_at, 'config.restart_at (teks \"HH:MM\" atau \"\")').to.be.a('string');",
+                      "  pm.expect(c.announcements_rev, 'config.announcements_rev (teks)').to.be.a('string');",
+                      "});",
+                      "pm.test('\"config.firmware_update\" lengkap (kalau ada)', () => {",
+                      "  const f = d.config && d.config.firmware_update;",
+                      "  if (f === undefined) return;",
+                      "  pm.expect(f.version, 'version').to.be.a('string');",
+                      "  pm.expect(f.url, 'url absolut').to.match(/^https?:\\/\\//);",
+                      "  pm.expect(Number.isInteger(f.size), 'size bilangan bulat').to.be.true;",
+                      "  pm.expect(f.size, 'size').to.be.within(1, 1966080);",
+                      "  pm.expect(f.md5, 'md5 32 huruf hex kecil').to.match(/^[0-9a-f]{32}$/);",
+                      "});",
+                      "",
+                      "pm.test('config.tap_schedule = 06:00 / 17:00', () => pm.expect(d.config.tap_schedule).to.eql({ check_in: '06:00', check_out: '17:00' }));",
+                      "pm.test('config.tap_mode tetap select', () => pm.expect(d.config.tap_mode).to.eql('select'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "X-API-Key",
+                    "value": "{{api_key}}"
+                  },
+                  {
+                    "key": "X-Device-ID",
+                    "value": "{{alat_uji}}"
+                  },
+                  {
+                    "key": "X-Spec-Version",
+                    "value": "1"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/ping",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "ping"
+                  ]
+                },
+                "description": "Alat menyimpan jadwal dari `config.tap_schedule` di balasan `/ping` dan `/heartbeat` berikutnya."
+              },
+              "response": []
+            },
+            {
+              "id": "fb975b93-52f7-5437-9122-11bd3191079a",
+              "name": "Jadwal – format jam salah (422)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('HTTP 422', () => pm.response.to.have.status(422));",
+                      "const d = pm.response.json();",
+                      "pm.test('\"ok\" = false', () => pm.expect(d.ok).to.eql(false));",
+                      "pm.test('\"message\" berupa teks', () => pm.expect(d.message).to.be.a('string'));",
+                      "",
+                      "pm.test('\"errors\" berisi pesan per field', () => { pm.expect(d.errors).to.be.an('object'); Object.values(d.errors).forEach((v) => pm.expect(v).to.be.a('string')); });",
+                      "pm.test('\"message\" = galat field pertama', () => pm.expect(d.message).to.eql(Object.values(d.errors)[0]));",
+                      "pm.test('ada galat untuk: tap_schedule', () => [\"tap_schedule\"].forEach((f) => pm.expect(d.errors, f).to.have.property(f)));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "X-Admin-Key",
+                    "value": "{{admin_key}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{admin_url}}/admin/devices/{{alat_uji}}",
+                  "host": [
+                    "{{admin_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "devices",
+                    "{{alat_uji}}"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tap_schedule\": {\n    \"check_in\": \"6:00\",\n    \"check_out\": \"17:00\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "description": "Jam harus `HH:MM` dua digit (00:00-23:59)."
+              },
+              "response": []
+            },
+            {
+              "id": "e0c65b08-9d6b-536b-82d2-a95468724c0b",
+              "name": "Jadwal – bukan objek (422)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('HTTP 422', () => pm.response.to.have.status(422));",
+                      "const d = pm.response.json();",
+                      "pm.test('\"ok\" = false', () => pm.expect(d.ok).to.eql(false));",
+                      "pm.test('\"message\" berupa teks', () => pm.expect(d.message).to.be.a('string'));",
+                      "",
+                      "pm.test('\"errors\" berisi pesan per field', () => { pm.expect(d.errors).to.be.an('object'); Object.values(d.errors).forEach((v) => pm.expect(v).to.be.a('string')); });",
+                      "pm.test('\"message\" = galat field pertama', () => pm.expect(d.message).to.eql(Object.values(d.errors)[0]));",
+                      "pm.test('ada galat untuk: tap_schedule', () => [\"tap_schedule\"].forEach((f) => pm.expect(d.errors, f).to.have.property(f)));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "X-Admin-Key",
+                    "value": "{{admin_key}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{admin_url}}/admin/devices/{{alat_uji}}",
+                  "host": [
+                    "{{admin_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "devices",
+                    "{{alat_uji}}"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tap_schedule\": \"06:00-17:00\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            },
+            {
+              "id": "2b5c85ce-489e-50ce-a811-a66557b8b213",
+              "name": "Jadwal – jam pulang tidak ada (422)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('HTTP 422', () => pm.response.to.have.status(422));",
+                      "const d = pm.response.json();",
+                      "pm.test('\"ok\" = false', () => pm.expect(d.ok).to.eql(false));",
+                      "pm.test('\"message\" berupa teks', () => pm.expect(d.message).to.be.a('string'));",
+                      "",
+                      "pm.test('\"errors\" berisi pesan per field', () => { pm.expect(d.errors).to.be.an('object'); Object.values(d.errors).forEach((v) => pm.expect(v).to.be.a('string')); });",
+                      "pm.test('\"message\" = galat field pertama', () => pm.expect(d.message).to.eql(Object.values(d.errors)[0]));",
+                      "pm.test('ada galat untuk: tap_schedule', () => [\"tap_schedule\"].forEach((f) => pm.expect(d.errors, f).to.have.property(f)));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "X-Admin-Key",
+                    "value": "{{admin_key}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{admin_url}}/admin/devices/{{alat_uji}}",
+                  "host": [
+                    "{{admin_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "devices",
+                    "{{alat_uji}}"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tap_schedule\": {\n    \"check_in\": \"06:00\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            },
+            {
+              "id": "f29cb614-f80c-5352-acd0-e12e58968c28",
+              "name": "Jadwal – check_in sama dengan check_out (422)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('HTTP 422', () => pm.response.to.have.status(422));",
+                      "const d = pm.response.json();",
+                      "pm.test('\"ok\" = false', () => pm.expect(d.ok).to.eql(false));",
+                      "pm.test('\"message\" berupa teks', () => pm.expect(d.message).to.be.a('string'));",
+                      "",
+                      "pm.test('\"errors\" berisi pesan per field', () => { pm.expect(d.errors).to.be.an('object'); Object.values(d.errors).forEach((v) => pm.expect(v).to.be.a('string')); });",
+                      "pm.test('\"message\" = galat field pertama', () => pm.expect(d.message).to.eql(Object.values(d.errors)[0]));",
+                      "pm.test('ada galat untuk: tap_schedule', () => [\"tap_schedule\"].forEach((f) => pm.expect(d.errors, f).to.have.property(f)));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "X-Admin-Key",
+                    "value": "{{admin_key}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{admin_url}}/admin/devices/{{alat_uji}}",
+                  "host": [
+                    "{{admin_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "devices",
+                    "{{alat_uji}}"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tap_schedule\": {\n    \"check_in\": \"17:00\",\n    \"check_out\": \"17:00\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            },
+            {
+              "id": "da3a91a8-084b-5a44-97c8-0145fda43f16",
+              "name": "Jadwal – check_in lebih lambat dari check_out (422)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('HTTP 422', () => pm.response.to.have.status(422));",
+                      "const d = pm.response.json();",
+                      "pm.test('\"ok\" = false', () => pm.expect(d.ok).to.eql(false));",
+                      "pm.test('\"message\" berupa teks', () => pm.expect(d.message).to.be.a('string'));",
+                      "",
+                      "pm.test('\"errors\" berisi pesan per field', () => { pm.expect(d.errors).to.be.an('object'); Object.values(d.errors).forEach((v) => pm.expect(v).to.be.a('string')); });",
+                      "pm.test('\"message\" = galat field pertama', () => pm.expect(d.message).to.eql(Object.values(d.errors)[0]));",
+                      "pm.test('ada galat untuk: tap_schedule', () => [\"tap_schedule\"].forEach((f) => pm.expect(d.errors, f).to.have.property(f)));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "X-Admin-Key",
+                    "value": "{{admin_key}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{admin_url}}/admin/devices/{{alat_uji}}",
+                  "host": [
+                    "{{admin_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "devices",
+                    "{{alat_uji}}"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tap_schedule\": {\n    \"check_in\": \"18:00\",\n    \"check_out\": \"07:00\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": []
+            },
+            {
+              "id": "f84f81d2-9cdb-59dc-8685-3b5f23151d40",
+              "name": "Jadwal – heartbeat alat melapor raw.tap_schedule",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                      "const d = pm.response.json();",
+                      "pm.test('\"ok\" = true', () => pm.expect(d.ok).to.eql(true));",
+                      "",
+                      "pm.test('\"config\" sesuai aturan spesifikasi bagian 6 (kalau ada)', () => {",
+                      "  if (d.config === undefined) return;",
+                      "  pm.expect(d.config).to.be.an('object');",
+                      "  const c = d.config;",
+                      "  if ('pin' in c) pm.expect(c.pin, 'pin').to.match(/^\\d{4,8}$/);",
+                      "  if ('title' in c) { pm.expect(c.title, 'title').to.be.a('string'); pm.expect([...c.title].length, 'panjang title').to.be.at.most(30); }",
+                      "  if ('announcements_rev' in c) pm.expect(c.announcements_rev, 'announcements_rev').to.be.a('string');",
+                      "  if ('dim_after' in c) { pm.expect(Number.isInteger(c.dim_after), 'dim_after bilangan bulat').to.be.true; pm.expect(c.dim_after === 0 || (c.dim_after >= 10 && c.dim_after <= 3600), 'dim_after 0 atau 10-3600').to.be.true; }",
+                      "  if ('dim_level' in c) { pm.expect(Number.isInteger(c.dim_level), 'dim_level bilangan bulat').to.be.true; pm.expect(c.dim_level).to.be.within(0, 100); }",
+                      "  if ('restart_at' in c) { pm.expect(c.restart_at, 'restart_at').to.be.a('string'); if (c.restart_at !== '') pm.expect(c.restart_at).to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); }",
+                      "  if ('tap_schedule' in c && c.tap_schedule !== null) { const j = c.tap_schedule; pm.expect(j, 'tap_schedule objek atau null').to.be.an('object'); pm.expect(j.check_in, 'tap_schedule.check_in').to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); pm.expect(j.check_out, 'tap_schedule.check_out').to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); pm.expect(j.check_in < j.check_out, 'tap_schedule.check_in lebih awal dari check_out').to.be.true; }",
+                      "});",
+                      "pm.test('\"config\" berisi title, dim_after, dim_level, restart_at, announcements_rev dengan tipe yang benar (fitur wajib Pengaturan, Alat, Pengumuman)', () => {",
+                      "  const c = d.config || {};",
+                      "  pm.expect(c.title, 'config.title (teks)').to.be.a('string');",
+                      "  pm.expect(Number.isInteger(c.dim_after), 'config.dim_after (bilangan bulat)').to.be.true;",
+                      "  pm.expect(Number.isInteger(c.dim_level), 'config.dim_level (bilangan bulat)').to.be.true;",
+                      "  pm.expect(c.restart_at, 'config.restart_at (teks \"HH:MM\" atau \"\")').to.be.a('string');",
+                      "  pm.expect(c.announcements_rev, 'config.announcements_rev (teks)').to.be.a('string');",
+                      "});",
+                      "pm.test('\"config.firmware_update\" lengkap (kalau ada)', () => {",
+                      "  const f = d.config && d.config.firmware_update;",
+                      "  if (f === undefined) return;",
+                      "  pm.expect(f.version, 'version').to.be.a('string');",
+                      "  pm.expect(f.url, 'url absolut').to.match(/^https?:\\/\\//);",
+                      "  pm.expect(Number.isInteger(f.size), 'size bilangan bulat').to.be.true;",
+                      "  pm.expect(f.size, 'size').to.be.within(1, 1966080);",
+                      "  pm.expect(f.md5, 'md5 32 huruf hex kecil').to.match(/^[0-9a-f]{32}$/);",
+                      "});",
+                      "",
+                      "pm.test('config.tap_schedule tetap 06:00 / 17:00 (kiriman yang ditolak tidak mengubah jadwal)', () => pm.expect(d.config.tap_schedule).to.eql({ check_in: '06:00', check_out: '17:00' }));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "X-API-Key",
+                    "value": "{{api_key}}"
+                  },
+                  {
+                    "key": "X-Device-ID",
+                    "value": "{{alat_uji}}"
+                  },
+                  {
+                    "key": "X-Spec-Version",
+                    "value": "1"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/heartbeat",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "heartbeat"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"device_id\": \"{{alat_uji}}\",\n  \"firmware\": \"{{firmware_versi}}\",\n  \"time\": \"{{sekarang}}\",\n  \"raw\": {\n    \"wifi_ssid\": \"Kantor-2.4G\",\n    \"rssi\": -55,\n    \"ip\": \"192.168.1.50\",\n    \"uptime_s\": 310,\n    \"free_heap\": 181000,\n    \"min_free_heap\": 150000,\n    \"reset_reason\": \"software\",\n    \"rfid_ok\": true,\n    \"queue\": 0,\n    \"tap_mode\": \"select\",\n    \"tap_select\": \"check_in\",\n    \"tap_schedule\": { \"check_in\": \"06:00\", \"check_out\": \"17:00\" }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "description": "Firmware 1.11.0 ke atas melaporkan jadwal yang sedang dipakai di `raw.tap_schedule` (objek, atau `null` = tanpa jadwal). Server menyimpannya sebagai `reported_tap_schedule`."
+              },
+              "response": []
+            },
+            {
+              "id": "09cc25b5-0cfe-5af4-a88d-16557ec62ff0",
+              "name": "Jadwal – detail alat menampilkan jadwal",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                      "const d = pm.response.json();",
+                      "pm.test('\"ok\" = true', () => pm.expect(d.ok).to.eql(true));",
+                      "",
+                      "const a = d.device;",
+                      "pm.test('\"device\" berisi semua field', () => [\"device_id\", \"name\", \"online\", \"last_seen_at\", \"firmware\", \"ip\", \"rssi\", \"wifi_ssid\", \"uptime_s\", \"reset_reason\", \"rfid_ok\", \"queue\", \"free_heap\", \"min_free_heap\", \"error\", \"ota_failed\", \"pin\", \"restart_at\", \"firmware_target\", \"firmware_state\", \"tap_mode\", \"reported_tap_mode\", \"tap_select\", \"tap_schedule\", \"reported_tap_schedule\", \"issues\"].forEach((k) => pm.expect(a, k).to.have.property(k)));",
+                      "pm.test('device_id = alat uji', () => pm.expect(a.device_id).to.eql(pm.collectionVariables.get('alat_uji')));",
+                      "",
+                      "pm.test('tap_schedule = 06:00 / 17:00 (dari server)', () => pm.expect(a.tap_schedule).to.eql({ check_in: '06:00', check_out: '17:00' }));",
+                      "pm.test('reported_tap_schedule = 06:00 / 17:00 (dari heartbeat)', () => pm.expect(a.reported_tap_schedule).to.eql({ check_in: '06:00', check_out: '17:00' }));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "X-Admin-Key",
+                    "value": "{{admin_key}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{admin_url}}/admin/devices/{{alat_uji}}",
+                  "host": [
+                    "{{admin_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "devices",
+                    "{{alat_uji}}"
+                  ]
+                },
+                "description": "`tap_schedule` = jadwal dari server, `reported_tap_schedule` = jadwal yang dipakai alat (dari heartbeat)."
+              },
+              "response": []
+            },
+            {
+              "id": "af728cb5-6f01-5fa9-83e7-97adbb27abc7",
+              "name": "Jadwal – matikan (null)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                      "const d = pm.response.json();",
+                      "pm.test('\"ok\" = true', () => pm.expect(d.ok).to.eql(true));",
+                      "",
+                      "const a = d.device;",
+                      "pm.test('\"device\" berisi semua field', () => [\"device_id\", \"name\", \"online\", \"last_seen_at\", \"firmware\", \"ip\", \"rssi\", \"wifi_ssid\", \"uptime_s\", \"reset_reason\", \"rfid_ok\", \"queue\", \"free_heap\", \"min_free_heap\", \"error\", \"ota_failed\", \"pin\", \"restart_at\", \"firmware_target\", \"firmware_state\", \"tap_mode\", \"reported_tap_mode\", \"tap_select\", \"tap_schedule\", \"reported_tap_schedule\", \"issues\"].forEach((k) => pm.expect(a, k).to.have.property(k)));",
+                      "pm.test('device_id = alat uji', () => pm.expect(a.device_id).to.eql(pm.collectionVariables.get('alat_uji')));",
+                      "",
+                      "pm.test('tap_schedule = null', () => pm.expect(a.tap_schedule).to.eql(null));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "X-Admin-Key",
+                    "value": "{{admin_key}}"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{admin_url}}/admin/devices/{{alat_uji}}",
+                  "host": [
+                    "{{admin_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "devices",
+                    "{{alat_uji}}"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tap_schedule\": null\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "description": "`{\"tap_schedule\": null}` menghapus jadwal: `/ping` & `/heartbeat` mengirim `config.tap_schedule: null` dan alat mematikan jadwalnya."
+              },
+              "response": []
+            },
+            {
+              "id": "63370045-d542-5279-885a-7e37d966b5cc",
+              "name": "Jadwal – heartbeat menerima config.tap_schedule null",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                      "const d = pm.response.json();",
+                      "pm.test('\"ok\" = true', () => pm.expect(d.ok).to.eql(true));",
+                      "",
+                      "pm.test('\"config\" sesuai aturan spesifikasi bagian 6 (kalau ada)', () => {",
+                      "  if (d.config === undefined) return;",
+                      "  pm.expect(d.config).to.be.an('object');",
+                      "  const c = d.config;",
+                      "  if ('pin' in c) pm.expect(c.pin, 'pin').to.match(/^\\d{4,8}$/);",
+                      "  if ('title' in c) { pm.expect(c.title, 'title').to.be.a('string'); pm.expect([...c.title].length, 'panjang title').to.be.at.most(30); }",
+                      "  if ('announcements_rev' in c) pm.expect(c.announcements_rev, 'announcements_rev').to.be.a('string');",
+                      "  if ('dim_after' in c) { pm.expect(Number.isInteger(c.dim_after), 'dim_after bilangan bulat').to.be.true; pm.expect(c.dim_after === 0 || (c.dim_after >= 10 && c.dim_after <= 3600), 'dim_after 0 atau 10-3600').to.be.true; }",
+                      "  if ('dim_level' in c) { pm.expect(Number.isInteger(c.dim_level), 'dim_level bilangan bulat').to.be.true; pm.expect(c.dim_level).to.be.within(0, 100); }",
+                      "  if ('restart_at' in c) { pm.expect(c.restart_at, 'restart_at').to.be.a('string'); if (c.restart_at !== '') pm.expect(c.restart_at).to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); }",
+                      "  if ('tap_schedule' in c && c.tap_schedule !== null) { const j = c.tap_schedule; pm.expect(j, 'tap_schedule objek atau null').to.be.an('object'); pm.expect(j.check_in, 'tap_schedule.check_in').to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); pm.expect(j.check_out, 'tap_schedule.check_out').to.match(/^([01]\\d|2[0-3]):[0-5]\\d$/); pm.expect(j.check_in < j.check_out, 'tap_schedule.check_in lebih awal dari check_out').to.be.true; }",
+                      "});",
+                      "pm.test('\"config\" berisi title, dim_after, dim_level, restart_at, announcements_rev dengan tipe yang benar (fitur wajib Pengaturan, Alat, Pengumuman)', () => {",
+                      "  const c = d.config || {};",
+                      "  pm.expect(c.title, 'config.title (teks)').to.be.a('string');",
+                      "  pm.expect(Number.isInteger(c.dim_after), 'config.dim_after (bilangan bulat)').to.be.true;",
+                      "  pm.expect(Number.isInteger(c.dim_level), 'config.dim_level (bilangan bulat)').to.be.true;",
+                      "  pm.expect(c.restart_at, 'config.restart_at (teks \"HH:MM\" atau \"\")').to.be.a('string');",
+                      "  pm.expect(c.announcements_rev, 'config.announcements_rev (teks)').to.be.a('string');",
+                      "});",
+                      "pm.test('\"config.firmware_update\" lengkap (kalau ada)', () => {",
+                      "  const f = d.config && d.config.firmware_update;",
+                      "  if (f === undefined) return;",
+                      "  pm.expect(f.version, 'version').to.be.a('string');",
+                      "  pm.expect(f.url, 'url absolut').to.match(/^https?:\\/\\//);",
+                      "  pm.expect(Number.isInteger(f.size), 'size bilangan bulat').to.be.true;",
+                      "  pm.expect(f.size, 'size').to.be.within(1, 1966080);",
+                      "  pm.expect(f.md5, 'md5 32 huruf hex kecil').to.match(/^[0-9a-f]{32}$/);",
+                      "});",
+                      "",
+                      "pm.test('config.tap_schedule = null (alat mematikan jadwal)', () => { pm.expect(d.config).to.have.property('tap_schedule'); pm.expect(d.config.tap_schedule).to.eql(null); });"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "X-API-Key",
+                    "value": "{{api_key}}"
+                  },
+                  {
+                    "key": "X-Device-ID",
+                    "value": "{{alat_uji}}"
+                  },
+                  {
+                    "key": "X-Spec-Version",
+                    "value": "1"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/heartbeat",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "heartbeat"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"device_id\": \"{{alat_uji}}\",\n  \"firmware\": \"{{firmware_versi}}\",\n  \"time\": \"{{sekarang}}\",\n  \"raw\": {\n    \"wifi_ssid\": \"Kantor-2.4G\",\n    \"rssi\": -55,\n    \"ip\": \"192.168.1.50\",\n    \"uptime_s\": 370,\n    \"free_heap\": 181000,\n    \"min_free_heap\": 150000,\n    \"reset_reason\": \"software\",\n    \"rfid_ok\": true,\n    \"queue\": 0,\n    \"tap_mode\": \"select\",\n    \"tap_select\": \"check_in\",\n    \"tap_schedule\": { \"check_in\": \"06:00\", \"check_out\": \"17:00\" }\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "description": "Alat masih melapor jadwal lama; balasan membawa `config.tap_schedule: null`, jadi jadwal di alat dimatikan."
               },
               "response": []
             },
@@ -9355,7 +10192,7 @@
                       "pm.test('\"ok\" = true', () => pm.expect(d.ok).to.eql(true));",
                       "",
                       "const a = d.device;",
-                      "pm.test('\"device\" berisi semua field', () => [\"device_id\", \"name\", \"online\", \"last_seen_at\", \"firmware\", \"ip\", \"rssi\", \"wifi_ssid\", \"uptime_s\", \"reset_reason\", \"rfid_ok\", \"queue\", \"free_heap\", \"min_free_heap\", \"error\", \"ota_failed\", \"pin\", \"restart_at\", \"firmware_target\", \"firmware_state\", \"tap_mode\", \"reported_tap_mode\", \"tap_select\", \"issues\"].forEach((k) => pm.expect(a, k).to.have.property(k)));",
+                      "pm.test('\"device\" berisi semua field', () => [\"device_id\", \"name\", \"online\", \"last_seen_at\", \"firmware\", \"ip\", \"rssi\", \"wifi_ssid\", \"uptime_s\", \"reset_reason\", \"rfid_ok\", \"queue\", \"free_heap\", \"min_free_heap\", \"error\", \"ota_failed\", \"pin\", \"restart_at\", \"firmware_target\", \"firmware_state\", \"tap_mode\", \"reported_tap_mode\", \"tap_select\", \"tap_schedule\", \"reported_tap_schedule\", \"issues\"].forEach((k) => pm.expect(a, k).to.have.property(k)));",
                       "pm.test('device_id = alat uji', () => pm.expect(a.device_id).to.eql(pm.collectionVariables.get('alat_uji')));",
                       "",
                       "pm.test('tap_mode = null', () => pm.expect(a.tap_mode).to.eql(null));"
@@ -9573,7 +10410,7 @@
           ]
         }
       ],
-      "description": "Skenario 6 fitur wajib (Kartu belum terdaftar, Rekap, Alat, Firmware, Pengumuman, Pengaturan) plus mode absen (`tap_mode`, `/check-in`, `/check-out`) terhadap **API admin server contoh** PHP/Node (header `X-Admin-Key`, variabel `admin_url` & `admin_key`). Jalankan berurutan; setiap run memakai ID alat & nomor kartu unik dan mengembalikan pengaturan di akhir, jadi bisa diulang. Untuk aplikasi Anda sendiri, folder ini adalah gambaran apa yang harus bisa dilakukan admin (lewat halaman web atau API Anda sendiri). Butuh file `contoh-firmware.bin` (Newman: `--working-dir contoh-integrasi/postman`)."
+      "description": "Skenario 6 fitur wajib (Kartu belum terdaftar, Rekap, Alat, Firmware, Pengumuman, Pengaturan) plus mode absen (`tap_mode`, jadwal `tap_schedule`, `/check-in`, `/check-out`) terhadap **API admin server contoh** PHP/Node (header `X-Admin-Key`, variabel `admin_url` & `admin_key`). Jalankan berurutan; setiap run memakai ID alat & nomor kartu unik dan mengembalikan pengaturan di akhir, jadi bisa diulang. Untuk aplikasi Anda sendiri, folder ini adalah gambaran apa yang harus bisa dilakukan admin (lewat halaman web atau API Anda sendiri). Butuh file `contoh-firmware.bin` (Newman: `--working-dir contoh-integrasi/postman`)."
     }
   ],
   "event": [

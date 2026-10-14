@@ -32,8 +32,15 @@ use Illuminate\Support\Str;
  * Mode absen (firmware 1.6.0+, lihat tapModeReady()): `tap_mode` = pengaturan dari panel ("auto" | "select"),
  * dikirim lewat config.tap_mode; null = ikuti pengaturan di alat. `reported_tap_mode` & `tap_select` = mode yang
  * sedang dipakai alat & pilihan Datang/Pulang saat ini, dari heartbeat (raw.tap_mode, raw.tap_select).
+ *
+ * Jadwal mode pilih (firmware 1.11.0+, lihat scheduleReady()): `schedule_check_in` & `schedule_check_out` = jam
+ * DATANG & PULANG dipilih otomatis ("HH:MM"), dikirim lewat config.tap_schedule (null = tanpa jadwal).
+ * `reported_tap_schedule` = jadwal yang sedang dipakai alat ("HH:MM-HH:MM"), dari heartbeat (raw.tap_schedule).
+ *
+ * Daya dari modul UPS (firmware 1.11.2+, lihat powerReady()): `power_source` ("mains" | "battery" | "none"),
+ * `battery_mv`, `battery_pct`, `battery_low`, dari heartbeat (raw.power). Null = belum dilaporkan / firmware lama.
  */
-#[Fillable(['code', 'name', 'location', 'pin', 'restart_at', 'firmware_release_id', 'tap_mode'])]
+#[Fillable(['code', 'name', 'location', 'pin', 'restart_at', 'firmware_release_id', 'tap_mode', 'schedule_check_in', 'schedule_check_out'])]
 #[Hidden(['api_key'])]
 class Device extends Model
 {
@@ -128,6 +135,9 @@ class Device extends Model
             'free_heap' => 'integer',
             'min_free_heap' => 'integer',
             'firmware_release_id' => 'integer',
+            'battery_mv' => 'integer',
+            'battery_pct' => 'integer',
+            'battery_low' => 'boolean',
         ];
     }
 
@@ -201,9 +211,29 @@ class Device extends Model
     }
 
     /**
+     * Migrasi jadwal mode pilih (kolom devices.schedule_check_in, schedule_check_out, reported_tap_schedule) sudah
+     * dijalankan? Sebelum itu config.tap_schedule tidak dikirim, raw.tap_schedule tidak disimpan dan form jadwal
+     * tidak tampil. Hasil pemeriksaan disimpan selama satu request.
+     */
+    public static function scheduleReady(): bool
+    {
+        return once(fn () => Schema::hasColumn('devices', 'schedule_check_in'));
+    }
+
+    /**
+     * Migrasi daya alat (kolom devices.power_source, battery_mv, battery_pct, battery_low) sudah dijalankan? Sebelum itu
+     * raw.power tidak disimpan dan baris Daya tidak tampil. Hasil pemeriksaan disimpan selama satu request.
+     */
+    public static function powerReady(): bool
+    {
+        return once(fn () => Schema::hasColumn('devices', 'power_source'));
+    }
+
+    /**
      * Simpan data kesehatan dari body /heartbeat (raw.uptime_s, reset_reason, rfid_ok, queue, free_heap,
-     * min_free_heap, error, ota_failed, crash), plus mode absen (raw.tap_mode, tap_select) kalau migrasinya sudah
-     * dijalankan, dan catat kejadian: boot, crash, ota_failed.
+     * min_free_heap, error, ota_failed, crash), plus mode absen (raw.tap_mode, tap_select), jadwal (raw.tap_schedule) dan
+     * daya (raw.power) kalau migrasinya sudah dijalankan, dan catat kejadian: boot, crash, ota_failed, power_lost,
+     * power_restored, battery_low.
      * Nilai yang tidak dikirim / tipenya salah dibiarkan, kecuali error & ota_failed: tidak dikirim = tidak ada.
      *
      * @param  array<string, mixed>  $body
@@ -244,6 +274,22 @@ class Device extends Model
             $this->tap_select = is_string($raw['tap_select'] ?? null) && isset(self::TAP_SELECTS[$raw['tap_select']]) ? $raw['tap_select'] : null;
         }
 
+        // Jadwal mode pilih (firmware 1.11.0+). Tidak dikirim / null / tidak sah = null (tanpa jadwal, atau firmware lama).
+        if (self::scheduleReady()) {
+            $schedule = is_array($raw['tap_schedule'] ?? null)
+                ? self::validTapSchedule($raw['tap_schedule']['check_in'] ?? null, $raw['tap_schedule']['check_out'] ?? null)
+                : null;
+            $this->reported_tap_schedule = $schedule ? $schedule['check_in'].'-'.$schedule['check_out'] : null;
+        }
+
+        // Daya dari modul UPS (firmware 1.11.2+). Tidak dikirim (firmware lama) / tidak sah = dibiarkan.
+        $previousPower = [$this->power_source, $this->battery_low];
+        $power = self::powerReady() && array_key_exists('power', $raw) ? self::validPower($raw['power']) : null;
+
+        if ($power !== null) {
+            $this->forceFill($power);
+        }
+
         // Menyala ulang: uptime lebih kecil dari sebelumnya, atau lebih kecil dari jarak sejak heartbeat
         // sebelumnya (restart di antaranya, mis. dua kali restart cepat), atau dulu tidak dikirim padahal
         // sudah pernah heartbeat.
@@ -277,6 +323,98 @@ class Device extends Model
                 'firmware' => $this->firmware,
             ]);
         }
+
+        if ($power !== null) {
+            $this->recordPowerEvents(...$previousPower);
+        }
+    }
+
+    /**
+     * raw.power yang sah => nilai kolom daya. null = pemantau baterai tidak terpasang (power_source "none").
+     * Objek dengan source "mains" / "battery": tegangan & persen dibatasi ke rentang wajar (tidak dikirim / bukan
+     * bilangan bulat = null), battery_low hanya true kalau alat mengirim true saat memakai baterai.
+     * Selain itu (source tidak dikenal, teks, angka) null = diabaikan.
+     *
+     * @return array{power_source: string, battery_mv: ?int, battery_pct: ?int, battery_low: ?bool}|null
+     */
+    public static function validPower(mixed $power): ?array
+    {
+        if ($power === null) {
+            return ['power_source' => 'none', 'battery_mv' => null, 'battery_pct' => null, 'battery_low' => null];
+        }
+
+        $source = is_array($power) ? ($power['source'] ?? null) : null;
+
+        if (! in_array($source, ['mains', 'battery'], true)) {
+            return null;
+        }
+
+        $int = fn (string $key, int $min, int $max) => is_int($power[$key] ?? null) ? max($min, min($max, $power[$key])) : null;
+
+        return [
+            'power_source' => $source,
+            'battery_mv' => $int('battery_mv', 0, 9999),
+            'battery_pct' => $int('battery_pct', 0, 100),
+            'battery_low' => $source === 'battery' && ($power['battery_low'] ?? null) === true,
+        ];
+    }
+
+    /**
+     * Kejadian daya setelah raw.power disimpan: listrik padam (selain baterai -> baterai), listrik kembali
+     * (baterai -> listrik PLN) dan baterai lemah (battery_low baru menjadi true). Status yang sama tidak dicatat ulang.
+     */
+    private function recordPowerEvents(?string $previousSource, ?bool $previousLow): void
+    {
+        $details = ['source' => $this->power_source, 'battery_mv' => $this->battery_mv, 'battery_pct' => $this->battery_pct];
+        $battery = $this->batteryText();
+
+        if ($this->power_source === 'battery' && $previousSource !== 'battery') {
+            DeviceEvent::record($this, 'power_lost', 'Listrik padam, alat memakai baterai'.($battery ? " ({$battery})" : ''), $details);
+        }
+
+        if ($this->power_source === 'mains' && $previousSource === 'battery') {
+            DeviceEvent::record($this, 'power_restored', 'Listrik kembali, baterai dicas'.($battery ? " ({$battery})" : ''), $details);
+        }
+
+        if ($this->battery_low === true && $previousLow !== true) {
+            DeviceEvent::record($this, 'battery_low', 'Baterai lemah'.($battery ? " ({$battery})" : '').', nyalakan listrik', $details);
+        }
+    }
+
+    /** Isi & tegangan baterai, mis. "18%, 3,62 V". Null kalau keduanya tidak dilaporkan. */
+    public function batteryText(): ?string
+    {
+        $parts = array_filter([$this->battery_pct !== null ? "{$this->battery_pct}%" : null, $this->batteryVolts()]);
+
+        return $parts ? implode(', ', $parts) : null;
+    }
+
+    /** Tegangan baterai, mis. "3,62 V". */
+    private function batteryVolts(): ?string
+    {
+        return $this->battery_mv !== null ? number_format($this->battery_mv / 1000, 2, ',', '.').' V' : null;
+    }
+
+    /**
+     * Status daya untuk panel admin: [teks, warna lencana (null = teks biasa), keterangan], null kalau belum dilaporkan
+     * (firmware sebelum 1.11.2).
+     *
+     * @return array{0: string, 1: ?string, 2: ?string}|null
+     */
+    public function powerState(): ?array
+    {
+        $percent = $this->battery_pct !== null ? " {$this->battery_pct}%" : '';
+        $volts = $this->batteryVolts();
+        $battery = $this->batteryText();
+
+        return match ($this->power_source) {
+            'none' => ['Tanpa UPS', null, null],
+            'mains' => ['Listrik PLN'.($percent ? " · baterai{$percent}" : ''), null, ($volts ? "{$volts}, " : '').'baterai sedang dicas'],
+            'battery' => $this->battery_low
+                ? ['Baterai lemah', 'danger', ($battery ? "{$battery} · " : '').'listrik padam, nyalakan listrik']
+                : ['Baterai'.$percent.($volts ? " ({$volts})" : ''), 'warning', 'listrik padam'],
+            default => null,
+        };
     }
 
     /**
@@ -312,6 +450,30 @@ class Device extends Model
     public static function validTapMode(mixed $mode): ?string
     {
         return is_string($mode) && isset(self::TAP_MODES[$mode]) ? $mode : null;
+    }
+
+    /**
+     * Jadwal mode pilih yang sah: keduanya "HH:MM" (24 jam) dan jam datang lebih awal dari jam pulang. Selain itu null.
+     *
+     * @return array{check_in: string, check_out: string}|null
+     */
+    public static function validTapSchedule(mixed $checkIn, mixed $checkOut): ?array
+    {
+        $time = fn (mixed $value) => is_string($value) && preg_match('/^([01][0-9]|2[0-3]):[0-5][0-9]$/', $value);
+
+        return $time($checkIn) && $time($checkOut) && $checkIn < $checkOut
+            ? ['check_in' => $checkIn, 'check_out' => $checkOut]
+            : null;
+    }
+
+    /**
+     * Jadwal mode pilih alat ini untuk config.tap_schedule, null kalau belum diatur (atau migrasinya belum dijalankan).
+     *
+     * @return array{check_in: string, check_out: string}|null
+     */
+    public function tapSchedule(): ?array
+    {
+        return self::validTapSchedule($this->schedule_check_in, $this->schedule_check_out);
     }
 
     public static function resetReasonLabel(string $reason): string
@@ -371,6 +533,13 @@ class Device extends Model
 
         if ($this->min_free_heap !== null && $this->min_free_heap < self::LOW_HEAP_BYTES) {
             $issues[] = 'RAM hampir habis (terendah '.Number::fileSize($this->min_free_heap, 1).')';
+        }
+
+        if (self::powerReady() && $this->power_source === 'battery') {
+            $battery = $this->batteryText();
+            $issues[] = $this->battery_low
+                ? 'Baterai lemah'.($battery ? " ({$battery})" : '').': listrik padam, nyalakan listrik sebelum alat mati'
+                : 'Listrik padam, alat memakai baterai'.($battery ? " ({$battery})" : '');
         }
 
         return $issues;

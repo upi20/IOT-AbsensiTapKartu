@@ -168,6 +168,15 @@ Butuh firmware **1.6.0** ke atas. Sebagian aplikasi ingin endpoint terpisah untu
 
 - Pilihan tersimpan di alat dan **otomatis dikosongkan saat tanggal berganti**, jadi harus dipilih lagi setiap hari.
 - Kalau belum memilih lalu kartu ditempelkan, alat menampilkan **"Pilih DATANG atau PULANG dulu"** dan **tidak mengirim apa pun**.
+- **Jadwal otomatis (opsional, firmware 1.11.0 ke atas):** aplikasi boleh mengirim `config.tap_schedule`, misalnya `{"check_in": "06:00", "check_out": "17:00"}` (bagian 6). Alat lalu memilih **DATANG** sendiri pada jam masuk dan **PULANG** pada jam pulang, jadi petugas tidak perlu menekan tombol tiap hari:
+
+  | Jam di alat | Pilihan |
+  |---|---|
+  | 00:00 – sebelum `check_in` | Kosong (dikosongkan saat tanggal berganti). Petugas boleh memilih manual |
+  | `check_in` – sebelum `check_out` | **DATANG** dipilih otomatis |
+  | `check_out` – 23:59 | **PULANG** dipilih otomatis |
+
+  **Jadwal selalu menang:** alat menyamakan pilihan dengan jadwal setiap 5 detik, termasuk saat baru menyala. Petugas tetap boleh menekan tombol lain, tapi pilihan manual yang berbeda dari jadwal hanya bertahan **3 menit** sejak tombol terakhir ditekan, lalu kembali ke jadwal (firmware **1.11.1**; di 1.11.0 pilihan manual bertahan sampai periode berikutnya). Tombol yang belum dipilih menampilkan jamnya, misalnya "otomatis 17:00". Jadwal hanya berlaku di mode `select`.
 - Mode absen diubah dari menu Pengaturan alat, atau dari aplikasi lewat `config.tap_mode` (bagian 6). Mode yang sedang dipakai dan pilihan saat ini dilaporkan di heartbeat (`raw.tap_mode`, `raw.tap_select`, bagian 5).
 - `/tap` **tidak berubah**. Aplikasi yang tidak menyediakan `/check-in` & `/check-out` cukup tidak memakai mode `select` (kalau dipakai juga, alat mendapat HTTP 404 dan menampilkan `E23`).
 
@@ -260,6 +269,9 @@ Isi `raw` adalah info kesehatan alat. Semuanya **opsional untuk aplikasi**: bole
 | `ota_failed` | Versi firmware yang **gagal dipasang** lewat update jarak jauh (alat kembali ke versi lama), mis. `"1.5.0"`. Tidak dikirim kalau tidak ada. Firmware **1.5.0** ke atas |
 | `tap_mode` | Mode absen yang sedang dipakai alat: `"auto"` atau `"select"` (bagian 4.1). Firmware **1.6.0** ke atas |
 | `tap_select` | Pilihan saat ini di mode `select`: `"check_in"` (DATANG), `"check_out"` (PULANG), atau `null` (belum memilih / mode `auto`). Firmware **1.6.0** ke atas |
+| `tap_schedule` | Jadwal mode pilih yang dipakai alat: `{"check_in":"06:00","check_out":"17:00"}`, atau `null` (tanpa jadwal). Firmware **1.11.0** ke atas |
+| `rtc` | Modul jam RTC: `"none"` (tidak terpasang), `"ok"`, atau `"lost"` (jam RTC hilang saat alat menyala, biasanya baterai RTC habis; jam tetap diambil dari internet). Firmware **1.10.0** ke atas |
+| `power` | Daya dari modul UPS (baterai 18650): `{"source":"mains","battery_mv":4105,"battery_pct":92,"battery_low":false}`, atau `null` (pemantau baterai tidak terpasang). `source`: `"mains"` = listrik PLN/adaptor ada (baterai sedang dicas), `"battery"` = listrik padam, alat memakai baterai. `battery_mv` = tegangan baterai (mV, ± 2500–4500). `battery_pct` = perkiraan isi 0–100 (saat dicas terbaca lebih tinggi). Saat listrik padam angkanya hanya turun, juga setelah alat dimatikan lalu dinyalakan lagi (firmware 1.11.3+). `battery_low` = `true` hanya saat memakai baterai dan tegangan di bawah 3400 mV (layar alat menampilkan peringatan merah). Heartbeat langsung dikirim (tanpa menunggu 60 detik) saat `source` berubah atau baterai mulai lemah. Catatan: saat listrik padam router WiFi biasanya ikut mati, jadi laporan `"battery"` hanya sampai kalau jaringan juga memakai UPS. Tidak dikirim = firmware lama (belum diketahui). Firmware **1.11.2** ke atas |
 | `crash` | Hanya dikirim setelah alat **crash**, sampai ada heartbeat yang berhasil (jadi bisa terkirim beberapa kali): `{"task":"loopTask","pc":"0x400d4634","backtrace":"0x400d4634 0x400880ed","elf":"<build id>"}`, semuanya teks. `backtrace` = daftar alamat PC dipisah spasi, `elf` = ID build firmware (untuk mencocokkan alamat dengan file ELF saat dianalisis). Firmware **1.5.0** ke atas |
 
 **Kode error di layar alat (`raw.error`):**
@@ -298,6 +310,7 @@ Objek `config` boleh disertakan di respons `/ping` dan `/heartbeat`. Semua isiny
 | `restart_at` | `"03:00"` | **Restart harian** alat ini pada jam tersebut (format `HH:MM` 24 jam, jam yang tampil di alat). Alat hanya restart kalau sedang diam (2 menit tanpa kartu/sentuhan), dalam 30 menit sejak jam itu, dan sudah menyala minimal 1 jam. `""` = tidak restart otomatis. Per alat, seperti `pin`. **Bawaan `"03:00"`** |
 | `announcements_rev` | `"7-1759212345"` | Penanda versi daftar pengumuman (teks bebas). Kalau berubah, alat segera mengambil ulang `GET /announcements` (lihat bagian 8) |
 | `tap_mode` | `"select"` | **Mode absen** alat ini (bagian 4.1): `"auto"` = semua tap ke `/tap`; `"select"` = petugas memilih DATANG/PULANG di alat, tap ke `/check-in` / `/check-out`. Tidak dikirim atau `null` = alat memakai pengaturannya sendiri (diubah dari menu alat). Nilai lain diabaikan. Per alat, seperti `pin`. Firmware **1.6.0** ke atas |
+| `tap_schedule` | `{"check_in":"06:00","check_out":"17:00"}` | **Jadwal mode pilih** alat ini (bagian 4.1): pada jam `check_in` alat memilih DATANG sendiri, pada jam `check_out` memilih PULANG. Keduanya wajib, format `HH:MM` 24 jam (jam alat), dan `check_in` harus lebih awal dari `check_out`. `null` = jadwal dimatikan (petugas memilih manual). Tidak dikirim = alat memakai jadwal terakhir yang diterima. Nilai tidak sah diabaikan. Hanya berlaku di mode `select`. Per alat, seperti `pin`. Firmware **1.11.0** ke atas |
 | `firmware_update` | `{"version":"1.5.0","url":"…","size":1523456,"md5":"…"}` | **Update firmware jarak jauh** (lihat 6.1). Tidak dikirim = tidak ada update. Aplikasi lain boleh tidak pernah mengirimnya |
 
 - Nilai di luar aturan (PIN bukan 4–8 digit, judul lebih dari 30 karakter, `dim_after` 1–9 atau lebih dari 3600, `dim_level` di luar 0–100, atau bukan angka bulat, `restart_at` bukan `HH:MM` dan bukan `""`) **diabaikan** oleh alat.
@@ -424,7 +437,7 @@ Checklist di bawah adalah syarat **API alat**. Untuk alat yang dikirim ke pelang
 - [ ] Simpan `tap_id` dan abaikan tap dengan `tap_id` yang sudah pernah dicatat.
 - [ ] (Opsional) Kirim `photo_url` JPEG kecil, `config.pin` (per alat), `config.title`, `config.dim_after` / `config.dim_level` (layar redup), dan `config.restart_at` (per alat).
 - [ ] (Opsional) Tampilkan status alat aktif dari heartbeat, plus kesehatan alat dari `raw` (restart, crash, `error`, RFID, antrean, RAM).
-- [ ] (Opsional) Mode pilih Datang/Pulang: sediakan `POST /check-in` & `POST /check-out` (bagian 4.1), plus `config.tap_mode` kalau mode absen ingin diatur dari aplikasi.
+- [ ] (Opsional) Mode pilih Datang/Pulang: sediakan `POST /check-in` & `POST /check-out` (bagian 4.1), plus `config.tap_mode` kalau mode absen ingin diatur dari aplikasi, dan `config.tap_schedule` kalau DATANG/PULANG ingin dipilih otomatis pada jam tertentu.
 - [ ] (Opsional) Update firmware jarak jauh: kirim `config.firmware_update` dan sediakan file `.bin` di `url` (bagian 6.1).
 - [ ] (Opsional) Sediakan `GET /announcements` untuk screensaver pengumuman, plus `config.announcements_rev`.
 

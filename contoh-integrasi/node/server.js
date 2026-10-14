@@ -135,7 +135,8 @@ function tentukanStatus(data, rfid, waktu, mode = null) {
 //   karyawan       [{ rfid, nama, foto_url, aktif }]             anggota pemilik kartu
 //   absensi        [{ id, tap_id, rfid, device_id, jenis, waktu, queued, raw_json, hasil }]
 //   alat           { device_id: { name, last_seen_at, firmware, ..., pin, restart_at, firmware_target,
-//                                 tap_mode, reported_tap_mode, tap_select, events } }
+//                                 tap_mode, reported_tap_mode, tap_select, tap_schedule,
+//                                 reported_tap_schedule, events } }
 //   firmware       [{ version, size, md5, notes, uploaded_at }]  file di firmware/<version>.bin
 //   pengumuman     [{ id, title, description, icon, active, order }]
 //   pengumuman_rev "2-1759212345"  (berubah tiap pengumuman diubah → config.announcements_rev)
@@ -178,6 +179,8 @@ function alatBaru() {
     tap_mode: null,          // mode absen dari server: null = ikuti pengaturan di alat, "auto", "select"
     reported_tap_mode: null, // mode absen yang sedang dipakai alat (raw.tap_mode di heartbeat)
     tap_select: null,        // pilihan DATANG/PULANG di alat: "check_in" / "check_out" / null
+    tap_schedule: null,          // jadwal mode pilih dari server: { check_in, check_out } atau null = tanpa jadwal
+    reported_tap_schedule: null, // jadwal yang sedang dipakai alat (raw.tap_schedule di heartbeat)
     events: [],            // riwayat: boot, crash, firmware, ota_failed (maks. 200)
   };
 }
@@ -242,6 +245,14 @@ const jamValid = (v) => typeof v === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.tes
 const angkaAtauNull = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
 const teksAtauNull = (v) => (typeof v === 'string' && v !== '' ? v : null);
 const objek = (v) => (v && typeof v === 'object' && !Array.isArray(v) ? v : null);
+
+// Jadwal mode pilih yang sah: {"check_in":"HH:MM","check_out":"HH:MM"} dengan check_in lebih awal.
+// Mengembalikan { check_in, check_out } (kunci lain dibuang), atau null kalau tidak sah.
+function jadwalSah(v) {
+  const j = objek(v);
+  if (!j || !jamValid(j.check_in) || !jamValid(j.check_out) || j.check_in >= j.check_out) return null;
+  return { check_in: j.check_in, check_out: j.check_out };
+}
 
 // Bentuk respons. tangani*() mengembalikan salah satu:
 //   { kode, json }              → JSON
@@ -317,6 +328,9 @@ function config(data, deviceId, req, base) {
   };
   if (a.pin) c.pin = a.pin; // PIN khusus alat ini (hanya kalau diatur)
   if (a.tap_mode) c.tap_mode = a.tap_mode; // mode absen "auto"/"select" (hanya kalau diatur dari server)
+  // Jadwal mode pilih: selalu dikirim. null = jadwal dimatikan, jadi menghapus jadwal di server juga
+  // mematikan jadwal di alat (alat hanya bisa mendapat jadwal dari server).
+  c.tap_schedule = a.tap_schedule || null;
 
   // Update firmware: hanya kalau alat dijadwalkan, versinya beda, dan versi itu belum pernah gagal di alat ini.
   const rilis = a.firmware_target && cariRilis(data, a.firmware_target);
@@ -378,6 +392,8 @@ function catatKesehatan(a, raw) {
   // Mode absen (firmware 1.6.0 ke atas; versi lama tidak mengirim → null).
   a.reported_tap_mode = ['auto', 'select'].includes(raw.tap_mode) ? raw.tap_mode : null;
   a.tap_select = ['check_in', 'check_out'].includes(raw.tap_select) ? raw.tap_select : null;
+  // Jadwal mode pilih yang dipakai alat (firmware 1.11.0 ke atas; null / tidak dikirim / tidak sah → null).
+  a.reported_tap_schedule = jadwalSah(raw.tap_schedule);
 }
 
 // Bentuk <device> untuk API admin, termasuk daftar masalah (issues) dalam bahasa Indonesia.
@@ -421,6 +437,8 @@ function dataAlat(data, deviceId) {
     tap_mode: a.tap_mode,                   // pengaturan dari server: null = ikuti alat, "auto", "select"
     reported_tap_mode: a.reported_tap_mode, // mode yang sedang dipakai alat (dari heartbeat)
     tap_select: a.tap_select,               // pilihan DATANG/PULANG di alat saat ini (null = belum memilih)
+    tap_schedule: a.tap_schedule,           // jadwal dari server: null = tanpa jadwal
+    reported_tap_schedule: a.reported_tap_schedule, // jadwal yang sedang dipakai alat (dari heartbeat)
     issues,
   };
 }
@@ -622,6 +640,15 @@ function periksaAlat(data, body) {
     const v = body.tap_mode; // null = alat memakai pengaturannya sendiri (config.tap_mode tidak dikirim)
     if (v === null || v === 'auto' || v === 'select') nilai.tap_mode = v;
     else errors.tap_mode = 'tap_mode harus null (ikuti pengaturan alat), "auto", atau "select"';
+  }
+  if (ada(body, 'tap_schedule')) {
+    // Jadwal mode pilih: {"check_in":"06:00","check_out":"17:00"}, atau null = jadwal dimatikan.
+    const v = body.tap_schedule, j = objek(v);
+    if (v === null) nilai.tap_schedule = null;
+    else if (!j || !jamValid(j.check_in) || !jamValid(j.check_out)) {
+      errors.tap_schedule = 'tap_schedule harus null (jadwal mati) atau {"check_in":"HH:MM","check_out":"HH:MM"} (00:00-23:59)';
+    } else if (!jadwalSah(j)) errors.tap_schedule = 'Jam datang (check_in) harus lebih awal dari jam pulang (check_out)';
+    else nilai.tap_schedule = jadwalSah(j);
   }
   return { errors, nilai };
 }
