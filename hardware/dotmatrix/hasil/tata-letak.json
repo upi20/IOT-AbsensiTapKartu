@@ -1,4 +1,5 @@
 {
+ "versi": "led",
  "grid": {
   "kolom": 30,
   "baris": 50,
@@ -988,6 +989,76 @@
     41
    ],
    "label": "C4 ke GND RC522"
+  },
+  {
+   "id": "TS1",
+   "sisi": "belakang",
+   "dari": [
+    5,
+    15
+   ],
+   "ke": [
+    4,
+    15
+   ],
+   "timah": true,
+   "label": "Titik sambung kabel P5: satukan 1e-015 dan 1d-015 dengan timah"
+  },
+  {
+   "id": "TS2",
+   "sisi": "belakang",
+   "dari": [
+    5,
+    17
+   ],
+   "ke": [
+    4,
+    17
+   ],
+   "timah": true,
+   "label": "Titik sambung kabel G6: satukan 1e-017 dan 1d-017 dengan timah"
+  },
+  {
+   "id": "TS3",
+   "sisi": "belakang",
+   "dari": [
+    1,
+    37
+   ],
+   "ke": [
+    2,
+    37
+   ],
+   "timah": true,
+   "label": "Titik sambung kabel G1: satukan 1a-037 dan 1b-037 dengan timah"
+  },
+  {
+   "id": "TS4",
+   "sisi": "belakang",
+   "dari": [
+    1,
+    38
+   ],
+   "ke": [
+    1,
+    39
+   ],
+   "timah": true,
+   "label": "Titik sambung kabel P2: satukan 1a-038 dan 1a-039 dengan timah"
+  },
+  {
+   "id": "TS5",
+   "sisi": "belakang",
+   "dari": [
+    19,
+    40
+   ],
+   "ke": [
+    19,
+    39
+   ],
+   "timah": true,
+   "label": "Titik sambung kabel G3: satukan 1s-040 dan 1s-039 dengan timah"
   }
  ],
  "penguat": [],
@@ -1033,21 +1104,21 @@
    "kelompok": "daya",
    "warna": "merah",
    "dari": [
-    5,
+    4,
     15
    ],
    "ke": [
     1,
     14
    ],
-   "label": "C1 (+) ke VCC LCD",
+   "label": "C1 (+) ke VCC LCD (ujung di titik sambung 1d-015)",
    "jalur": [
     [
-     13.18,
+     10.64,
      38.06
     ],
     [
-     13.18,
+     10.64,
      36.99
     ],
     [
@@ -1062,6 +1133,15 @@
      3.02,
      35.52
     ]
+   ],
+   "titik": [
+    {
+     "pin": [
+      5,
+      15
+     ],
+     "ts": "TS1"
+    }
    ]
   },
   {
@@ -1070,25 +1150,25 @@
    "warna": "merah",
    "dari": [
     1,
-    38
+    39
    ],
    "ke": [
     17,
     40
    ],
-   "label": "3V3 ESP32 ke C4 / 3.3V RC522",
+   "label": "3V3 ESP32 ke C4 / 3.3V RC522 (ujung di titik sambung 1a-039)",
    "jalur": [
     [
      3.02,
-     96.48
+     99.02
     ],
     [
      3.02,
-     97.75
+     100.29
     ],
     [
      42.39,
-     97.75
+     100.29
     ],
     [
      42.39,
@@ -1098,6 +1178,15 @@
      43.66,
      101.56
     ]
+   ],
+   "titik": [
+    {
+     "pin": [
+      1,
+      38
+     ],
+     "ts": "TS4"
+    }
    ]
   },
   {
@@ -1105,21 +1194,21 @@
    "kelompok": "gnd",
    "warna": "hitam",
    "dari": [
-    1,
+    2,
     37
    ],
    "ke": [
     5,
     17
    ],
-   "label": "GND ESP32 ke C1 (-)",
+   "label": "GND ESP32 ke C1 (-) (ujung di titik sambung 1b-037)",
    "jalur": [
     [
-     3.02,
+     5.56,
      93.94
     ],
     [
-     3.02,
+     5.56,
      92.47
     ],
     [
@@ -1134,6 +1223,15 @@
      13.18,
      43.14
     ]
+   ],
+   "titik": [
+    {
+     "pin": [
+      1,
+      37
+     ],
+     "ts": "TS3"
+    }
    ]
   },
   {
@@ -1141,21 +1239,21 @@
    "kelompok": "gnd",
    "warna": "hitam",
    "dari": [
-    5,
+    4,
     17
    ],
    "ke": [
     1,
     13
    ],
-   "label": "C1 (-) ke GND LCD",
+   "label": "C1 (-) ke GND LCD (ujung di titik sambung 1d-017)",
    "jalur": [
     [
-     13.18,
+     10.64,
      43.14
     ],
     [
-     13.18,
+     10.64,
      41.47
     ],
     [
@@ -1170,6 +1268,15 @@
      3.02,
      32.98
     ]
+   ],
+   "titik": [
+    {
+     "pin": [
+      5,
+      17
+     ],
+     "ts": "TS2"
+    }
    ]
   },
   {
@@ -1218,25 +1325,25 @@
    "warna": "hitam",
    "dari": [
     19,
-    40
+    39
    ],
    "ke": [
     30,
     39
    ],
-   "label": "GND ke LED (K)",
+   "label": "GND ke LED (K) (ujung di titik sambung 1s-039)",
    "jalur": [
     [
      48.74,
-     101.56
+     99.02
     ],
     [
      48.74,
-     100.49
+     97.95
     ],
     [
      75.61,
-     100.49
+     97.95
     ],
     [
      75.61,
@@ -1246,6 +1353,15 @@
      76.68,
      99.02
     ]
+   ],
+   "titik": [
+    {
+     "pin": [
+      19,
+      40
+     ],
+     "ts": "TS5"
+    }
    ]
   },
   {

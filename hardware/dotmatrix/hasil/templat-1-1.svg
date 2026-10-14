@@ -3262,12 +3262,12 @@
 <circle cx="192.68" cy="136.86" r="0.75" fill="none" stroke="#000" stroke-width="0.2"/>
 <text x="194.28" y="125.50" font-size="1.8" text-anchor="start" font-weight="bold">R3</text>
 <path d="M119.02 144.48 L119.02 143.61 L128.31 143.61 L128.31 86.06 L129.18 86.06" fill="none" stroke="#c0392b" stroke-width="0.3"/>
-<path d="M129.18 86.06 L129.18 84.99 L120.09 84.99 L120.09 83.52 L119.02 83.52" fill="none" stroke="#c0392b" stroke-width="0.3"/>
-<path d="M119.02 144.48 L119.02 145.75 L158.39 145.75 L158.39 149.56 L159.66 149.56" fill="none" stroke="#c0392b" stroke-width="0.3"/>
-<path d="M119.02 141.94 L119.02 140.47 L127.71 140.47 L127.71 91.14 L129.18 91.14" fill="none" stroke="#222" stroke-width="0.3"/>
-<path d="M129.18 91.14 L129.18 89.47 L120.69 89.47 L120.69 80.98 L119.02 80.98" fill="none" stroke="#222" stroke-width="0.3"/>
+<path d="M126.64 86.06 L126.64 84.99 L120.09 84.99 L120.09 83.52 L119.02 83.52" fill="none" stroke="#c0392b" stroke-width="0.3"/>
+<path d="M119.02 147.02 L119.02 148.29 L158.39 148.29 L158.39 149.56 L159.66 149.56" fill="none" stroke="#c0392b" stroke-width="0.3"/>
+<path d="M121.56 141.94 L121.56 140.47 L127.71 140.47 L127.71 91.14 L129.18 91.14" fill="none" stroke="#222" stroke-width="0.3"/>
+<path d="M126.64 91.14 L126.64 89.47 L120.69 89.47 L120.69 80.98 L119.02 80.98" fill="none" stroke="#222" stroke-width="0.3"/>
 <path d="M144.42 141.94 L145.19 141.94 L145.19 147.79 L163.97 147.79 L163.97 149.56 L164.74 149.56" fill="none" stroke="#222" stroke-width="0.3"/>
-<path d="M164.74 149.56 L164.74 148.49 L191.61 148.49 L191.61 147.02 L192.68 147.02" fill="none" stroke="#222" stroke-width="0.3"/>
+<path d="M164.74 147.02 L164.74 145.95 L191.61 145.95 L191.61 147.02 L192.68 147.02" fill="none" stroke="#222" stroke-width="0.3"/>
 <path d="M119.02 126.70 L119.02 125.43 L120.64 125.43 L120.64 78.44 L119.02 78.44" fill="none" stroke="#222" stroke-width="0.3"/>
 <path d="M119.02 134.32 L119.02 132.85 L125.02 132.85 L125.02 75.90 L119.02 75.90" fill="none" stroke="#222" stroke-width="0.3"/>
 <path d="M119.02 131.78 L119.02 130.11 L125.72 130.11 L125.72 73.36 L119.02 73.36" fill="none" stroke="#222" stroke-width="0.3"/>
@@ -3295,6 +3295,11 @@
 <line x1="119.02" y1="83.52" x2="121.56" y2="83.52" stroke="#888" stroke-width="0.6"/>
 <line x1="159.66" y1="149.56" x2="159.66" y2="152.10" stroke="#888" stroke-width="0.6"/>
 <line x1="164.74" y1="149.56" x2="164.74" y2="152.10" stroke="#888" stroke-width="0.6"/>
+<line x1="129.18" y1="86.06" x2="126.64" y2="86.06" stroke="#888" stroke-width="0.6"/>
+<line x1="129.18" y1="91.14" x2="126.64" y2="91.14" stroke="#888" stroke-width="0.6"/>
+<line x1="119.02" y1="141.94" x2="121.56" y2="141.94" stroke="#888" stroke-width="0.6"/>
+<line x1="119.02" y1="144.48" x2="119.02" y2="147.02" stroke="#888" stroke-width="0.6"/>
+<line x1="164.74" y1="149.56" x2="164.74" y2="147.02" stroke="#888" stroke-width="0.6"/>
 <path d="M12 287H62M12 285V289M62 285V289" stroke="#000" stroke-width="0.4"/>
 <text x="37" y="284" font-size="3" text-anchor="middle">50 mm</text>
 </svg>

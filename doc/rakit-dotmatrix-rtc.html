@@ -1,0 +1,817 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rakit Dot Matrix RTC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: meja kerja — papan dot matrix yang bisa dibalik di kiri, urutan langkah di kanan; bertumpuk di ponsel */
+:root {
+  --bg: #f2f3ef; --surface: #fbfbf9; --ink: #1c211f; --muted: #5b6560; --line: #d8dcd6;
+  --accent: #a8641a; --accent-soft: #f4e6d3; --ok: #2e7a4d; --ok-soft: #dcefe3; --warn: #b3392c; --warn-soft: #f7e1dd;
+  --board: #2b5a49; --board-edge: #1d3f33; --strip: #33695a; --hole: #c9cbc4; --hole-in: #1b2a24; --silk: #e8ebe7;
+  --joint: #d9dcd4; --module: #f3f5f1;
+  --w-daya: #ef5a4f; --w-gnd: #141716; --w-lcd: #5b9cf7; --w-rfid: #f2c230; --w-led: #c58cff; --w-buzzer: #f59a3c; --w-baterai: #1fb5a3; --timah: #b9c0c8;
+  --halo: #f3f5f1; --bridge: #e9ecef;
+  --f-display: "Barlow Semi Condensed", "Arial Narrow", sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #101311; --surface: #171b19; --ink: #e5e9e6; --muted: #98a39d; --line: #29302c;
+    --accent: #e3a257; --accent-soft: #3a2c1b; --ok: #5fc08b; --ok-soft: #1c3226; --warn: #f07b6c; --warn-soft: #3b1f1b;
+    --board: #24493c; --board-edge: #4a7566; --strip: #2b5648; --hole: #aeb2aa; --hole-in: #0d1512; --silk: #dde2de;
+    --joint: #c4c8bf; --module: #dfe4df; --halo: #1c2420; --w-gnd: #0a0c0b; --bridge: #d6dbe0;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #101311; --surface: #171b19; --ink: #e5e9e6; --muted: #98a39d; --line: #29302c;
+  --accent: #e3a257; --accent-soft: #3a2c1b; --ok: #5fc08b; --ok-soft: #1c3226; --warn: #f07b6c; --warn-soft: #3b1f1b;
+  --board: #24493c; --board-edge: #4a7566; --strip: #2b5648; --hole: #aeb2aa; --hole-in: #0d1512; --silk: #dde2de;
+  --joint: #c4c8bf; --module: #dfe4df; --halo: #1c2420; --w-gnd: #0a0c0b; --bridge: #d6dbe0;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.55; margin: 0; }
+.wrap { max-width: 1320px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 64px; display: grid; gap: 26px; grid-template-columns: minmax(0, 1fr); }
+.wrap > * { min-width: 0; }
+@media (min-width: 700px) { .wrap { padding-inline: 22px; } }
+
+header { display: grid; gap: 8px; }
+.eyebrow { font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h1 { font-family: var(--f-display); font-weight: 700; font-size: clamp(30px, 4.4vw, 46px); line-height: 1.05; margin: 0; text-wrap: balance; }
+h2 { font-family: var(--f-display); font-weight: 700; font-size: 24px; margin: 0; text-wrap: balance; }
+h3 { font-family: var(--f-display); font-weight: 700; font-size: 19px; margin: 0; }
+.lede { color: var(--muted); max-width: 72ch; margin: 0; }
+code, .mono { font-family: var(--f-mono); font-size: .92em; }
+.facts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.fact { font-family: var(--f-mono); font-size: 12.5px; border: 1px solid var(--line); border-radius: 6px; padding: 3px 9px; background: var(--surface); font-variant-numeric: tabular-nums; }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+.bench { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 20px; align-items: start; }
+@media (max-width: 1080px) { .bench { grid-template-columns: minmax(0, 1fr); } }
+
+.viewer { padding: 14px; display: grid; gap: 12px; min-width: 0; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { font: 500 13px var(--f-body); color: var(--muted); background: transparent; border: 0; padding: 7px 12px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.btn { font: 600 13px var(--f-body); padding: 7px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.btn.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.btn:disabled { opacity: .4; cursor: default; }
+button:focus-visible, input:focus-visible, .step:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sidebadge { font-family: var(--f-mono); font-size: 12px; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+.sidebadge b { color: var(--ink); }
+
+.stage { overflow-x: auto; border-radius: 8px; }
+.flipwrap { perspective: 2200px; min-width: 560px; }
+.flipper { position: relative; display: grid; transform-style: preserve-3d; transition: transform .7s cubic-bezier(.3,.7,.2,1); }
+.flipper.back { transform: rotateY(180deg); }
+.face { grid-area: 1 / 1; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.face.belakang { transform: rotateY(180deg); }
+@media (prefers-reduced-motion: reduce) { .flipper { transition: none; } }
+svg.board { display: block; width: 100%; height: auto; max-height: 86vh; }
+svg.board text { font-family: var(--f-mono); }
+
+.item { transition: opacity .2s ease; }
+.dim .item:not(.on) { opacity: .16; }
+.item.sel .w, .item.sel .pinring { stroke-width: 1.15; }
+.w { fill: none; stroke-width: .72; stroke-linecap: round; stroke-linejoin: round; }
+.wh { fill: none; stroke: var(--halo); stroke-width: 1.25; stroke-linecap: round; stroke-linejoin: round; }
+.hot { fill: none; stroke: var(--accent); stroke-width: .5; }
+@media (prefers-reduced-motion: no-preference) { .hot { animation: pulse 1.4s ease-in-out infinite; } }
+@keyframes pulse { 50% { stroke-opacity: .2; } }
+
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 18px; height: 4px; border-radius: 2px; display: inline-block; }
+.info { border-top: 1px solid var(--line); padding-top: 12px; display: grid; gap: 6px; min-height: 96px; }
+.info-title { font-family: var(--f-display); font-weight: 700; font-size: 20px; }
+.info dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 3px 12px; margin: 0; font-size: 14px; }
+.info dt { font-family: var(--f-mono); font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; padding-top: 2px; }
+.info dd { margin: 0; }
+.hint { font-size: 13px; color: var(--muted); }
+
+.rail { padding: 14px; display: grid; gap: 12px; }
+.progress { display: grid; gap: 6px; }
+.progress-row { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.bar { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--ok); transition: width .25s ease; }
+ol.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; max-height: 360px; overflow-y: auto; }
+.step { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 6px 8px; border-radius: 7px; border: 1px solid transparent; cursor: pointer; }
+.step:hover { background: var(--bg); }
+.step[aria-current="step"] { border-color: var(--accent); background: var(--accent-soft); }
+.step .no { font-family: var(--f-mono); font-size: 12px; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+.step .t { font-size: 14px; font-weight: 500; min-width: 0; }
+.step .s { font-family: var(--f-mono); font-size: 11px; color: var(--muted); }
+.step.done .t { color: var(--ok); }
+.step.done .no::before { content: "✓ "; color: var(--ok); }
+
+.detail { border-top: 1px solid var(--line); padding-top: 12px; display: grid; gap: 10px; }
+.detail-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; }
+.detail-num { font-family: var(--f-mono); font-size: 13px; color: var(--accent); }
+.detail p { margin: 0; }
+.detail ul, .detail ol { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.note { font-size: 14px; background: var(--accent-soft); border-radius: 6px; padding: 8px 10px; }
+.note.warn { background: var(--warn-soft); }
+ul.cek { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
+ul.cek label { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 8px; font-size: 13.5px; cursor: pointer; align-items: start; }
+ul.cek input { width: 16px; height: 16px; margin-top: 2px; accent-color: var(--ok); }
+ul.cek .mono { font-size: 12.5px; }
+.nav { display: flex; gap: 8px; }
+.nav .btn { flex: 1; justify-content: center; }
+
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+@media (max-width: 860px) { .grid2 { grid-template-columns: minmax(0, 1fr); } }
+.card { padding: 18px; display: grid; gap: 12px; align-content: start; min-width: 0; }
+.table-scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { text-align: left; padding: 7px 9px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-family: var(--f-mono); font-size: 11.5px; font-weight: 500; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); white-space: nowrap; }
+td.mono, td .mono { font-family: var(--f-mono); font-size: 12.5px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+tr.grp td { font-family: var(--f-display); font-weight: 700; font-size: 16px; padding-top: 14px; border-bottom-color: var(--ink); }
+tr.done td { color: var(--muted); }
+tr.done td:nth-child(2) { text-decoration: line-through; }
+.sw { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: 0; border: 1px solid var(--line); }
+.src { font-size: 13px; color: var(--muted); margin: 0; }
+.row-link { background: none; border: 0; padding: 0; font: inherit; color: var(--ink); text-align: left; cursor: pointer; text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Absensi RFID Terintegrasi · Perakitan PCB dot matrix</div>
+    <h1>Rakit Absensi RFID di PCB dot matrix: versi modul jam (RTC)</h1>
+    <p class="lede">Papan bolong <b>1 sisi</b> 9 × 15 cm (30 × 50 lubang): semua komponen di depan, semua solder dan kabel di belakang. Buzzer di papan. Versi ini memakai <b>modul jam RTC DS3231</b> (jam tetap tersimpan saat listrik mati) di header kabel yang di <a href="rakit-dotmatrix.html">versi LED</a> dipakai untuk LED, jadi <b>tanpa LED RGB</b>. Firmware sama untuk semua versi (1.10.0 ke atas): modul jam terdeteksi otomatis. Ada juga <a href="rakit-dotmatrix-ups.html">versi UPS</a>: sama dengan versi ini, ditambah pantau baterai di layar. Ikuti langkah di kanan satu per satu: papan di kiri menyorot lubang yang dipakai, dan berbalik sendiri ke sisi yang sedang dikerjakan. Klik komponen atau kabel untuk melihat keterangannya. Centang yang sudah selesai; tanda centang tersimpan di browser ini.</p>
+    <div class="facts" id="facts"></div>
+  </header>
+
+  <section class="bench">
+    <div class="panel viewer">
+      <div class="toolbar">
+        <div class="seg" role="group" aria-label="Sisi papan">
+          <button type="button" id="v-depan" aria-pressed="true">Depan</button>
+          <button type="button" id="v-belakang" aria-pressed="false">Belakang</button>
+        </div>
+        <button type="button" class="btn" id="flip" title="Balik papan">⟲ Balik papan</button>
+        <div class="seg" role="group" aria-label="Sorotan">
+          <button type="button" id="m-langkah" aria-pressed="true">Langkah aktif</button>
+          <button type="button" id="m-semua" aria-pressed="false">Semua</button>
+        </div>
+        <span class="sidebadge" id="sidebadge"></span>
+      </div>
+      <div class="stage">
+        <div class="flipwrap">
+          <div class="flipper" id="flipper">
+            <div class="face depan"><svg class="board" id="svg-depan" viewBox="-30 -15 136 160" role="img" aria-label="Papan dot matrix tampak depan"></svg></div>
+            <div class="face belakang"><svg class="board" id="svg-belakang" viewBox="-30 -15 136 160" role="img" aria-label="Papan dot matrix tampak belakang"></svg></div>
+          </div>
+        </div>
+      </div>
+      <div class="legend" id="legend"></div>
+      <div class="info" id="info" aria-live="polite"></div>
+    </div>
+
+    <aside class="panel rail">
+      <div class="progress">
+        <div class="progress-row"><span>Langkah selesai</span><span id="count">0 / 0</span></div>
+        <div class="bar"><i id="bar"></i></div>
+      </div>
+      <ol class="steps" id="steps"></ol>
+      <div class="detail" id="detail"></div>
+      <div class="nav">
+        <button type="button" class="btn" id="prev">Sebelumnya</button>
+        <button type="button" class="btn primary" id="next">Berikutnya</button>
+      </div>
+    </aside>
+  </section>
+
+  <section class="grid2">
+    <div class="panel card">
+      <h2>Cara membaca papan</h2>
+      <ul style="margin:0;padding-left:20px;display:grid;gap:6px">
+        <li>Penulisan lubang mengikuti <b>label yang tercetak di papan</b>: <span class="mono">1q-041</span> = kolom 1q, baris 041.</li>
+        <li><b>Kolom</b>: <span class="mono">1a … 1z</span>, lalu huruf diulang <span class="mono">2a … 2d</span> (30 kolom). <b>Baris</b>: <span class="mono">001 … 050</span>.</li>
+        <li><b>Depan</b> = sisi polos, tempat semua komponen dan modul. Dilihat dari depan, kolom <b>1a ada di kanan</b>.</li>
+        <li><b>Belakang</b> = sisi tembaga, tempat label tercetak, semua solderan, kabel, dan kawat polos (jembatan). Dilihat dari belakang, kolom 1a ada di kiri.</li>
+        <li>Kotak putus-putus = posisi modul saat dicolokkan. LCD lebih besar dari papan, jadi menjorok melewati kolom 2d dan baris 001.</li>
+        <li>Baris <b>042–050 tidak dipakai</b> (diarsir). Semua komponen dan kabel ada di baris 001–041.</li>
+      </ul>
+      <div class="note"><b>Tip:</b> tulis "DEPAN" dengan spidol di sisi polos. Karena label hanya terbaca di belakang, tandai juga beberapa kolom (1a, 1k, 1q, 1x, 2d) dan baris (001, 014, 024, 038, 041, 050) di tepi sisi depan supaya posisi komponen tidak salah.</div>
+
+
+    </div>
+    <div class="panel card">
+      <h2>Warna kabel</h2>
+      <p class="src" style="font-size:14px">Kabel asli tiga warna: <b>merah = 3V3</b>, <b>kuning = +5V baterai</b>, <b>hitam = GND dan semua sinyal</b>. Kuning dan merah <b>jangan tertukar</b>: 5 V di jalur 3V3 merusak LCD dan RC522. Warna lain di gambar hanya untuk membedakan kelompok. Setiap kabel punya kode (L1, F2, …). Tempel selotip kecil berisi kodenya di ujung kabel kalau perlu.</p>
+      <div class="legend" id="legend2"></div>
+      <p class="src">Templat cetak 1:1 (A4 tegak), tampak depan dan belakang lengkap dengan jalur kabel: <span class="mono">hardware/dotmatrix/hasil/templat-1-1-rtc.pdf</span> (cetak skala 100 %, cek garis 50 mm).</p>
+    </div>
+  </section>
+
+  <section class="panel card">
+    <h2>Daftar kabel</h2>
+    <p class="src">Semua kabel dipasang di sisi <b>belakang</b>, disolder <b>langsung menempel pada kaki</b> komponen atau soket (bersamaan dengan solderan kakinya). Centang di sini sama dengan centang di langkah.</p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th></th><th>Kode</th><th>Warna</th><th>Dari</th><th>Ke</th><th>Fungsi</th></tr></thead>
+        <tbody id="wiretable"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="grid2">
+    <div class="panel card">
+      <h2>Komponen per unit</h2>
+      <div class="table-scroll"><table><thead><tr><th>Kode</th><th>Komponen</th><th>Nilai</th><th>Lubang</th></tr></thead><tbody id="parttable"></tbody></table></div>
+    </div>
+    <div class="panel card">
+      <h2>Kalau hasilnya tidak normal</h2>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Gejala</th><th>Periksa</th></tr></thead>
+          <tbody>
+            <tr><td>ESP32 tidak menyala / USB panas</td><td>Cabut USB. Multimeter mode bunyi antara 1a-014 (VCC) dan 1a-013 (GND) di belakang: tidak boleh berbunyi terus. Cari timah yang menyambung dua lubang bersebelahan.</td></tr>
+            <tr><td>Layar putih polos</td><td>Kabel L1–L5 (CS, RESET, DC, SDI, SCK) dan solderan soket J3.</td></tr>
+            <tr><td>Layar gelap</td><td>Kabel L6 (D2 → LED).</td></tr>
+            <tr><td>Sentuhan tidak jalan / meleset</td><td>L7–L10 (T_CLK, T_CS, T_DIN, T_DO). Kalau sudah benar, kalibrasi ulang dari menu.</td></tr>
+            <tr><td>"RFID tidak terdeteksi" (E30)</td><td>F1–F5, G2, P2, C4 dan jembatan JB3–JB4. Pin RC522 harus menghadap ke papan.</td></tr>
+            <tr><td>Buzzer diam</td><td>Kabel B1 (D17 → + buzzer 2b-004) dan B2 (GND → − buzzer 2b-001), kaki buzzer tidak terbalik. Coba menu Tes buzzer.</td></tr>
+            <tr><td>Buzzer bunyi terus</td><td>D17 tersambung ke kaki − buzzer (terbalik), atau kaki + buzzer tersambung ke 3V3. Kaki buzzer hanya boleh ke D17 (+) dan GND (−).</td></tr>
+            <tr><td>Bunyi buzzer serak / pelan</td><td>Firmware sebelum 1.6.0 belum menaikkan arus pin D17. Update firmware (Pengaturan → Update firmware).</td></tr>
+            <tr><td>Jam hilang setelah mati listrik / Info alat tanpa "+ RTC"</td><td>Urutan header JRTC di kolom 2d: GND 021, VCC 022, SDA 023, SCL 024, sama dengan pin modul. Kabel E1, E2, P6, G3. Baterai koin CR2032 di modul terpasang.</td></tr>
+            <tr><td>Alat restart saat listrik mati / charger dicabut</td><td>Jumper keluaran modul UPS di <b>5V</b>, elco 1000 µF di UPS+/UPS−, kabel V1 (kuning) ke VIN 1k-038 dan V2 ke GND 1k-037, charger minimal 2 A.</td></tr>
+            <tr><td>Alat tidak menyala dengan baterai</td><td>Saklar ON, baterai terpasang benar (kutub + sesuai tanda), terminal JDAYA: +5V di 2d-031, GND di 2d-033.</td></tr>
+            <tr><td>Upload gagal</td><td>Lepas LCD dan RC522, coba lagi. Pastikan tidak ada timah yang menyambung D2 atau D12 ke 3V3.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+const DATA = /*DATA*/{"versi":"rtc","grid":{"kolom":30,"baris":50,"baris_terakhir":41,"x1":3.02,"y1":2.5,"jarak":2.54},"tepi":{"kiri":1.75,"kanan":77.95,"atas":1.23,"bawah":128.23},"bor":[],"komponen":[{"id":"J2","nama":"Soket ESP32 (D23 ... 3V3)","jenis":"soket","sisi":"depan","catatan":"Header female 1x15. D23 di 1a-024, 3V3 di 1a-038","pin":[{"nama":"D23","cr":[1,24],"xy":[3.02,60.92]},{"nama":"D22","cr":[1,25],"xy":[3.02,63.46]},{"nama":"TX","cr":[1,26],"xy":[3.02,66.0]},{"nama":"RX","cr":[1,27],"xy":[3.02,68.54]},{"nama":"D21","cr":[1,28],"xy":[3.02,71.08]},{"nama":"D19","cr":[1,29],"xy":[3.02,73.62]},{"nama":"D18","cr":[1,30],"xy":[3.02,76.16]},{"nama":"D5","cr":[1,31],"xy":[3.02,78.7]},{"nama":"D17","cr":[1,32],"xy":[3.02,81.24]},{"nama":"D16","cr":[1,33],"xy":[3.02,83.78]},{"nama":"D4","cr":[1,34],"xy":[3.02,86.32]},{"nama":"D2","cr":[1,35],"xy":[3.02,88.86]},{"nama":"D15","cr":[1,36],"xy":[3.02,91.4]},{"nama":"GND","cr":[1,37],"xy":[3.02,93.94]},{"nama":"3V3","cr":[1,38],"xy":[3.02,96.48]}]},{"id":"J1","nama":"Soket ESP32 (EN ... VIN)","jenis":"soket","sisi":"depan","catatan":"Header female 1x15. EN di 1k-024, VIN di 1k-038","pin":[{"nama":"EN","cr":[11,24],"xy":[28.42,60.92]},{"nama":"VP","cr":[11,25],"xy":[28.42,63.46]},{"nama":"VN","cr":[11,26],"xy":[28.42,66.0]},{"nama":"D34","cr":[11,27],"xy":[28.42,68.54]},{"nama":"D35","cr":[11,28],"xy":[28.42,71.08]},{"nama":"D32","cr":[11,29],"xy":[28.42,73.62]},{"nama":"D33","cr":[11,30],"xy":[28.42,76.16]},{"nama":"D25","cr":[11,31],"xy":[28.42,78.7]},{"nama":"D26","cr":[11,32],"xy":[28.42,81.24]},{"nama":"D27","cr":[11,33],"xy":[28.42,83.78]},{"nama":"D14","cr":[11,34],"xy":[28.42,86.32]},{"nama":"D12","cr":[11,35],"xy":[28.42,88.86]},{"nama":"D13","cr":[11,36],"xy":[28.42,91.4]},{"nama":"GND","cr":[11,37],"xy":[28.42,93.94]},{"nama":"VIN","cr":[11,38],"xy":[28.42,96.48]}]},{"id":"J3","nama":"Soket LCD","jenis":"soket","sisi":"depan","catatan":"Header female 1x14. T_IRQ di 1a-001, VCC di 1a-014","pin":[{"nama":"VCC","cr":[1,14],"xy":[3.02,35.52]},{"nama":"GND","cr":[1,13],"xy":[3.02,32.98]},{"nama":"CS","cr":[1,12],"xy":[3.02,30.44]},{"nama":"RESET","cr":[1,11],"xy":[3.02,27.9]},{"nama":"DC","cr":[1,10],"xy":[3.02,25.36]},{"nama":"SDI","cr":[1,9],"xy":[3.02,22.82]},{"nama":"SCK","cr":[1,8],"xy":[3.02,20.28]},{"nama":"LED","cr":[1,7],"xy":[3.02,17.74]},{"nama":"SDO","cr":[1,6],"xy":[3.02,15.2]},{"nama":"T_CLK","cr":[1,5],"xy":[3.02,12.66]},{"nama":"T_CS","cr":[1,4],"xy":[3.02,10.12]},{"nama":"T_DIN","cr":[1,3],"xy":[3.02,7.58]},{"nama":"T_DO","cr":[1,2],"xy":[3.02,5.04]},{"nama":"T_IRQ","cr":[1,1],"xy":[3.02,2.5]}]},{"id":"J4","nama":"Soket RC522","jenis":"soket","sisi":"depan","catatan":"Header female 1x8, mendatar. 3.3V di 1q-041, SDA di 1x-041","pin":[{"nama":"SDA","cr":[24,41],"xy":[61.44,104.1]},{"nama":"SCK","cr":[23,41],"xy":[58.9,104.1]},{"nama":"MOSI","cr":[22,41],"xy":[56.36,104.1]},{"nama":"MISO","cr":[21,41],"xy":[53.82,104.1]},{"nama":"IRQ","cr":[20,41],"xy":[51.28,104.1]},{"nama":"GND","cr":[19,41],"xy":[48.74,104.1]},{"nama":"RST","cr":[18,41],"xy":[46.2,104.1]},{"nama":"3.3V","cr":[17,41],"xy":[43.66,104.1]}]},{"id":"JRTC","nama":"Header kabel modul jam RTC DS3231","jenis":"soket","sisi":"depan","catatan":"Header male 1x4 tegak di tepi 2d, baris 021-024: GND, VCC, SDA, SCL (urutan sama dengan pin modul, kabel lurus tanpa disilang). Jauh dari modul baterai supaya baterai koin modul jam mudah diganti. Kabel jumper female ke pin SDA, SCL, VCC, GND modul DS3231 (ZS-042). Pin 32K dan SQW modul tidak disambung","pin":[{"nama":"GND","cr":[30,21],"xy":[76.68,53.3]},{"nama":"VCC","cr":[30,22],"xy":[76.68,55.84]},{"nama":"SDA","cr":[30,23],"xy":[76.68,58.38]},{"nama":"SCL","cr":[30,24],"xy":[76.68,60.92]}]},{"id":"BZ1","nama":"Buzzer aktif","jenis":"buzzer","sisi":"depan","nilai":"aktif 12 mm","catatan":"Langsung di papan, di bawah LCD. Kaki + (lebih panjang, ada tanda +) di 2b-004, kaki - di 2b-001. Digerakkan langsung oleh pin D17 (tanpa transistor), seperti prototipe expansion board","pin":[{"nama":"+","cr":[28,4],"xy":[71.6,10.12]},{"nama":"-","cr":[28,1],"xy":[71.6,2.5]}]},{"id":"C2","nama":"Keramik dekat LCD","jenis":"keramik","sisi":"depan","nilai":"47 nF (473)","catatan":"Tidak punya plus-minus. Di bawah LCD, tepat di sebelah pin LCD: 1b-013 disatukan dengan 1a-013 (GND), 1b-014 disatukan dengan 1a-014 (VCC). Baris 013 dan 014 TIDAK boleh menyatu","pin":[{"nama":"1","cr":[2,13],"xy":[5.56,32.98]},{"nama":"2","cr":[2,14],"xy":[5.56,35.52]}]},{"id":"C1","nama":"Elco penstabil daya","jenis":"elco-tidur","sisi":"depan","nilai":"220 uF 16-25 V","catatan":"Dipasang TIDUR di bawah LCD (badan rebah ke arah kolom 1f-1j). Kaki panjang (+) di 1e-015, sisi bergaris (-) di 1e-017. Kaki direntangkan 2 lubang (5 mm); baris 016 kosong sebagai pemisah","pin":[{"nama":"+","cr":[5,15],"xy":[13.18,38.06]},{"nama":"-","cr":[5,17],"xy":[13.18,43.14]}]},{"id":"C4","nama":"Keramik dekat RC522","jenis":"keramik","sisi":"depan","nilai":"47 nF (473)","catatan":"Tidak punya plus-minus. Pasang rapat ke papan. 1q-040 tersambung ke 3.3V RC522 (1q-041), 1s-040 ke GND RC522 (1s-041) lewat jembatan JB3 dan JB4. Masih di bawah ujung header RC522, bukan di bawah antena","pin":[{"nama":"1","cr":[17,40],"xy":[43.66,101.56]},{"nama":"2","cr":[19,40],"xy":[48.74,101.56]}]},{"id":"JDAYA","nama":"Terminal daya baterai (modul UPS)","jenis":"soket","sisi":"depan","catatan":"Terminal sekrup 2 pin KF301-2P (jarak kaki 5,08 mm), lubang kabel menghadap ke luar papan: +5V di 2d-031, GND di 2d-033, baris 2d-032 KOSONG sebagai pemisah. Pengganti: header male 1x3 dengan pin tengah dicabut. Kabel dari modul UPS lewat saklar: kuning = +5V, hitam = GND. Jangan tertukar","pin":[{"nama":"+5V","cr":[30,31],"xy":[76.68,78.7]},{"nama":"GND","cr":[30,33],"xy":[76.68,83.78]}]}],"modul":[{"id":"m-lcd","nama":"LCD 3.5\"","sisi":"depan","kotak":[1.02,-9.16,99.02,47.18]},{"id":"m-rc522","nama":"RC522","sisi":"depan","kotak":[30.94,47.18,70.94,106.0]},{"id":"m-esp32","nama":"ESP32 DevKit","sisi":"depan","kotak":[1.72,54.88,29.72,106.38]}],"jembatan":[{"id":"JB1","sisi":"belakang","dari":[1,13],"ke":[2,13],"label":"GND LCD - C2 (disatukan dengan timah)"},{"id":"JB2","sisi":"belakang","dari":[1,14],"ke":[2,14],"label":"VCC LCD - C2 (disatukan dengan timah)"},{"id":"JB3","sisi":"belakang","dari":[17,40],"ke":[17,41],"label":"C4 ke 3.3V RC522"},{"id":"JB4","sisi":"belakang","dari":[19,40],"ke":[19,41],"label":"C4 ke GND RC522"},{"id":"TS1","sisi":"belakang","dari":[5,15],"ke":[4,15],"timah":true,"label":"Titik sambung kabel P5: satukan 1e-015 dan 1d-015 dengan timah"},{"id":"TS2","sisi":"belakang","dari":[5,17],"ke":[4,17],"timah":true,"label":"Titik sambung kabel G6: satukan 1e-017 dan 1d-017 dengan timah"},{"id":"TS3","sisi":"belakang","dari":[30,33],"ke":[29,33],"timah":true,"label":"Titik sambung kabel G3: satukan 2d-033 dan 2c-033 dengan timah"},{"id":"TS4","sisi":"belakang","dari":[1,37],"ke":[2,37],"timah":true,"label":"Titik sambung kabel G1: satukan 1a-037 dan 1b-037 dengan timah"},{"id":"TS5","sisi":"belakang","dari":[11,37],"ke":[10,37],"timah":true,"label":"Titik sambung kabel G2: satukan 1k-037 dan 1j-037 dengan timah"},{"id":"TS6","sisi":"belakang","dari":[1,38],"ke":[1,39],"timah":true,"label":"Titik sambung kabel P2: satukan 1a-038 dan 1a-039 dengan timah"},{"id":"TS7","sisi":"belakang","dari":[17,40],"ke":[17,39],"timah":true,"label":"Titik sambung kabel P6: satukan 1q-040 dan 1q-039 dengan timah"}],"penguat":[],"kabel":[{"id":"P1","kelompok":"daya","warna":"merah","dari":[1,38],"ke":[5,15],"label":"3V3 ESP32 ke C1 (+)","jalur":[[3.02,96.48],[3.02,95.61],[12.31,95.61],[12.31,38.06],[13.18,38.06]]},{"id":"P5","kelompok":"daya","warna":"merah","dari":[4,15],"ke":[1,14],"label":"C1 (+) ke VCC LCD (ujung di titik sambung 1d-015)","jalur":[[10.64,38.06],[10.64,36.99],[4.09,36.99],[4.09,35.52],[3.02,35.52]],"titik":[{"pin":[5,15],"ts":"TS1"}]},{"id":"P2","kelompok":"daya","warna":"merah","dari":[1,39],"ke":[17,40],"label":"3V3 ESP32 ke C4 / 3.3V RC522 (ujung di titik sambung 1a-039)","jalur":[[3.02,99.02],[3.02,100.29],[42.39,100.29],[42.39,101.56],[43.66,101.56]],"titik":[{"pin":[1,38],"ts":"TS6"}]},{"id":"P6","kelompok":"daya","warna":"merah","dari":[17,39],"ke":[30,22],"label":"C4 (3.3V) ke VCC modul jam (ujung di titik sambung 1q-039)","jalur":[[43.66,99.02],[43.66,97.55],[75.21,97.55],[75.21,55.84],[76.68,55.84]],"titik":[{"pin":[17,40],"ts":"TS7"}]},{"id":"G1","kelompok":"gnd","warna":"hitam","dari":[2,37],"ke":[5,17],"label":"GND ESP32 ke C1 (-) (ujung di titik sambung 1b-037)","jalur":[[5.56,93.94],[5.56,92.27],[11.51,92.27],[11.51,43.14],[13.18,43.14]],"titik":[{"pin":[1,37],"ts":"TS4"}]},{"id":"G6","kelompok":"gnd","warna":"hitam","dari":[4,17],"ke":[1,13],"label":"C1 (-) ke GND LCD (ujung di titik sambung 1d-017)","jalur":[[10.64,43.14],[10.64,42.27],[3.89,42.27],[3.89,32.98],[3.02,32.98]],"titik":[{"pin":[5,17],"ts":"TS2"}]},{"id":"G2","kelompok":"gnd","warna":"hitam","dari":[10,37],"ke":[19,40],"label":"GND ESP32 ke C4 / GND RC522 (ujung di titik sambung 1j-037)","jalur":[[25.88,93.94],[26.9,93.94],[26.9,100.04],[47.72,100.04],[47.72,101.56],[48.74,101.56]],"titik":[{"pin":[11,37],"ts":"TS5"}]},{"id":"G3","kelompok":"gnd","warna":"hitam","dari":[29,33],"ke":[30,21],"label":"GND terminal daya ke modul jam (ujung di titik sambung 2c-033)","jalur":[[74.14,83.78],[74.14,82.51],[75.41,82.51],[75.41,53.3],[76.68,53.3]],"titik":[{"pin":[30,33],"ts":"TS3"}]},{"id":"L1","kelompok":"lcd","warna":"hitam","dari":[1,31],"ke":[1,12],"label":"D5 ke CS","jalur":[[3.02,78.7],[3.02,77.23],[4.64,77.23],[4.64,30.44],[3.02,30.44]]},{"id":"L2","kelompok":"lcd","warna":"hitam","dari":[1,34],"ke":[1,11],"label":"D4 ke RESET","jalur":[[3.02,86.32],[3.02,84.65],[9.02,84.65],[9.02,27.9],[3.02,27.9]]},{"id":"L3","kelompok":"lcd","warna":"hitam","dari":[1,33],"ke":[1,10],"label":"D16 ke DC","jalur":[[3.02,83.78],[3.02,82.91],[9.72,82.91],[9.72,25.36],[3.02,25.36]]},{"id":"L4","kelompok":"lcd","warna":"hitam","dari":[1,24],"ke":[1,9],"label":"D23 ke SDI","jalur":[[3.02,60.92],[3.02,59.85],[2.1,59.85],[2.1,22.82],[3.02,22.82]]},{"id":"L5","kelompok":"lcd","warna":"hitam","dari":[1,30],"ke":[1,8],"label":"D18 ke SCK","jalur":[[3.02,76.16],[3.02,74.89],[7.18,74.89],[7.18,20.28],[3.02,20.28]]},{"id":"L6","kelompok":"lcd","warna":"hitam","dari":[1,35],"ke":[1,7],"label":"D2 ke LED (lampu layar)","jalur":[[3.02,88.86],[3.02,87.39],[14.1,87.39],[14.1,17.74],[3.02,17.74]]},{"id":"L7","kelompok":"lcd","warna":"hitam","dari":[1,25],"ke":[1,5],"label":"D22 ke T_CLK","jalur":[[3.02,63.46],[3.02,61.79],[6.48,61.79],[6.48,12.66],[3.02,12.66]]},{"id":"L8","kelompok":"lcd","warna":"hitam","dari":[1,36],"ke":[1,4],"label":"D15 ke T_CS","jalur":[[3.02,91.4],[3.02,90.53],[14.8,90.53],[14.8,10.12],[3.02,10.12]]},{"id":"L9","kelompok":"lcd","warna":"hitam","dari":[1,28],"ke":[1,3],"label":"D21 ke T_DIN","jalur":[[3.02,71.08],[3.02,70.01],[11.56,70.01],[11.56,7.58],[3.02,7.58]]},{"id":"L10","kelompok":"lcd","warna":"hitam","dari":[1,29],"ke":[1,2],"label":"D19 ke T_DO","jalur":[[3.02,73.62],[3.02,72.35],[12.26,72.35],[12.26,5.04],[3.02,5.04]]},{"id":"F1","kelompok":"rfid","warna":"hitam","dari":[11,30],"ke":[24,41],"label":"D33 ke SDA RC522","jalur":[[28.42,76.16],[29.94,76.16],[29.94,100.54],[59.92,100.54],[59.92,104.1],[61.44,104.1]]},{"id":"F2","kelompok":"rfid","warna":"hitam","dari":[11,34],"ke":[23,41],"label":"D14 ke SCK RC522","jalur":[[28.42,86.32],[30.19,86.32],[30.19,100.79],[57.13,100.79],[57.13,104.1],[58.9,104.1]]},{"id":"F3","kelompok":"rfid","warna":"hitam","dari":[11,36],"ke":[22,41],"label":"D13 ke MOSI RC522","jalur":[[28.42,91.4],[29.19,91.4],[29.19,99.79],[55.59,99.79],[55.59,104.1],[56.36,104.1]]},{"id":"F4","kelompok":"rfid","warna":"hitam","dari":[11,28],"ke":[21,41],"label":"D35 ke MISO RC522","jalur":[[28.42,71.08],[29.44,71.08],[29.44,100.04],[52.8,100.04],[52.8,104.1],[53.82,104.1]]},{"id":"F5","kelompok":"rfid","warna":"hitam","dari":[11,29],"ke":[18,41],"label":"D32 ke RST RC522","jalur":[[28.42,73.62],[29.69,73.62],[29.69,100.29],[44.93,100.29],[44.93,104.1],[46.2,104.1]]},{"id":"E1","kelompok":"led","warna":"hitam","dari":[11,31],"ke":[30,23],"label":"D25 ke SDA modul jam","jalur":[[28.42,78.7],[29.94,78.7],[29.94,95.46],[72.62,95.46],[72.62,58.38],[76.68,58.38]]},{"id":"E2","kelompok":"led","warna":"hitam","dari":[11,32],"ke":[30,24],"label":"D26 ke SCL modul jam","jalur":[[28.42,81.24],[30.19,81.24],[30.19,95.71],[72.37,95.71],[72.37,60.92],[76.68,60.92]]},{"id":"V1","kelompok":"baterai","warna":"kuning","dari":[30,31],"ke":[11,38],"label":"+5V baterai ke VIN ESP32","jalur":[[76.68,78.7],[75.91,78.7],[75.91,97.25],[29.19,97.25],[29.19,96.48],[28.42,96.48]]},{"id":"V2","kelompok":"baterai","warna":"hitam","dari":[30,33],"ke":[11,37],"label":"GND baterai ke GND ESP32","jalur":[[76.68,83.78],[75.66,83.78],[75.66,97.5],[29.44,97.5],[29.44,93.94],[28.42,93.94]]},{"id":"B1","kelompok":"buzzer","warna":"hitam","dari":[1,32],"ke":[28,4],"label":"D17 ke buzzer (+)","jalur":[[3.02,81.24],[19.53,81.24],[19.53,44.06],[70.33,44.06],[70.33,10.12],[71.6,10.12]]},{"id":"B2","kelompok":"buzzer","warna":"hitam","dari":[1,37],"ke":[28,1],"label":"GND ke buzzer (-)","jalur":[[3.02,93.94],[22.07,93.94],[22.07,44.76],[70.33,44.76],[70.33,2.5],[71.6,2.5]]}]}/*AKHIR-DATA*/;
+
+(function () {
+  const NS = "http://www.w3.org/2000/svg";
+  const KEY = "absensi.dotmatrix-rtc.v1.";
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem(KEY + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem(KEY + k, JSON.stringify(v)); } catch (e) {} }
+  };
+
+  const G = DATA.grid, T = DATA.tepi;
+  const X = c => +(G.x1 + G.jarak * (c - 1)).toFixed(2);
+  const Y = r => +(G.y1 + G.jarak * (r - 1)).toFixed(2);
+  // Label lubang seperti tercetak di papan: kolom 1a..1z lalu 2a..2d, baris 001..050. Contoh [26, 24] = "1z-024".
+  const kolomNama = c => c <= 26 ? "1" + String.fromCharCode(96 + c) : "2" + String.fromCharCode(96 + c - 26);
+  const lub = cr => `${kolomNama(cr[0])}-${String(cr[1]).padStart(3, "0")}`;
+  const CERMIN = T.kiri + T.kanan, TENGAH = CERMIN / 2;  // cermin terhadap tengah papan
+
+  const WARNA = {
+    daya: { css: "var(--w-daya)", nama: "3V3 (kabel merah)" },
+    gnd: { css: "var(--w-gnd)", nama: "GND (kabel hitam)" },
+    lcd: { css: "var(--w-lcd)", nama: "Sinyal LCD" },
+    rfid: { css: "var(--w-rfid)", nama: "Sinyal RC522" },
+    led: { css: "var(--w-led)", nama: "Modul jam (I2C)" },
+    buzzer: { css: "var(--w-buzzer)", nama: "Buzzer" },
+    baterai: { css: "var(--w-baterai)", nama: "Daya baterai 5V (kabel kuning + hitam)" }
+  };
+
+  const byId = {};
+  DATA.komponen.forEach(k => byId[k.id] = Object.assign({ tipe: "komponen" }, k));
+  DATA.kabel.forEach(k => byId[k.id] = Object.assign({ tipe: "kabel" }, k));
+  DATA.jembatan.forEach(j => byId[j.id] = Object.assign({ tipe: "jembatan" }, j));
+  DATA.modul.forEach(m => byId[m.id] = Object.assign({ tipe: "modul" }, m));
+  DATA.bor.forEach(b => byId[b.id] = Object.assign({ tipe: "bor" }, b));
+  DATA.penguat.forEach(p => byId[p.id] = Object.assign({ tipe: "penguat" }, p));
+
+  // Nama titik: kaki komponen atau lubang tembus
+  function titik(cr) {
+    for (const k of DATA.komponen) for (const p of k.pin) if (p.cr[0] === cr[0] && p.cr[1] === cr[1]) {
+      const nm = k.jenis === "soket" ? `${k.id} ${p.nama}` : (k.pin.length === 2 && /^[12]$/.test(p.nama) ? `${k.id}` : `${k.id} ${p.nama}`);
+      return { teks: nm, lubang: lub(cr) };
+    }
+    for (const j of DATA.jembatan) if (j.sisi === "depan" && j.ke[0] === cr[0] && j.ke[1] === cr[1]) {
+      const [, s, n] = j.id.split("-");
+      return { teks: `${s} ${n} (tembus)`, lubang: lub(cr) };
+    }
+    for (const j of DATA.jembatan) if (j.timah && j.ke[0] === cr[0] && j.ke[1] === cr[1]) {
+      return { teks: `titik sambung ${j.id} (timah ke ${titik(j.dari).teks} ${lub(j.dari)})`, lubang: lub(cr) };
+    }
+    return { teks: "", lubang: lub(cr) };
+  }
+
+  // ---------- Langkah ----------
+  const kabelKel = (...ids) => ids;
+  const STEPS = [
+    { id: "alat", judul: "Siapkan alat & bahan", sisi: "depan", sorot: [],
+      isi: `<p>Bahan per unit: 1 papan dot matrix <b>1 sisi</b> 9 × 15 cm (30 × 50 lubang), header female 1×15 ×2, 1×14 ×1, 1×8 ×1, header male 1×4 (untuk kabel modul jam), elco 220 µF ×1, keramik 47 nF ×2, kabel silikon merah ± 0.6 m dan hitam ± 2 m, buzzer aktif 12 mm, kabel jumper female 4 jalur, modul jam <b>DS3231 (ZS-042)</b> + baterai koin CR2032 (bukan DS1307: modul itu butuh 5 V). <b>Baterai:</b> terminal sekrup 2 pin <b>KF301-2P</b> (5,08 mm), modul UPS <b>LX-2BUPS varian 5V</b>, 2 × baterai 18650 sama persis, saklar rocker <b>KCD11</b> (3 A), elco 1000 µF 10 V, kabel <b>kuning</b> ± 30 cm, charger 5 V minimal 2 A.</p>
+             <div class="note">Simpan potongan kaki resistor: dipakai untuk 4 kawat jembatan pendek di belakang. Elco 22 µF tidak dipakai lagi (buzzer di luar papan, cukup C1 220 µF).</div>`,
+      cek: ["Solder, timah, tang potong", "Multimeter", "Spidol, selotip kertas", "Templat dicetak (opsional)"] },
+    { id: "papan", judul: "Kenali sisi papan", sisi: "belakang", sorot: [],
+      isi: `<ol><li>Sisi <b>tembaga</b> (ada label 1a…2d, 001…050) = <b>belakang</b>: tempat menyolder dan memasang kabel.</li>
+             <li>Sisi <b>polos</b> = <b>depan</b>: tempat semua komponen. Tulis "DEPAN" dengan spidol.</li>
+             <li>Dari depan, kolom 1a ada di <b>kanan</b>. Tandai beberapa kolom dan baris di tepi sisi depan (lihat "Cara membaca papan").</li></ol>
+             <div class="note">Cara menyolder di papan 1 sisi: kaki dimasukkan dari depan, lalu disolder di pad tembaga belakang. Kabel disolder menempel ke kaki yang sama.</div>`,
+      cek: ["Sisi depan ditandai", "Tanda kolom & baris di sisi depan"] },
+    { id: "soket-esp", judul: "Soket ESP32 (J1, J2)", sisi: "depan", sorot: ["J1", "J2", "m-esp32"],
+      isi: `<ol><li>Potong 2 header female <b>1×15</b>. Masukkan dari <b>depan</b>: J2 di kolom <b>1a</b>, J1 di kolom <b>1k</b>, keduanya baris <b>024–038</b>.</li>
+             <li>Colokkan ESP32 supaya jaraknya pas: komponen ESP32 menghadap Anda, <b>USB ke arah bawah</b> (melewati baris 041). D23 harus di 1a-024 dan EN di 1k-024.</li>
+             <li>Balik papan, solder 2 kaki ujung tiap soket di belakang, cek tegak lurus, lalu solder semua 30 kaki. Lepas ESP32.</li></ol>`,
+      cek: ["J2 kolom 1a, baris 024–038", "J1 kolom 1k, baris 024–038", "ESP32 masuk pas, USB ke bawah", "30 kaki tersolder"] },
+    { id: "soket-modul", judul: "Soket LCD (J3) & RC522 (J4)", sisi: "depan", sorot: ["J3", "J4", "m-lcd", "m-rc522"],
+      isi: `<ol><li>J3: header female <b>1×14</b> di kolom <b>1a</b>, baris <b>001–014</b> (T_IRQ di 001, VCC di 014).</li>
+             <li>J4: header female <b>1×8</b> <b>mendatar</b> di baris <b>041</b>, kolom <b>1q–1x</b> (3.3V di 1q, SDA di 1x).</li>
+             <li>Colokkan LCD dan RC522 untuk mengecek: tidak saling menekan, dan tidak menekan ESP32. Solder 2 kaki ujung, cek lurus, solder semua. Lepas modul.</li></ol>`,
+      cek: ["J3 1a-001…1a-014", "J4 1q-041…1x-041", "LCD, RC522, ESP32 terpasang bersamaan tanpa saling menekan", "Semua kaki tersolder"] },
+    { id: "bawah-lcd", judul: "Kapasitor di bawah LCD (C2, C1)", sisi: "depan", sorot: ["C2", "C1", "JB1", "JB2"],
+      isi: `<ol><li>C2 (47 nF, bebas arah) di <span class="mono">1b-013</span> dan <span class="mono">1b-014</span>, tepat di sebelah pin GND dan VCC LCD.</li>
+             <li>Di belakang, <b>satukan dengan timah</b> (atau tekuk kaki C2): <b>JB1</b> 1a-013 ↔ 1b-013 (GND) dan <b>JB2</b> 1a-014 ↔ 1b-014 (VCC). Baris 013 dan 014 <b>tidak boleh</b> menyatu satu sama lain.</li>
+             <li>C1 (220 µF) dipasang <b>tidur</b>: rentangkan kaki 2 lubang, <b>kaki panjang (+) di 1e-015</b>, bergaris (−) di 1e-017, badan rebah ke arah kolom 1f–1j. C1 berdiri sendiri: tidak dijembatani, nanti disambung kabel P1, P5, G1, G6.</li></ol>
+             <div class="note">Baris 016 sengaja dikosongkan di antara kaki C1 supaya 3V3 dan GND berjarak 5 mm.</div>
+             <div class="note warn">Elco terbalik bisa menggelembung. Cek dua kali sebelum menyolder.</div>`,
+      items: ["C2", "C1", "JB1", "JB2"] },
+    { id: "c4", judul: "Kapasitor RC522 (C4)", sisi: "depan", sorot: ["C4", "JB3", "JB4"],
+      isi: `<p>C4 (47 nF) di <span class="mono">1q-040</span> dan <span class="mono">1s-040</span>, tepat di atas pin 3.3V dan GND RC522 (masih di bawah ujung header RC522, bukan di bawah antena). Pasang <b>rapat ke papan</b> supaya tidak menyentuh RC522. Di belakang: <b>JB3</b> 1q-040 → 1q-041 dan <b>JB4</b> 1s-040 → 1s-041 (cukup tekuk kaki C4 ke pad di bawahnya).</p>`,
+      items: ["C4", "JB3", "JB4"] },
+    { id: "header-luar", judul: "Buzzer, header modul jam & daya", sisi: "depan", sorot: ["BZ1", "JRTC", "JDAYA"],
+      isi: `<ol><li>Buzzer langsung di papan, di bawah LCD: <b>kaki + (lebih panjang, ada tanda +) di 2b-004</b>, kaki − di 2b-001. Badan buzzer menempel ke papan; cek LCD masih bisa dicolok tanpa menekan buzzer.</li>
+             <li>JRTC: header male <b>1×4</b> tegak di kolom <b>2d</b>, baris <b>021–024</b>: <b>GND 021, VCC 022, SDA 023, SCL 024</b> (urutan sama dengan pin modul DS3231, kabel lurus). Letaknya jauh dari modul baterai, supaya baterai koin modul jam mudah diganti.</li><li>JDAYA: <b>terminal sekrup 2 pin KF301-2P</b> di kolom <b>2d</b>: <b>+5V di 031, GND di 033</b>, lubang kabel menghadap ke luar papan. Baris <b>032 dibiarkan kosong</b> sebagai pemisah, supaya +5V dan GND tidak mungkin tersambung timah. Beri tanda spidol "+" di sebelah 031. (Pengganti: header male 1×3, pin tengah dicabut.)</li>
+             <li>Modul jam ditempel di casing atau di belakang papan (double tape busa, jangan di belakang antena RC522), disambung kabel jumper female 4 jalur ke pin <b>SDA, SCL, VCC, GND</b> modul. Pin 32K dan SQW tidak dipakai. Pasang baterai koin CR2032 di modul.</li></ol>
+             <div class="note">Buzzer digerakkan <b>langsung oleh pin D17</b> tanpa transistor (sama seperti prototipe). Firmware menaikkan arus pin D17 supaya bunyinya jernih.</div>`,
+      cek: ["Buzzer + di 2b-004, − di 2b-001", "LCD terpasang tanpa menekan buzzer", "JRTC 2d-021…024 (GND VCC SDA SCL)", "Kabel modul jam 4 jalur siap", "JDAYA 2d-031 (+5V), 2d-033 (GND), 032 kosong"] },
+    { id: "daya", judul: "Kabel daya merah (3V3)", sisi: "belakang", sorot: ["P1", "P5", "P2", "P6"],
+      isi: `<p>Kupas ujung 3–4 mm, pilin, lapisi timah, lalu solder menempel ke kaki tujuan. Ikuti jalur di gambar (kabel lewat celah antar-lubang).</p>
+             <div class="note"><b>Satu lubang hanya untuk satu kabel.</b> Kalau sebuah pin perlu 2 kabel, kabel kedua disolder di <b>titik sambung (TS)</b>: lubang kosong tepat di sebelah pin, lalu kedua lubang <b>disatukan dengan timah</b>. Di gambar, titik sambung = garis perak tebal.</div>
+             <ul><li>P1: 3V3 ESP32 (1a-038) ke C1 + (1e-015).</li><li>P5: titik sambung <b>1d-015</b> (timah ke C1 + 1e-015) ke VCC LCD (1a-014).</li><li>P2: titik sambung <b>1a-039</b> (timah ke 3V3 1a-038) ke C4 (1q-040), menyuplai RC522.</li><li>P6: titik sambung <b>1q-039</b> (timah ke C4 1q-040, 3.3 V) ke VCC header modul jam (2d-022).</li></ul>`,
+      items: ["P1", "P5", "P2", "P6"] },
+    { id: "gnd", judul: "Kabel GND hitam", sisi: "belakang", sorot: ["G1", "G6", "G2", "G3"],
+      isi: `<ul><li>G1: titik sambung <b>1b-037</b> (timah ke GND ESP32 1a-037) ke C1 − (1e-017).</li><li>G6: titik sambung <b>1d-017</b> (timah ke C1 − 1e-017) ke GND LCD (1a-013).</li><li>G2: titik sambung <b>1j-037</b> (timah ke GND ESP32 1k-037) ke C4 (1s-040), GND RC522.</li><li>G3: titik sambung <b>2c-033</b> (timah ke GND terminal JDAYA 2d-033) naik di celah kolom 2c–2d ke GND header modul jam (2d-021).</li></ul>`,
+      items: ["G1", "G6", "G2", "G3"] },
+    { id: "cek-daya", judul: "Cek daya", sisi: "belakang", sorot: ["P1", "P5", "P2", "G1", "G6", "G2", "G3"],
+      isi: `<ol><li>Tanpa multimeter: cek dengan mata (zoom kamera HP) bahwa tidak ada timah yang menyambung dua baris berbeda, terutama 1a-013/014 dan 1q/1s-040/041.</li>
+             <li>Colokkan <b>hanya ESP32</b>, sambungkan USB. LED merah ESP32 harus terang, ESP32 tidak panas, dan monitor serial menampilkan WiFi tersambung.</li>
+             <li>Dengan multimeter (kalau ada): 1a-014 ke 1a-013 ≈ <b>3.3 V</b>, 1q-041 ke 1s-041 (RC522) ≈ <b>3.3 V</b>.</li>
+             <li>Cabut USB sebelum lanjut menyolder.</li></ol>
+             <div class="note warn">Kalau ESP32 panas, USB terputus sendiri, atau LED merah redup: cabut, cari timah yang menyambung 3V3 dan GND.</div>`,
+      cek: ["Tidak ada korsleting 3V3–GND", "ESP32 menyala normal", "LED biru ESP32 ikut menyala (lampu layar D2)"] },
+    { id: "lcd", judul: "Kabel LCD (10 kabel)", sisi: "belakang", sorot: ["L1", "L2", "L3", "L4", "L5", "L6", "L7", "L8", "L9", "L10"],
+      isi: `<p>Semua dari kolom 1a soket ESP32 (baris 024–036) naik ke kolom 1a soket LCD (baris 002–012), disebar di celah kolom 1a–1f. Tempel selotip kecil berkode di tiap kabel supaya tidak tertukar. SDO dan T_IRQ LCD tidak disambung.</p>`,
+      items: ["L1", "L2", "L3", "L4", "L5", "L6", "L7", "L8", "L9", "L10"] },
+    { id: "rfid", judul: "Kabel RC522 (5 kabel)", sisi: "belakang", sorot: ["F1", "F2", "F3", "F4", "F5"],
+      isi: `<p>Dari kolom 1k soket ESP32 turun ke celah baris 039–040, ke kanan, lalu masuk ke soket RC522 (baris 041). Semua kabel tetap di dekat header RC522, tidak melintas di belakang antena.</p>`,
+      items: ["F1", "F2", "F3", "F4", "F5"] },
+    { id: "led", judul: "Kabel modul jam (2 kabel)", sisi: "belakang", sorot: ["E1", "E2"],
+      isi: `<ul><li>E1: D25 (1k-031) turun ke celah baris <b>037–038</b>, ke kanan, lalu naik di celah kolom <b>2b–2c</b> ke SDA header modul jam (2d-023). Kabel daya baterai memakai celah 038–039, jadi keduanya tidak menumpuk.</li><li>E2: D26 (1k-032) lewat jalur yang sama ke SCL (2d-024).</li></ul>`,
+      items: ["E1", "E2"] },
+    { id: "baterai", judul: "Kabel daya baterai (2 kabel)", sisi: "belakang", sorot: ["V1", "V2"],
+      isi: `<ul><li>V1 (<b>kabel kuning</b>): +5V terminal JDAYA (2d-031) turun ke celah baris 038–039, ke kiri sampai kolom 1k–1l, lalu ke <b>VIN ESP32 (1k-038)</b>.</li><li>V2 (kabel hitam): GND JDAYA (2d-033) lewat jalur yang sama ke <b>GND ESP32 (1k-037)</b>.</li></ul><div class="note warn">VIN dan GND bersebelahan (1k-037/038): pastikan timahnya tidak menyatu. Kuning hanya ke VIN, jangan ke 3V3.</div>`,
+      items: ["V1", "V2"] },
+    { id: "buzzer", judul: "Kabel buzzer (2 kabel)", sisi: "belakang", sorot: ["B1", "B2"],
+      isi: `<ul><li>B1: D17 (1a-032) ke kaki + buzzer (2b-004).</li><li>B2: GND (1a-037) ke kaki − buzzer (2b-001).</li></ul>
+             <p>Jalur di gambar lewat celah di antara LCD dan RC522; kabel boleh lurus asal kedua ujungnya benar dan tidak menempel ke solderan lain. Jangan menyambung D17 ke kaki − buzzer: buzzer akan bunyi terus.</p>`,
+      items: ["B1", "B2"] },
+    { id: "cek-kabel", judul: "Cek semua sambungan", sisi: "belakang", sorot: DATA.kabel.map(k => k.id).concat(DATA.jembatan.map(j => j.id)),
+      isi: `<ol><li>Multimeter mode bunyi. Untuk setiap kabel di tabel "Daftar kabel", tempelkan ke kedua ujungnya: harus berbunyi.</li>
+             <li>Cek pin bersebelahan di soket LCD, RC522, dan ESP32: <b>tidak boleh</b> berbunyi satu sama lain (kecuali GND–GND).</li>
+             <li>Lihat dengan kaca pembesar: tidak ada serpihan timah atau serabut kabel yang menyentuh pad lain.</li></ol>`,
+      cek: [`Semua ${DATA.kabel.length} kabel tersambung`, `${DATA.jembatan.filter(j => !j.timah).length} jembatan & ${DATA.jembatan.filter(j => j.timah).length} titik sambung benar`, "Pin bersebelahan tidak korsleting", "Tidak ada serabut / timah lepas"] },
+    { id: "ups", judul: "Modul UPS, saklar & baterai", sisi: "depan", sorot: ["JDAYA"],
+      isi: `<p>Dirakit di luar papan, sebelum dipasang ke casing. Urutan sambungan:</p><ul><li><b>+5V:</b> charger 5V 2A → USB-C modul UPS → pad UPS+ → saklar → kabel kuning → terminal JDAYA +5V (2d-031)</li><li><b>GND:</b> pad UPS− → kabel hitam → terminal JDAYA GND (2d-033)</li></ul><ol><li>Cek <b>jumper keluaran modul di 5V</b> (kotak 5V/9V/12V). Dengan multimeter: UPS+ ke UPS− ≈ 5 V. <b>9 V atau 12 V merusak ESP32.</b></li><li>Solder <b>elco 1000 µF</b> di pad UPS+ (kaki panjang) dan UPS− (sisi bergaris): menahan tegangan saat pindah ke baterai.</li><li>Kabel kuning dari UPS+ ke salah satu kaki <b>saklar KCD11</b>, kaki lain ke kabel kuning menuju JDAYA +5V. Kabel hitam UPS− langsung ke JDAYA GND. Ujung kabel dikupas ± 5 mm, dilapisi timah, lalu dijepit sekrup terminal.</li><li>Pasang <b>2 baterai 18650 searah</b> sesuai gambar di modul (paralel), tegangan keduanya hampir sama. <b>Baterai dulu, baru charger.</b></li><li>Saklar OFF, jepit kabel di terminal JDAYA (kuning ke +5V di 031, hitam ke GND di 033), tarik pelan untuk memastikan kuat, lalu saklar ON.</li></ol><div class="note">Saklar memutus daya ke alat saja; baterai tetap terisi saat charger dicolok. Pasang saklar di sisi bawah casing, agak masuk ke dalam, supaya tidak tertekan orang yang absen.</div>`,
+      cek: ["Keluaran modul 5 V", "Elco 1000 µF di UPS+/UPS−", "Saklar di jalur kuning (+5V)", "Baterai searah, tegangan sama", "Kuning ke JDAYA +5V"] },
+    { id: "tes", judul: "Pasang modul & tes", sisi: "depan", sorot: ["m-lcd", "m-rc522", "m-esp32"],
+      isi: `<ol><li>Colokkan ESP32, LCD, RC522, lalu kabel modul jam.</li>
+             <li>Sambungkan USB. Buka monitor serial (Arduino IDE, atau <span class="mono">firmware/monitor.sh</span>).</li>
+             <li>Harus tampil: layar menyala, "RFID: RC522 terdeteksi", WiFi tersambung.</li>
+             <li>Monitor serial: "RTC: disetel dari jam server". Menu → <b>Info alat</b>: baris Jam bertanda <b>(server + RTC)</b>.</li><li>Uji jam: matikan router (atau WiFi), cabut lalu colok listrik alat. Langkah jam di layar boot bertanda <b>(RTC)</b> dan tidak ada E31.</li>
+             <li>Tempel kartu: bip, layar berwarna, nama tampil.</li><li>Uji baterai: saat alat menyala, cabut charger dari modul UPS. <b>Alat tidak boleh restart.</b> Ulangi 5 kali.</li><li>Saklar OFF: alat mati total walaupun baterai terpasang.</li></ol>`,
+      cek: ["Layar menyala", "Touch tepat", "RC522 terdeteksi", "Info alat: Jam (server + RTC)", "Jam (RTC) saat tanpa internet", "Charger dicabut: tidak restart", "Saklar OFF: mati total", "Kartu terbaca + bip"] },
+    { id: "casing", judul: "Casing (menyusul)", sisi: "depan", sorot: ["m-lcd"],
+      isi: `<p>Casing untuk tata letak ini belum dibuat. LCD menjorok di luar papan, dan modul jam dipasang di casing lewat kabel. Sampai saat itu, alat bisa dipakai dan dites tanpa casing.</p>` }
+  ];  // Kabel yang ujungnya di titik sambung: titik sambungnya (TS) ikut dicentang & disorot di langkah kabel itu.
+  const denganTs = ids => ids.flatMap(id => byId[id] && byId[id].titik ? [id, ...byId[id].titik.map(t => t.ts)] : [id]);
+  STEPS.forEach(st => { if (st.items) st.items = denganTs(st.items); if (Array.isArray(st.sorot)) st.sorot = denganTs(st.sorot); });
+
+
+  // ---------- State ----------
+  let done = store.get("done", {});
+  let cek = store.get("cek", {});
+  let active = Math.max(0, STEPS.findIndex(s => s.id === store.get("active", "")));
+  let side = store.get("side", "depan");
+  let mode = store.get("mode", "langkah");
+  let sel = null;
+
+  // ---------- SVG ----------
+  function el(tag, attrs, parent, text) {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  const svgs = { depan: document.getElementById("svg-depan"), belakang: document.getElementById("svg-belakang") };
+
+  function gambar(sisi) {
+    const svg = svgs[sisi];
+    svg.innerHTML = "";
+    const blk = sisi === "belakang";
+    // Data = tampak belakang (sisi tembaga, 1a di kiri). Tampak depan dicerminkan: 1a di kanan.
+    const fx = x => +(blk ? x : CERMIN - x).toFixed(2);
+    const xL = Math.min(fx(T.kiri), fx(T.kanan)), xR = Math.max(fx(T.kiri), fx(T.kanan));
+
+    // Batas gambar: papan + modul yang menjorok keluar (LCD), sama untuk kedua sisi supaya ukurannya sama
+    const xsAll = [T.kiri, T.kanan], ysAll = [T.atas, T.bawah];
+    DATA.modul.forEach(m => { xsAll.push(m.kotak[0], m.kotak[2]); ysAll.push(m.kotak[1], m.kotak[3]); });
+    const lo = Math.min(...xsAll, ...xsAll.map(x => CERMIN - x)) - 6, hi = Math.max(...xsAll, ...xsAll.map(x => CERMIN - x)) + 6;
+    const top = Math.min(...ysAll) - 6, bot = Math.max(...ysAll) + 6;
+    svg.setAttribute("viewBox", `${lo.toFixed(1)} ${top.toFixed(1)} ${(hi - lo).toFixed(1)} ${(bot - top).toFixed(1)}`);
+
+    // papan
+    el("rect", { x: xL, y: T.atas, width: xR - xL, height: T.bawah - T.atas, rx: 0.8, fill: "var(--board)", stroke: "var(--board-edge)", "stroke-width": 0.5 }, svg);
+
+    // lubang
+    const holes = el("g", {}, svg);
+    for (let c = 1; c <= G.kolom; c++) for (let r = 1; r <= G.baris; r++) {
+      el("circle", { cx: fx(X(c)), cy: Y(r), r: 0.62, fill: "var(--hole)" }, holes);
+      el("circle", { cx: fx(X(c)), cy: Y(r), r: 0.3, fill: "var(--hole-in)" }, holes);
+    }
+    // baris yang tidak dipakai (boleh dipotong)
+    if (G.baris_terakhir && G.baris_terakhir < G.baris) {
+      const ya = Y(G.baris_terakhir) + G.jarak / 2;
+      el("rect", { x: xL, y: ya, width: xR - xL, height: T.bawah - ya, fill: "var(--bg)", "fill-opacity": 0.55 }, svg);
+      el("text", { x: (xL + xR) / 2, y: ya + (T.bawah - ya) / 2, "text-anchor": "middle", "font-size": 2.4, fill: "var(--ink)", "font-weight": 600 }, svg,
+        `baris ${String(G.baris_terakhir + 1).padStart(3, "0")}–${String(G.baris).padStart(3, "0")} tidak dipakai`);
+    }
+    // label kolom (1a..1z, 2a..2d) & baris (001..050), seperti tercetak di papan
+    for (let c = 1; c <= G.kolom; c++) {
+      const nama = kolomNama(c), big = "aejoty".includes(nama[1]) || c === G.kolom;
+      const attrs = { x: fx(X(c)), "text-anchor": "middle", "font-size": big ? 1.25 : 1.0, fill: big ? "var(--ink)" : "var(--muted)", "font-weight": big ? 600 : 400 };
+      el("text", Object.assign({ y: T.atas - 1.2 }, attrs), svg, nama);
+      el("text", Object.assign({ y: T.bawah + 1.9 }, attrs), svg, nama);
+    }
+    for (let r = 1; r <= G.baris; r++) {
+      const big = r === 1 || r % 5 === 0 || r === G.baris;
+      const attrs = { y: Y(r) + 0.45, "text-anchor": "middle", "font-size": big ? 1.25 : 0.95, fill: big ? "var(--ink)" : "var(--muted)" };
+      el("text", Object.assign({ x: xL - 2.5 }, attrs), svg, String(r).padStart(3, "0"));
+      el("text", Object.assign({ x: xR + 2.5 }, attrs), svg, String(r).padStart(3, "0"));
+    }
+
+    // modul (garis putus-putus) di sisinya
+    DATA.modul.filter(m => m.sisi === sisi).forEach(m => {
+      const g = el("g", { class: "item", "data-id": m.id }, svg);
+      const a = Math.min(fx(m.kotak[0]), fx(m.kotak[2])), b = Math.max(fx(m.kotak[0]), fx(m.kotak[2]));
+      el("rect", { x: a, y: m.kotak[1], width: b - a, height: m.kotak[3] - m.kotak[1], rx: 1, fill: "var(--module)", "fill-opacity": 0.06, stroke: "var(--module)", "stroke-width": 0.3, "stroke-dasharray": "1.4 0.9" }, g);
+      const cy = (m.kotak[1] + m.kotak[3]) / 2 + (m.id === "m-lcd" ? -2 : 0);
+      el("text", { x: (a + b) / 2, y: cy, "text-anchor": "middle", "font-size": 2.3, fill: "var(--module)", opacity: 0.9 }, g, m.nama);
+      el("text", { x: (a + b) / 2, y: cy + 2.8, "text-anchor": "middle", "font-size": 1.5, fill: "var(--module)", opacity: 0.75 }, g, m.sisi === "depan" ? "dicolok ke soket, ± 11 mm di atas papan" : "komponen ESP32 menghadap keluar");
+    });
+
+    // lubang bor
+    DATA.bor.forEach(b => {
+      const g = el("g", { class: "item", "data-id": b.id }, svg);
+      const x = fx(b.xy[0]), y = b.xy[1];
+      el("circle", { cx: x, cy: y, r: 1.6, fill: "var(--hole-in)", stroke: "var(--accent)", "stroke-width": b.wajib ? 0.35 : 0.25, "stroke-dasharray": b.wajib ? "none" : "0.6 0.4" }, g);
+      el("path", { d: `M${x - 2.4} ${y}H${x + 2.4}M${x} ${y - 2.4}V${y + 2.4}`, stroke: "var(--accent)", "stroke-width": 0.18 }, g);
+      el("text", { x: x, y: y + 4, "text-anchor": "middle", "font-size": 1.5, fill: "var(--accent)" }, g, b.id);
+    });
+
+    // komponen
+    DATA.komponen.forEach(k => {
+      const disini = k.sisi === sisi;
+      const g = el("g", { class: "item", "data-id": k.id, style: "cursor:pointer" }, svg);
+      const pts = k.pin.map(p => [fx(p.xy[0]), p.xy[1]]);
+      if (disini) bentuk(k, pts, g, blk);
+      pts.forEach((p, i) => {
+        el("circle", { cx: p[0], cy: p[1], r: disini ? 0.85 : 0.78, fill: disini ? "var(--joint)" : "var(--joint)", stroke: "var(--board-edge)", "stroke-width": 0.15, class: "pinring" }, g);
+        if (k.jenis === "soket") {
+          // Nama pin: soket tegak -> menghadap ke tengah papan; soket mendatar -> tegak ke atas
+          const tegak = k.pin.every(q => q.cr[0] === k.pin[0].cr[0]);
+          let tx, ty, anchor, rot = 0;
+          if (tegak) { const keKanan = p[0] < TENGAH; tx = p[0] + (keKanan ? 1.6 : -1.6); ty = p[1]; anchor = keKanan ? "start" : "end"; }
+          else { tx = p[0]; ty = p[1] - 1.6; anchor = "start"; rot = -90; }
+          const t = el("text", { x: tx, y: ty, "text-anchor": anchor, "font-size": 1.2, fill: "var(--silk)", transform: rot ? `rotate(${rot} ${tx} ${ty})` : "" }, g, k.pin[i].nama);
+          t.setAttribute("dominant-baseline", "middle");
+        }
+      });
+      if (k.jenis === "soket") {
+        // kode soket di ujung deret
+        const xs = pts.map(q => q[0]), ys = pts.map(q => q[1]);
+        const tegak = k.pin.every(q => q.cr[0] === k.pin[0].cr[0]);
+        // soket mendatar: kode di sisi yang menghadap ke tengah papan (tidak keluar dari tepi)
+        const kiri = Math.min(...xs) - 1.6, kanan = Math.max(...xs) + 1.6;
+        const diKanan = (Math.min(...xs) + Math.max(...xs)) / 2 < TENGAH;   // ke arah tengah papan
+        const tx = tegak ? xs[0] : (diKanan ? kanan : kiri), ty = tegak ? Math.max(...ys) + 2.6 : ys[0];
+        el("text", { x: tx, y: ty, "text-anchor": tegak ? "middle" : (diKanan ? "start" : "end"), "font-size": 1.6, "font-weight": 600, fill: "var(--silk)" }, g, k.id);
+      }
+    });
+
+    // jembatan
+    DATA.jembatan.forEach(j => {
+      const g = el("g", { class: "item", "data-id": j.id, style: "cursor:pointer" }, svg);
+      const a = [fx(X(j.dari[0])), Y(j.dari[1])], b = [fx(X(j.ke[0])), Y(j.ke[1])];
+      if (j.sisi === sisi) {
+        el("line", { x1: a[0], y1: a[1], x2: b[0], y2: b[1], stroke: j.timah ? "var(--timah)" : "var(--bridge)", "stroke-width": j.timah ? 1.5 : 0.75, "stroke-linecap": "round" }, g);
+      } else if (j.sisi === "depan") {
+        el("circle", { cx: b[0], cy: b[1], r: 0.7, fill: "var(--bridge)", stroke: "var(--board-edge)", "stroke-width": 0.15 }, g);
+      }
+    });
+    DATA.penguat.forEach(p => {
+      const g = el("g", { class: "item", "data-id": p.id }, svg);
+      if (sisi !== "belakang") return;
+      el("line", { x1: fx(X(p.dari[0])), y1: Y(p.dari[1]), x2: fx(X(p.ke[0])), y2: Y(p.ke[1]), stroke: "var(--bridge)", "stroke-width": 0.7, "stroke-linecap": "round" }, g);
+    });
+
+    // kabel (belakang)
+    if (sisi === "belakang") {
+      DATA.kabel.forEach(k => {
+        const g = el("g", { class: "item", "data-id": k.id, style: "cursor:pointer" }, svg);
+        const d = k.jalur.map((p, i) => (i ? "L" : "M") + fx(p[0]) + " " + p[1]).join(" ");
+        el("path", { d, class: "wh" }, g);
+        el("path", { d, class: "w", stroke: WARNA[k.kelompok].css }, g);
+        const s = k.jalur[0], e = k.jalur[k.jalur.length - 1];
+        el("circle", { cx: fx(s[0]), cy: s[1], r: 0.55, fill: WARNA[k.kelompok].css, stroke: "var(--halo)", "stroke-width": 0.2 }, g);
+        el("circle", { cx: fx(e[0]), cy: e[1], r: 0.55, fill: WARNA[k.kelompok].css, stroke: "var(--halo)", "stroke-width": 0.2 }, g);
+      });
+    }
+    el("g", { class: "hotlayer" }, svg);
+  }
+
+  function bentuk(k, pts, g, blk) {
+    const st = { stroke: "var(--board-edge)", "stroke-width": 0.2 };
+    const [a, b] = pts;
+    const mid = pts.length ? [(pts[0][0] + pts[pts.length - 1][0]) / 2, (pts[0][1] + pts[pts.length - 1][1]) / 2] : [0, 0];
+    if (k.jenis === "soket") {
+      const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+      el("rect", Object.assign({ x: Math.min(...xs) - 1.27, y: Math.min(...ys) - 1.27, width: Math.max(...xs) - Math.min(...xs) + 2.54, height: Math.max(...ys) - Math.min(...ys) + 2.54, rx: 0.3, fill: "#1a1d1c" }, st), g);
+    } else if (k.jenis === "resistor") {
+      el("line", { x1: a[0], y1: a[1], x2: b[0], y2: b[1], stroke: "#c8ccc6", "stroke-width": 0.35 }, g);
+      const vert = Math.abs(a[0] - b[0]) < 0.1;
+      el("rect", Object.assign({ x: mid[0] - (vert ? 1.25 : 3.15), y: mid[1] - (vert ? 3.15 : 1.25), width: vert ? 2.5 : 6.3, height: vert ? 6.3 : 2.5, rx: 1, fill: "#cdb48b" }, st), g);
+      el("text", { x: mid[0], y: mid[1] + 0.45, "text-anchor": "middle", "font-size": 1.3, fill: "#1c211f", transform: vert ? `rotate(-90 ${mid[0]} ${mid[1]})` : "" }, g, k.id);
+    } else if (k.jenis === "dioda") {
+      el("line", { x1: a[0], y1: a[1], x2: b[0], y2: b[1], stroke: "#c8ccc6", "stroke-width": 0.35 }, g);
+      const w = 5.2, h = 2.7, x0 = mid[0] - w / 2;
+      el("rect", Object.assign({ x: x0, y: mid[1] - h / 2, width: w, height: h, rx: 0.6, fill: "#2a2d2c" }, st), g);
+      const kx = a[0] < b[0] ? x0 + 0.5 : x0 + w - 1.3;   // garis katoda di sisi kaki K (pin pertama)
+      el("rect", { x: kx, y: mid[1] - h / 2, width: 0.8, height: h, fill: "#e6e8e3" }, g);
+      el("text", { x: mid[0], y: mid[1] - 2.2, "text-anchor": "middle", "font-size": 1.5, fill: "var(--silk)" }, g, "D1");
+    } else if (k.jenis === "elco-tidur") {
+      // badan rebah ke arah kolom yang lebih besar (data), panjang ± 12 mm, diameter ± 8 mm
+      const arah = blk ? 1 : -1, x0 = a[0] + arah * 1.2, x1 = a[0] + arah * 13.2, cy = (a[1] + b[1]) / 2;
+      el("rect", Object.assign({ x: Math.min(x0, x1), y: cy - 4, width: 12, height: 8, rx: 2.2, fill: "#2f4f8f" }, st), g);
+      const xg = Math.min(x0, x1) + (arah > 0 ? 0.8 : 12 - 1.6);
+      el("rect", { x: xg, y: cy - 4, width: 0.8, height: 8, fill: "#dfe6f3" }, g);
+      el("text", { x: (x0 + x1) / 2, y: cy + 0.6, "text-anchor": "middle", "font-size": 1.6, fill: "#dfe6f3", "font-weight": 600 }, g, "C1 (tidur)");
+    } else if (k.jenis === "elco") {
+      const r = k.id === "C1" ? 4 : 3.15;
+      el("circle", Object.assign({ cx: mid[0], cy: mid[1], r, fill: "#2f4f8f" }, st), g);
+      const minusRight = b[0] > a[0];
+      el("path", { d: `M${mid[0] + (minusRight ? r * 0.55 : -r * 0.55)} ${mid[1] - r * 0.83}V${mid[1] + r * 0.83}`, stroke: "#dfe6f3", "stroke-width": 0.9 }, g);
+      el("text", { x: a[0], y: a[1] - r - 0.6, "text-anchor": "middle", "font-size": 1.8, fill: "var(--silk)", "font-weight": 600 }, g, "+");
+      el("text", { x: mid[0], y: mid[1] + r + 2, "text-anchor": "middle", "font-size": 1.5, fill: "var(--silk)" }, g, k.id);
+    } else if (k.jenis === "keramik") {
+      el("ellipse", Object.assign({ cx: mid[0], cy: mid[1], rx: 1.2, ry: 2.1, fill: "#d79b45" }, st), g);
+      el("text", { x: mid[0] + (blk ? 2.2 : -2.2), y: mid[1] + 0.5, "text-anchor": blk ? "start" : "end", "font-size": 1.4, fill: "var(--silk)" }, g, k.id);
+    } else if (k.jenis === "transistor") {
+      const c = pts[1], r = 2.4;
+      el("path", Object.assign({ d: `M${c[0] - r} ${c[1] + 0.9}A${r} ${r} 0 1 1 ${c[0] + r} ${c[1] + 0.9}Z`, fill: "#202322" }, st), g);
+      el("text", { x: c[0], y: c[1] - 3.2, "text-anchor": "middle", "font-size": 1.5, fill: "var(--silk)" }, g, "Q1");
+      pts.forEach((p, i) => el("text", { x: p[0], y: p[1] + 2.2, "text-anchor": "middle", "font-size": 1.05, fill: "#e6e8e3" }, g, k.pin[i].nama));
+    } else if (k.jenis === "buzzer") {
+      el("circle", Object.assign({ cx: mid[0], cy: mid[1], r: 6, fill: "#151716" }, st), g);
+      el("circle", { cx: mid[0], cy: mid[1], r: 1.1, fill: "#3a3f3d" }, g);
+      el("text", { x: a[0], y: a[1] - 1.6, "text-anchor": "middle", "font-size": 1.8, fill: "#e6e8e3", "font-weight": 600 }, g, "+");
+      el("text", { x: mid[0], y: mid[1] - 6.8, "text-anchor": "middle", "font-size": 1.5, fill: "var(--silk)" }, g, "BZ1");
+    } else if (k.jenis === "led") {
+      const c = [(pts[0][0] + pts[3][0]) / 2, pts[0][1]];
+      el("circle", Object.assign({ cx: c[0], cy: c[1], r: 2.6, fill: "#eef1ed", "fill-opacity": 0.85 }, st), g);
+      pts.forEach((p, i) => el("text", { x: p[0], y: p[1] - 3.3, "text-anchor": "middle", "font-size": 1.4, fill: "var(--silk)", "font-weight": 600 }, g, k.pin[i].nama));
+    }
+  }
+
+  // ---------- Sorotan & info ----------
+  function sorotSekarang() {
+    if (sel) return new Set([sel]);
+    return mode === "semua" ? null : new Set(STEPS[active].sorot);
+  }
+  function terapkanSorot() {
+    const set = sorotSekarang();
+    ["depan", "belakang"].forEach(s => {
+      const svg = svgs[s];
+      svg.classList.toggle("dim", !!set && set.size > 0);
+      svg.querySelectorAll(".item").forEach(n => {
+        const on = !!set && set.has(n.dataset.id);
+        n.classList.toggle("on", on);
+        n.classList.toggle("sel", n.dataset.id === sel);
+      });
+      const hot = svg.querySelector(".hotlayer");
+      hot.innerHTML = "";
+    });
+  }
+
+  function infoHtml(id) {
+    const o = byId[id];
+    if (!o) return "";
+    const kode = `<span class="mono">${id}</span>`;
+    if (o.tipe === "kabel") {
+      const a = titik(o.dari), b = titik(o.ke);
+      return `<div class="info-title">${kode} · ${o.label}</div><dl>
+        <dt>Kabel</dt><dd>${o.warna === "merah" ? "Merah (3V3)" : o.warna === "kuning" ? "Kuning (5V baterai)" : "Hitam"} · sisi belakang</dd>
+        <dt>Dari</dt><dd>${a.teks} <span class="mono">${a.lubang}</span></dd>
+        <dt>Ke</dt><dd>${b.teks} <span class="mono">${b.lubang}</span></dd></dl>`;
+    }
+    if (o.tipe === "komponen") {
+      // keramik & resistor tidak punya kutub: tampilkan lubangnya saja
+      const bebas = o.jenis === "keramik" || o.jenis === "resistor";
+      const pins = bebas ? `<span class="mono">${o.pin.map(p => lub(p.cr)).join("</span> dan <span class=\"mono\">")}</span> (bebas arah, tidak ada plus-minus)`
+        : o.pin.map(p => `${p.nama} <span class="mono">${lub(p.cr)}</span>`).join(", ");
+      return `<div class="info-title">${kode} · ${o.nama}</div><dl>
+        ${o.nilai ? `<dt>Nilai</dt><dd>${o.nilai}</dd>` : ""}
+        <dt>Sisi</dt><dd>Dipasang di depan, disolder di belakang</dd>
+        <dt>${bebas ? "Lubang" : "Kaki"}</dt><dd>${pins}</dd>
+        ${o.catatan ? `<dt>Catatan</dt><dd>${o.catatan}</dd>` : ""}</dl>`;
+    }
+    if (o.tipe === "jembatan") {
+      return `<div class="info-title">${kode} · ${o.timah ? "Titik sambung (satukan dengan timah)" : "Jembatan"}</div><dl><dt>Sisi</dt><dd>${o.sisi}</dd>
+        <dt>Dari</dt><dd><span class="mono">${lub(o.dari)}</span> ke <span class="mono">${lub(o.ke)}</span></dd><dt>Fungsi</dt><dd>${o.label}</dd></dl>`;
+    }
+    if (o.tipe === "bor") {
+      return `<div class="info-title">${kode} · Lubang bor 3 mm</div><dl><dt>Untuk</dt><dd>${o.untuk}${o.wajib ? "" : " (opsional)"}</dd>
+        <dt>Posisi</dt><dd><span class="mono">${o.xy[0].toFixed(1)} mm dari kiri, ${o.xy[1].toFixed(1)} mm dari atas</span> (tampak depan)</dd></dl>`;
+    }
+    if (o.tipe === "modul") return `<div class="info-title">${o.nama}</div><p class="hint">Garis putus-putus = posisi modul saat dicolokkan (${o.sisi}).</p>`;
+    if (o.tipe === "penguat") return `<div class="info-title">${kode} · Kawat penguat sambungan</div><p class="hint">Kawat polos melintang di belakang, <span class="mono">${lub(o.dari)}</span> ke <span class="mono">${lub(o.ke)}</span>.</p>`;
+    return "";
+  }
+
+  function tampilkanInfo() {
+    const box = document.getElementById("info");
+    box.innerHTML = sel ? infoHtml(sel) + `<button type="button" class="btn" id="clearsel" style="justify-self:start">Tutup</button>`
+      : `<p class="hint">Klik komponen, kabel, atau lubang bor di papan untuk melihat keterangannya. Klik kode di daftar langkah atau tabel untuk menyorotnya.</p>`;
+    const c = document.getElementById("clearsel");
+    if (c) c.onclick = () => { sel = null; terapkanSorot(); tampilkanInfo(); };
+  }
+
+  function pilih(id) {
+    sel = sel === id ? null : id;
+    if (sel) {
+      const o = byId[sel];
+      const s = o.tipe === "kabel" || o.tipe === "penguat" ? "belakang" : o.sisi;
+      if (s && s !== side) setSide(s);
+    }
+    terapkanSorot();
+    tampilkanInfo();
+  }
+
+  ["depan", "belakang"].forEach(s => svgs[s].addEventListener("click", ev => {
+    const n = ev.target.closest(".item");
+    if (n && n.dataset.id && byId[n.dataset.id]) pilih(n.dataset.id);
+  }));
+
+  // ---------- Sisi ----------
+  const flipper = document.getElementById("flipper");
+  function setSide(s) {
+    side = s;
+    store.set("side", s);
+    flipper.classList.toggle("back", s === "belakang");
+    document.getElementById("v-depan").setAttribute("aria-pressed", s === "depan");
+    document.getElementById("v-belakang").setAttribute("aria-pressed", s === "belakang");
+    document.getElementById("sidebadge").innerHTML = s === "depan"
+      ? "Tampak <b>depan</b> (komponen) · kolom 1a di <b>kanan</b>" : "Tampak <b>belakang</b> (solder & kabel, label terbaca) · kolom 1a di <b>kiri</b>";
+  }
+  document.getElementById("v-depan").onclick = () => setSide("depan");
+  document.getElementById("v-belakang").onclick = () => setSide("belakang");
+  document.getElementById("flip").onclick = () => setSide(side === "depan" ? "belakang" : "depan");
+  function setMode(m) {
+    mode = m;
+    store.set("mode", m);
+    document.getElementById("m-langkah").setAttribute("aria-pressed", m === "langkah");
+    document.getElementById("m-semua").setAttribute("aria-pressed", m === "semua");
+    terapkanSorot();
+  }
+  document.getElementById("m-langkah").onclick = () => setMode("langkah");
+  document.getElementById("m-semua").onclick = () => setMode("semua");
+
+  // ---------- Langkah ----------
+  function itemTeks(id) {
+    const o = byId[id];
+    if (o.tipe === "kabel") {
+      const a = titik(o.dari), b = titik(o.ke);
+      return `<span class="mono">${id}</span> ${o.label} · <span class="mono">${a.lubang} → ${b.lubang}</span>`;
+    }
+    if (o.tipe === "komponen") return `<span class="mono">${id}</span> ${o.nama}${o.nilai ? " (" + o.nilai + ")" : ""} · <span class="mono">${o.pin.map(p => lub(p.cr)).join(" ")}</span>`;
+    if (o.tipe === "jembatan" && o.timah) return `<span class="mono">${o.id}</span> satukan dengan timah · <span class="mono">${lub(o.dari)} ↔ ${lub(o.ke)}</span>`;
+    if (o.tipe === "jembatan") return `<span class="mono">${o.id.replace(/^T-/, "")}</span> · <span class="mono">${lub(o.dari)} → ${lub(o.ke)}</span>`;
+    return id;
+  }
+
+  function renderSteps() {
+    const ol = document.getElementById("steps");
+    ol.innerHTML = "";
+    STEPS.forEach((s, i) => {
+      const li = document.createElement("li");
+      li.className = "step" + (done[s.id] ? " done" : "");
+      li.tabIndex = 0;
+      if (i === active) li.setAttribute("aria-current", "step");
+      li.innerHTML = `<span class="no">${i + 1}</span><span class="t">${s.judul}</span><span class="s">${s.sisi}</span>`;
+      li.onclick = () => goto(i);
+      li.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); goto(i); } };
+      ol.appendChild(li);
+    });
+    const n = STEPS.filter(s => done[s.id]).length;
+    document.getElementById("count").textContent = `${n} / ${STEPS.length}`;
+    document.getElementById("bar").style.width = (100 * n / STEPS.length) + "%";
+    const cur = ol.children[active];
+    if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: "nearest" });
+  }
+
+  function renderDetail() {
+    const s = STEPS[active];
+    const box = document.getElementById("detail");
+    const list = s.items ? s.items.map(id => ({ id, html: itemTeks(id) })) : (s.cek || []).map((t, i) => ({ id: s.id + "#" + i, html: t }));
+    box.innerHTML = `<div class="detail-head"><span class="detail-num">Langkah ${active + 1} / ${STEPS.length}</span><h3>${s.judul}</h3><span class="sidebadge">sisi <b>${s.sisi}</b></span></div>
+      ${s.isi}
+      ${list.length ? `<ul class="cek">${list.map(it => `<li><label><input type="checkbox" data-cek="${it.id}" ${cek[it.id] ? "checked" : ""}><span>${it.html}</span></label></li>`).join("")}</ul>` : ""}
+      <label class="hint" style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="stepdone" ${done[s.id] ? "checked" : ""} style="accent-color:var(--ok)"> Langkah ini selesai</label>`;
+    box.querySelectorAll("input[data-cek]").forEach(inp => inp.onchange = () => {
+      cek[inp.dataset.cek] = inp.checked; store.set("cek", cek);
+      if (list.every(it => cek[it.id])) { done[s.id] = true; store.set("done", done); renderSteps(); document.getElementById("stepdone").checked = true; }
+      renderTable();
+    });
+    document.getElementById("stepdone").onchange = e => { done[s.id] = e.target.checked; store.set("done", done); renderSteps(); };
+    document.getElementById("prev").disabled = active === 0;
+    document.getElementById("next").disabled = active === STEPS.length - 1;
+  }
+
+  function goto(i) {
+    active = Math.max(0, Math.min(STEPS.length - 1, i));
+    store.set("active", STEPS[active].id);
+    sel = null;
+    setSide(STEPS[active].sisi);
+    renderSteps(); renderDetail(); terapkanSorot(); tampilkanInfo();
+  }
+  document.getElementById("prev").onclick = () => goto(active - 1);
+  document.getElementById("next").onclick = () => goto(active + 1);
+
+  // ---------- Tabel ----------
+  const URUT = [["Daya 3V3 (merah)", "daya"], ["GND (hitam)", "gnd"], ["LCD", "lcd"], ["RC522", "rfid"], ["Modul jam", "led"], ["Daya baterai 5V (kuning)", "baterai"], ["Buzzer", "buzzer"]];
+  function renderTable() {
+    const tb = document.getElementById("wiretable");
+    tb.innerHTML = "";
+    URUT.forEach(([judul, kel]) => {
+      const tr = document.createElement("tr"); tr.className = "grp";
+      tr.innerHTML = `<td colspan="6"><span class="sw" style="background:${WARNA[kel].css}"></span>${judul}</td>`;
+      tb.appendChild(tr);
+      DATA.kabel.filter(k => k.kelompok === kel).forEach(k => {
+        const a = titik(k.dari), b = titik(k.ke);
+        const row = document.createElement("tr");
+        if (cek[k.id]) row.className = "done";
+        row.innerHTML = `<td><input type="checkbox" data-cek="${k.id}" aria-label="${k.id} selesai" ${cek[k.id] ? "checked" : ""}></td>
+          <td class="mono"><button type="button" class="row-link" data-sel="${k.id}">${k.id}</button></td>
+          <td>${k.warna}</td><td>${a.teks} <span class="mono">${a.lubang}</span></td><td>${b.teks} <span class="mono">${b.lubang}</span></td><td>${k.label}</td>`;
+        tb.appendChild(row);
+      });
+    });
+    tb.querySelectorAll("input[data-cek]").forEach(inp => inp.onchange = () => { cek[inp.dataset.cek] = inp.checked; store.set("cek", cek); renderTable(); renderDetail(); });
+    tb.querySelectorAll("[data-sel]").forEach(b => b.onclick = () => { pilih(b.dataset.sel); document.getElementById("flipper").scrollIntoView({ behavior: "smooth", block: "center" }); });
+  }
+
+  function renderParts() {
+    const tb = document.getElementById("parttable");
+    tb.innerHTML = DATA.komponen.map(k => `<tr><td class="mono"><button type="button" class="row-link" data-sel="${k.id}">${k.id}</button></td><td>${k.nama}</td><td>${k.nilai || "–"}</td>
+      <td class="mono">${k.jenis === "soket" ? lub(k.pin[0].cr) + " … " + lub(k.pin[k.pin.length - 1].cr) : k.pin.map(p => lub(p.cr)).join(" ")}</td></tr>`).join("");
+    tb.querySelectorAll("[data-sel]").forEach(b => b.onclick = () => { pilih(b.dataset.sel); document.getElementById("flipper").scrollIntoView({ behavior: "smooth", block: "center" }); });
+  }
+
+  function legend() {
+    const html = Object.keys(WARNA).map(k => `<span><i style="background:${WARNA[k].css};outline:1px solid var(--line)"></i>${WARNA[k].nama}</span>`).join("")
+      + `<span><i style="background:var(--bridge);outline:1px solid var(--line)"></i>Jembatan / kawat sisa</span>`;
+    document.getElementById("legend").innerHTML = html;
+    document.getElementById("legend2").innerHTML = html;
+    document.getElementById("facts").innerHTML = [
+      `${G.kolom} × ${G.baris} lubang (1a–2d, 001–${String(G.baris).padStart(3, "0")})`, `± ${(T.kanan - T.kiri).toFixed(1)} × ${(T.bawah - T.atas).toFixed(1)} mm area lubang`,
+      `${DATA.komponen.length} komponen`, `${DATA.kabel.length} kabel`, `${DATA.jembatan.length} jembatan`
+    ].concat(DATA.bor.length ? [`${DATA.bor.length} lubang bor`] : []).map(t => `<span class="fact">${t}</span>`).join("");
+  }
+
+  gambar("depan"); gambar("belakang");
+  legend(); renderParts(); renderTable();
+  setMode(mode);
+  // Tautan langsung ke langkah: ...#lcd, #rfid, #bor, dst.
+  const dariHash = () => { const i = STEPS.findIndex(s => "#" + s.id === location.hash); return i; };
+  goto(dariHash() >= 0 ? dariHash() : active);
+  window.addEventListener("hashchange", () => { const i = dariHash(); if (i >= 0) goto(i); });
+})();
+</script>
+</body>
+</html>
